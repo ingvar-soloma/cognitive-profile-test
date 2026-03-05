@@ -1,7 +1,7 @@
 services:
   backend:
     image: ${BACKEND_IMAGE:-aphantasia-backend:latest}
-    build: 
+    build:
       context: ./backend
     ports:
       - "${BACKEND_PORT:-8000}:8000"
@@ -20,6 +20,7 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_TELEGRAM_BOT_NAME: ${VITE_TELEGRAM_BOT_NAME}
+        VITE_TELEGRAM_CLIENT_ID: ${VITE_TELEGRAM_CLIENT_ID}
         VITE_ADMIN_TELEGRAM_IDS: ${VITE_ADMIN_TELEGRAM_IDS}
     ports:
       - "${PROD_PORT:-80}:80"
