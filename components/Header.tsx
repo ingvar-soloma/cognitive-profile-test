@@ -124,55 +124,47 @@ export const Header: React.FC<HeaderProps> = ({
 };
 
 export const TelegramButton: React.FC = () => {
-  const handleLogin = () => {
-    const clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
-    const origin = window.location.origin;
-    const scope = 'openid profile telegram:bot_access';
-    const redirectUri = window.location.origin + '/';
-
-    // Формуємо URL вручну, додаючи обов'язковий параметр origin, 
-    // який бібліотека Telegram ігнорує, через що виникає помилка "origin required".
-    const authUrl = `https://oauth.telegram.org/auth?response_type=post_message&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&origin=${encodeURIComponent(origin)}`;
-
-    const width = 550;
-    const height = 470;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const popup = window.open(
-      authUrl,
-      'telegram_oauth',
-      `width=${width},height=${height},left=${left},top=${top},status=0,location=0,menubar=0,toolbar=0`
-    );
-
-    if (!popup) {
-      alert('Будь ласка, дозвольте спливаючі вікна для цього сайту.');
-      return;
+  const handleLogin = async () => {
+    let clientId = import.meta.env.VITE_TELEGRAM_CLIENT_ID;
+    if (clientId && clientId.includes(':')) {
+      clientId = clientId.split(':')[0]; // Use just the bot id if the full token was pasted
     }
+    const redirectUri = window.location.origin + '/';
+    const scope = 'openid profile telegram:bot_access';
 
-    const messageListener = (event: MessageEvent) => {
-      if (event.source === popup) {
-        try {
-          const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-          if (data && (window as any).onTelegramAuth) {
-            (window as any).onTelegramAuth(data);
-            window.removeEventListener('message', messageListener);
-            popup.close();
-          }
-        } catch (e) {
-          console.error('[Auth] Error parsing message data:', e);
-        }
+    // Generate PKCE code verifier and challenge
+    const generateRandomString = (length: number) => {
+      const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+      let result = '';
+      const randomValues = new Uint8Array(length);
+      window.crypto.getRandomValues(randomValues);
+      for (let i = 0; i < length; i++) {
+        result += charset[randomValues[i] % charset.length];
       }
+      return result;
     };
 
-    window.addEventListener('message', messageListener);
+    const codeVerifier = generateRandomString(43); // Recommended length is 43-128
+    const encoder = new TextEncoder();
+    const data = encoder.encode(codeVerifier);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    // Base64URL encode
+    const codeChallenge = btoa(String.fromCharCode(...hashArray))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
 
-    const checkClosed = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checkClosed);
-        window.removeEventListener('message', messageListener);
-      }
-    }, 1000);
+    const state = generateRandomString(16);
+
+    // Save state and verifier for later validation (when returning from Telegram)
+    localStorage.setItem('tg_oauth_state', state);
+    localStorage.setItem('tg_oauth_verifier', codeVerifier);
+
+    const authUrl = `https://oauth.telegram.org/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+
+    // Redirect browser directly to Telegram's OIDC page
+    window.location.href = authUrl;
   };
 
   return (

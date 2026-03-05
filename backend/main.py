@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Config
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_GROUP_ID = os.getenv("TELEGRAM_GROUP_ID")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 ADMIN_TELEGRAM_IDS = os.getenv("ADMIN_TELEGRAM_IDS", "").split(",")
@@ -54,8 +54,12 @@ class SaveResult(BaseModel):
     scores: Dict[str, Any]
     lang: Optional[str] = "en"
 
+from auth import router as auth_router
+
 # FastAPI App
 app = FastAPI(title="Aphantasia Test Backend")
+
+app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,

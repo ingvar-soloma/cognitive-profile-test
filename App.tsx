@@ -105,6 +105,39 @@ const App: React.FC = () => {
       setActiveProfileId(loadedProfiles[0].id);
     }
 
+    // Telegram OAuth Callback
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+
+    if (code && state) {
+      const savedState = localStorage.getItem('tg_oauth_state');
+      const verifier = localStorage.getItem('tg_oauth_verifier');
+
+      if (state === savedState && verifier) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        fetch(`${apiUrl}/api/auth/telegram/exchange`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code,
+            code_verifier: verifier,
+            redirect_uri: window.location.origin + '/'
+          })
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.id && data.hash) {
+              localStorage.setItem('telegram_auth', JSON.stringify(data));
+              globalThis.dispatchEvent(new CustomEvent('telegram-login', { detail: data }));
+            }
+          })
+          .catch(err => console.error('Telegram OAuth Exchange Failed', err));
+      }
+    }
+
     // Telegram Login Listener
     const handleTelegramLogin = (e: any) => {
       const user = e.detail;

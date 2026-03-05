@@ -8,3 +8,5 @@ python-dotenv
 httpx
 pytz
 aiofiles
+httpx
+PyJWT
