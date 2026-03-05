@@ -127,14 +127,17 @@ export const TelegramButton: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Офіційний віджет згідно з гайдом Telegram
     if (containerRef.current && !containerRef.current.querySelector('script')) {
       const script = document.createElement('script');
-      script.src = "https://oauth.telegram.org/js/telegram-login.js?22";
-      script.setAttribute('data-client-id', import.meta.env.VITE_TELEGRAM_CLIENT_ID);
-      script.setAttribute('data-onauth', 'onTelegramAuth(data)');
-      script.setAttribute('data-request-access', 'write');
-      script.setAttribute('data-userpic', 'true');
+      script.src = "https://telegram.org/js/telegram-widget.js?22";
+      // Використовуємо NAME бота, а не CLIENT_ID для офіційного віджета
+      script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_NAME);
       script.setAttribute('data-size', 'medium');
+      script.setAttribute('data-userpic', 'true');
+      script.setAttribute('data-request-access', 'write');
+      // Функція onTelegramAuth визначена в index.html
+      script.setAttribute('data-onauth', 'onTelegramAuth(user)');
       script.async = true;
       containerRef.current.appendChild(script);
     }
