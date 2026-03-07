@@ -266,6 +266,38 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
           { label: { uk: 'Перетворюєте на концепції, щоб "знати" їх', en: 'Convert them into concepts to "know" them', ru: 'Превращаете в концепции, чтобы "знать" их' }, value: 'conceptual' },
         ],
       },
+      {
+        id: '2_DRAW_1',
+        category: 'Process',
+        subCategory: { uk: 'Візуальна Реконструкція', en: 'Visual Reconstruction', ru: 'Визуальная Реконструкция' },
+        text: {
+          uk: 'Завдання на малювання: Намалюйте велосипед з пам\'яті настільки детально, наскільки можете.',
+          en: 'Drawing Task: Draw a bicycle from memory as detailed as you can.',
+          ru: 'Задание на рисование: Нарисуйте велосипед по памяти настолько детально, насколько сможете.'
+        },
+        hint: {
+          uk: 'Не хвилюйтеся про художні навички. Важливо те, які саме деталі (спиці, ланцюг, рама) Ви пам\'ятаєте візуально.',
+          en: 'Don\'t worry about artistic skills. What matters is which details (spokes, chain, frame) you remember visually.',
+          ru: 'Не беспокойтесь о художественных навыках. Важно то, какие именно детали (спицы, цепь, рама) Вы помните визуально.'
+        },
+        type: QuestionType.DRAWING,
+      },
+      {
+        id: '2_DRAW_2',
+        category: 'Process',
+        subCategory: { uk: 'Просторова Пам\'ять', en: 'Spatial Memory', ru: 'Пространственная Память' },
+        text: {
+          uk: 'Завдання на малювання: Намалюйте схематичне планування Вашої кімнати (де знаходяться вікна, двері, меблі).',
+          en: 'Drawing Task: Draw a schematic layout of your room (windows, doors, furniture locations).',
+          ru: 'Задание на рисование: Нарисуйте схематичную планировку Вашей комнаты (окна, двери, мебель).'
+        },
+        hint: {
+          uk: 'Це допомагає зрозуміти різницю між візуалізацією об\'єктів та знанням просторових зв\'язків.',
+          en: 'This helps understand the difference between object visualization and spatial relationship knowledge.',
+          ru: 'Это помогает понять разницу между визуализацией объектов и знанием пространственных связей.'
+        },
+        type: QuestionType.DRAWING,
+      },
     ],
   },
   {
@@ -319,9 +351,9 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: 'Так', en: 'Yes', ru: 'Да' }, value: 'yes' },
-            { label: { uk: 'Ні', en: 'No', ru: 'Нет' }, value: 'no' },
-            { label: { uk: 'Частково', en: 'Partially', ru: 'Частично' }, value: 'partial' },
+          { label: { uk: 'Так', en: 'Yes', ru: 'Да' }, value: 'yes' },
+          { label: { uk: 'Ні', en: 'No', ru: 'Нет' }, value: 'no' },
+          { label: { uk: 'Частково', en: 'Partially', ru: 'Частично' }, value: 'partial' },
         ]
       },
       {
@@ -335,9 +367,9 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: '3D Модель', en: '3D Model', ru: '3D Модель' }, value: '3d' },
-            { label: { uk: 'Список функцій/правил', en: 'List of functions/rules', ru: 'Список функций/правил' }, value: 'rules' },
-            { label: { uk: 'Змішаний тип', en: 'Mixed type', ru: 'Смешанный тип' }, value: 'mixed' },
+          { label: { uk: '3D Модель', en: '3D Model', ru: '3D Модель' }, value: '3d' },
+          { label: { uk: 'Список функцій/правил', en: 'List of functions/rules', ru: 'Список функций/правил' }, value: 'rules' },
+          { label: { uk: 'Змішаний тип', en: 'Mixed type', ru: 'Смешанный тип' }, value: 'mixed' },
         ]
       },
       {
@@ -351,9 +383,9 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: 'Як фільм (жива картина)', en: 'Like a movie (living picture)', ru: 'Как фильм (живая картина)' }, value: 'movie' },
-            { label: { uk: 'Як послідовність подій', en: 'Like a sequence of events', ru: 'Как последовательность событий' }, value: 'sequence' },
-            { label: { uk: 'Як сухий факт', en: 'Like a dry fact', ru: 'Как сухой факт' }, value: 'fact' },
+          { label: { uk: 'Як фільм (жива картина)', en: 'Like a movie (living picture)', ru: 'Как фильм (живая картина)' }, value: 'movie' },
+          { label: { uk: 'Як послідовність подій', en: 'Like a sequence of events', ru: 'Как последовательность событий' }, value: 'sequence' },
+          { label: { uk: 'Як сухий факт', en: 'Like a dry fact', ru: 'Как сухой факт' }, value: 'fact' },
         ]
       },
       {
@@ -367,8 +399,8 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: 'Так', en: 'Yes', ru: 'Да' }, value: 'yes' },
-            { label: { uk: 'Ні', en: 'No', ru: 'Нет' }, value: 'no' },
+          { label: { uk: 'Так', en: 'Yes', ru: 'Да' }, value: 'yes' },
+          { label: { uk: 'Ні', en: 'No', ru: 'Нет' }, value: 'no' },
         ]
       },
       {
@@ -409,8 +441,8 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: 'Ментальна карта', en: 'Mental map', ru: 'Ментальная карта' }, value: 'map' },
-            { label: { uk: 'Послідовність кроків', en: 'Sequence of steps', ru: 'Последовательность шагов' }, value: 'steps' },
+          { label: { uk: 'Ментальна карта', en: 'Mental map', ru: 'Ментальная карта' }, value: 'map' },
+          { label: { uk: 'Послідовність кроків', en: 'Sequence of steps', ru: 'Последовательность шагов' }, value: 'steps' },
         ]
       },
       {
@@ -424,9 +456,9 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: 'Відчуваю емоцію (Співчуття)', en: 'Feel emotion (Compassion)', ru: 'Чувствую эмоцию (Сочувствие)' }, value: 'emotional' },
-            { label: { uk: 'Аналізую ситуацію (Когнітивна емпатія)', en: 'Analyze situation (Cognitive empathy)', ru: 'Анализирую ситуацию (Когнитивная эмпатия)' }, value: 'cognitive' },
-            { label: { uk: 'Обидва', en: 'Both', ru: 'Оба' }, value: 'both' },
+          { label: { uk: 'Відчуваю емоцію (Співчуття)', en: 'Feel emotion (Compassion)', ru: 'Чувствую эмоцию (Сочувствие)' }, value: 'emotional' },
+          { label: { uk: 'Аналізую ситуацію (Когнітивна емпатія)', en: 'Analyze situation (Cognitive empathy)', ru: 'Анализирую ситуацию (Когнитивная эмпатия)' }, value: 'cognitive' },
+          { label: { uk: 'Обидва', en: 'Both', ru: 'Оба' }, value: 'both' },
         ]
       },
       {
@@ -440,8 +472,8 @@ export const APHANTASIA_CATEGORIES: CategoryData[] = [
         },
         type: QuestionType.CHOICE,
         options: [
-            { label: { uk: 'Логічні аргументи', en: 'Logical arguments', ru: 'Логические аргументы' }, value: 'logic' },
-            { label: { uk: 'Емоційна переконливість', en: 'Emotional persuasiveness', ru: 'Эмоциональная убедительность' }, value: 'emotion' },
+          { label: { uk: 'Логічні аргументи', en: 'Logical arguments', ru: 'Логические аргументы' }, value: 'logic' },
+          { label: { uk: 'Емоційна переконливість', en: 'Emotional persuasiveness', ru: 'Эмоциональная убедительность' }, value: 'emotion' },
         ]
       },
       {

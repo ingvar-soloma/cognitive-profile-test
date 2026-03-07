@@ -13,6 +13,7 @@ import { ProfileService } from './services/ProfileService';
 // @ts-ignore - Assuming the package is available via importmap
 import { decode } from '@toon-format/toon';
 import { AdminDashboard } from './components/AdminDashboard';
+import { LoginModal } from './components/Auth/LoginModal';
 
 enum AppState {
   INTRO = 'INTRO',
@@ -58,6 +59,8 @@ const App: React.FC = () => {
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [loginModalConfig, setLoginModalConfig] = useState<{ title?: string, description?: string }>({});
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('auth_token') || localStorage.getItem('telegram_auth');
     if (saved) {
@@ -106,12 +109,19 @@ const App: React.FC = () => {
       setActiveProfileId(loadedProfiles[0].id);
     }
 
+    // Show login modal on entry if not authenticated
+    const savedAuth = localStorage.getItem('auth_token');
+    if (!savedAuth) {
+      setTimeout(() => setShowLoginModal(true), 1500);
+    }
+
     // Login Listener
     const handleLogin = (e: any) => {
       const userData = e.detail;
       if (userData && userData.id && !userData.error) {
         console.log('[App] Login event received:', userData.first_name);
         setUser(userData);
+        setShowLoginModal(false);
       } else {
         console.warn('[App] Invalid login event ignored:', userData);
       }
@@ -197,6 +207,12 @@ const App: React.FC = () => {
   }, [activeSurveyId]);
 
   const handleStartSurvey = () => {
+    if (!user) {
+      setLoginModalConfig({});
+      setShowLoginModal(true);
+      return;
+    }
+
     setIsLoading(true);
     // Simulate loading delay or wait for data if not ready
     SurveyService.getSurveyById(activeSurveyId)
@@ -222,6 +238,14 @@ const App: React.FC = () => {
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('telegram_auth');
+    localStorage.removeItem('neuroprofile_active_profile_id');
+    setUser(null);
+    window.location.reload(); // Hard reload to clear all states and re-trigger initial modal
   };
 
   // Load answers from active profile
@@ -309,6 +333,7 @@ const App: React.FC = () => {
     if (q.type === QuestionType.SCALE) return typeof ans.value === 'number';
     if (q.type === QuestionType.CHOICE) return typeof ans.value === 'string' && ans.value !== '';
     if (q.type === QuestionType.TEXT) return typeof ans.note === 'string' && ans.note.trim() !== '';
+    if (q.type === QuestionType.DRAWING) return typeof ans.value === 'string' && ans.value.startsWith('data:image/');
     return false;
   };
 
@@ -393,6 +418,16 @@ const App: React.FC = () => {
   };
 
   const nextCategory = () => {
+    // Require auth before moving to the second part (Category 1 -> Category 2)
+    if (currentCategoryIndex === 0 && !user) {
+      setLoginModalConfig({
+        title: ui.loginRequired,
+        description: ui.loginToContinue
+      });
+      setShowLoginModal(true);
+      return;
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (currentCategoryIndex < localizedCategories.length - 1) {
       setCurrentCategoryIndex((prev) => prev + 1);
@@ -533,6 +568,7 @@ const App: React.FC = () => {
         onToggleTheme={toggleTheme}
         onDownloadProgress={downloadProgress}
         onGoToIntro={() => setAppState(AppState.INTRO)}
+        onLogout={handleLogout}
       />
 
       <main className={`${appState === AppState.RESULTS ? 'max-w-5xl' : 'max-w-3xl'} mx-auto p-4 md:p-8 transition-all duration-500`}>
@@ -615,6 +651,14 @@ const App: React.FC = () => {
           lang={language}
         />
       )}
+
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        ui={ui}
+        title={loginModalConfig.title}
+        description={loginModalConfig.description}
+      />
     </div>
   );
 };

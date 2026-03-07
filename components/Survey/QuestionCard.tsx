@@ -1,6 +1,7 @@
 import React from 'react';
 import { LocalizedQuestion, QuestionType, Answer, UIStrings, LocalizedScaleConfig } from '@/types';
 import { MessageSquare, CheckCircle2, Lightbulb } from 'lucide-react';
+import { DrawingCanvas } from './DrawingCanvas';
 
 interface QuestionCardProps {
   question: LocalizedQuestion;
@@ -33,11 +34,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   const scaleNumbers = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 
   return (
-    <div 
+    <div
       id={`question-${question.id}`}
       className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border p-6 mb-6 transition-all hover:shadow-md relative
-        ${isUnanswered 
-          ? 'border-red-300 dark:border-red-900 shadow-red-50 dark:shadow-none ring-1 ring-red-100 dark:ring-red-900/30' 
+        ${isUnanswered
+          ? 'border-red-300 dark:border-red-900 shadow-red-50 dark:shadow-none ring-1 ring-red-100 dark:ring-red-900/30'
           : 'border-slate-200 dark:border-slate-700'}
       `}
     >
@@ -48,16 +49,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       )}
       <div className="flex items-start gap-3 mb-2">
         <div className="bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg text-indigo-600 dark:text-indigo-400 mt-1 min-w-fit">
-            <span className="font-bold text-xs uppercase tracking-wider block">{question.subCategory || 'Question'}</span>
+          <span className="font-bold text-xs uppercase tracking-wider block">{question.subCategory || 'Question'}</span>
         </div>
         <div className="flex-1">
-            <h3 className="text-lg font-medium text-slate-800 dark:text-slate-100 leading-snug">{question.text}</h3>
-            {question.hint && (
-                <div className="flex items-start gap-2 mt-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-2 rounded-md border border-slate-100 dark:border-slate-600 italic">
-                    <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                    <span>{question.hint}</span>
-                </div>
-            )}
+          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-100 leading-snug">{question.text}</h3>
+          {question.hint && (
+            <div className="flex items-start gap-2 mt-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-2 rounded-md border border-slate-100 dark:border-slate-600 italic">
+              <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <span>{question.hint}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -72,15 +73,15 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               </div>
               <div className="flex gap-2 w-full">
                 {scaleNumbers.map((num) => {
-                   const isSelected = answer?.value === num;
-                   return (
+                  const isSelected = answer?.value === num;
+                  return (
                     <button
                       key={num}
                       onClick={() => handleValueChange(num)}
                       className={`
                         flex-1 h-12 rounded-lg font-bold text-lg transition-all transform active:scale-95 border
-                        ${isSelected 
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg scale-105' 
+                        ${isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg scale-105'
                           : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-600'
                         }
                       `}
@@ -94,17 +95,25 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 {answer?.value && typeof answer.value === 'number' && (
                   <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 animate-fade-in">
                     {scaleConfig?.labels[answer.value] || (
-                        // Fallback to UI strings if no custom config or label missing
-                        answer.value === 1 ? ui.scale1 :
+                      // Fallback to UI strings if no custom config or label missing
+                      answer.value === 1 ? ui.scale1 :
                         answer.value === 2 ? ui.scale2 :
-                        answer.value === 3 ? ui.scale3 :
-                        answer.value === 4 ? ui.scale4 :
-                        answer.value === 5 ? ui.scale5 : ''
+                          answer.value === 3 ? ui.scale3 :
+                            answer.value === 4 ? ui.scale4 :
+                              answer.value === 5 ? ui.scale5 : ''
                     )}
                   </span>
                 )}
               </div>
             </div>
+          )}
+
+          {question.type === QuestionType.DRAWING && (
+            <DrawingCanvas
+              value={answer?.value as string}
+              onChange={handleValueChange}
+              ui={ui}
+            />
           )}
 
           {question.type === QuestionType.CHOICE && question.options && (
@@ -114,8 +123,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   key={opt.value}
                   className={`
                     flex items-center p-3 border rounded-lg cursor-pointer transition-all
-                    ${answer?.value === opt.value 
-                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 ring-1 ring-indigo-500' 
+                    ${answer?.value === opt.value
+                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 ring-1 ring-indigo-500'
                       : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
                     }
                   `}

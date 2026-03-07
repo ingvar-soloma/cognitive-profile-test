@@ -14,6 +14,7 @@ interface HeaderProps {
   onToggleTheme: () => void;
   onDownloadProgress: () => void;
   onGoToIntro: () => void;
+  onLogout: () => void;
   user: any;
 }
 
@@ -28,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onDownloadProgress,
   onGoToIntro,
+  onLogout,
   user
 }) => {
   return (
@@ -44,15 +46,23 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {user && (
-            <div className="flex items-center gap-2 ml-2">
-              {user.photo_url ? (
-                <img src={user.photo_url} alt={user.first_name} className="w-8 h-8 rounded-full border border-indigo-200 shadow-sm" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs border border-indigo-200">
-                  {user.first_name?.[0] || 'U'}
-                </div>
-              )}
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden xs:block">{user.first_name}</span>
+            <div className="flex items-center gap-3 ml-2 border-l border-slate-200 dark:border-slate-700 pl-4">
+              <div className="flex items-center gap-2">
+                {user.photo_url ? (
+                  <img src={user.photo_url} alt={user.first_name} className="w-8 h-8 rounded-full border border-indigo-200 shadow-sm" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs border border-indigo-200">
+                    {user.first_name?.[0] || 'U'}
+                  </div>
+                )}
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden xs:block">{user.first_name}</span>
+              </div>
+              <button
+                onClick={onLogout}
+                className="text-xs font-bold text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors uppercase tracking-wider"
+              >
+                {ui.logout}
+              </button>
             </div>
           )}
 

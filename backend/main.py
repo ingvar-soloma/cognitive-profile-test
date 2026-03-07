@@ -235,11 +235,36 @@ async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str 
             "- Ensure double newlines between logical sections for correct Markdown parsing.\n"
         )
 
-        user_data_block = f"\n### INPUT TEST RESULTS (JSON):\n{json.dumps(test_results, indent=2)}"
-        
+        from google.genai import types
+        import base64
+
+        # Prepare multimodal content parts
+        content_parts = [system_instruction]
+
+        # Check for drawing answers and add them as image parts
+        # Answers are in test_results["answers"]
+        answers = test_results.get("answers", {})
+        for q_id, ans in answers.items():
+            val = ans.get("value")
+            if isinstance(val, str) and val.startswith("data:image/"):
+                try:
+                    # Parse base64
+                    header, encoded = val.split(",", 1)
+                    mime_type = header.split(";")[0].split(":")[1]
+                    img_data = base64.b64decode(encoded)
+                    
+                    # Add a text hint for which question this is
+                    content_parts.append(f"\nUser drawing for question {q_id}:")
+                    content_parts.append(types.Part.from_bytes(data=img_data, mime_type=mime_type))
+                except Exception as img_err:
+                    logger.error(f"Failed to parse image for {q_id}: {img_err}")
+
+        # Add the final data block
+        content_parts.append(f"\n### INPUT TEST RESULTS (JSON):\n{json.dumps(test_results, indent=2)}")
+
         response = await client.aio.models.generate_content_stream(
-            model='gemini-3-flash-preview',
-            contents=system_instruction + user_data_block
+            model='gemini-3.1-pro-preview',
+            contents=content_parts
         )
         
         async for chunk in response:

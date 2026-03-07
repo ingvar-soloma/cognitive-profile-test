@@ -1,6 +1,6 @@
 import React from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Answer, UIStrings, Language } from '@/types';
+import { Answer, UIStrings, Language, QuestionType } from '@/types';
 import { SURVEY_DATA } from '@/constants';
 import { Download, FileJson, BrainCircuit, ShieldAlert } from 'lucide-react';
 import { ProfileService } from '@/services/ProfileService';
@@ -239,12 +239,38 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
                   <p className="text-slate-400 dark:text-slate-500 italic">{ui.noNotes}</p>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
-                    {textAnswers.map((ans, idx) => {
+                    {Object.values(answers).map((ans) => {
                       const q = SURVEY_DATA.flatMap(c => c.questions).find(q => q.id === ans.questionId);
+                      const isDrawing = q?.type === QuestionType.DRAWING && (ans.value as string)?.startsWith('data:image/');
+                      const hasNote = ans.note && ans.note.trim() !== '';
+
+                      if (!isDrawing && !hasNote && q?.type !== QuestionType.TEXT) return null;
+                      if (q?.type === QuestionType.TEXT && !ans.value && !ans.note) return null;
+
                       return (
                         <div key={ans.questionId} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700 text-sm">
-                          <p className="font-semibold text-slate-700 dark:text-slate-200 mb-1 line-clamp-2" title={q?.text[lang]}>{q?.text[lang]}</p>
-                          <p className="text-slate-600 dark:text-slate-400">{ans.note}</p>
+                          <p className="font-semibold text-slate-700 dark:text-slate-200 mb-2">{q?.text[lang]}</p>
+
+                          {isDrawing && (
+                            <div className="mb-3 border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden bg-white">
+                              <img
+                                src={ans.value as string}
+                                alt={q?.text[lang]}
+                                className="w-full h-auto max-h-[200px] object-contain mx-auto"
+                              />
+                            </div>
+                          )}
+
+                          {hasNote && (
+                            <p className="text-slate-600 dark:text-slate-400 italic">
+                              {q?.type === QuestionType.DRAWING ? "Коментар: " : ""}
+                              {ans.note}
+                            </p>
+                          )}
+
+                          {q?.type === QuestionType.TEXT && ans.value && !isDrawing && (
+                            <p className="text-slate-600 dark:text-slate-400">{ans.value}</p>
+                          )}
                         </div>
                       )
                     })}

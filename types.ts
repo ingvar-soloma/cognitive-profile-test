@@ -6,6 +6,7 @@ export enum QuestionType {
   SCALE = 'SCALE', // 1-5 rating
   CHOICE = 'CHOICE', // Radio buttons
   TEXT = 'TEXT', // Text input only
+  DRAWING = 'DRAWING', // Drawing canvas
 }
 
 export interface Option {
@@ -159,6 +160,15 @@ export interface UIStrings {
   consentTitle: string;
   consentCheckbox: string;
   showResults: string;
+  undo: string;
+  redo: string;
+  clear: string;
+  drawHint: string;
+  loginRequired: string;
+  loginToContinue: string;
+  loginModalTitle: string;
+  loginModalDesc: string;
+  logout: string;
 }
 
 export enum ProfileType {
