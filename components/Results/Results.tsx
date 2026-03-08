@@ -1,8 +1,8 @@
 import React from 'react';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Answer, UIStrings, Language, QuestionType } from '@/types';
-import { SURVEY_DATA } from '@/constants';
-import { Download, FileJson, BrainCircuit, ShieldAlert } from 'lucide-react';
+import { Answer, UIStrings, Language, QuestionType, SurveyDefinition } from '@/types';
+import { SURVEY_DATA, AVAILABLE_SURVEYS } from '@/constants';
+import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare } from 'lucide-react';
 import { ProfileService } from '@/services/ProfileService';
 // @ts-ignore
 import { encode } from '@toon-format/toon';
@@ -17,9 +17,22 @@ interface ResultsProps {
   lang: Language;
   filenamePrefix?: string;
   user: any;
+  surveyId?: string;
+  survey?: SurveyDefinition | null;
 }
 
-export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui, lang, filenamePrefix, user }) => {
+const RadarIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 21a9 9 0 1 0-9-9" />
+    <path d="M12 8a4 4 0 1 1-4 4" />
+    <path d="M12 12l9 9" />
+  </svg>
+);
+
+export const Results: React.FC<ResultsProps> = ({
+  answers, onReset, onGoHome, ui, lang, filenamePrefix, user, surveyId, survey
+}) => {
   const [geminiRecs, setGeminiRecs] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
   const [showActions, setShowActions] = React.useState(false);
@@ -39,13 +52,23 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
       if (activeProfile) {
         hasAttemptedSave.current = true;
         setIsSaving(true);
-        const scores = {
-          Visual: calculateCategoryScore('Visual'),
-          Auditory: calculateCategoryScore('Auditory'),
-          Tactile: calculateCategoryScore('Tactile'),
-          Gustatory: calculateCategoryScore('Gustatory'),
-          Olfactory: calculateCategoryScore('Olfactory'),
-        };
+
+        // Generate dynamic scores based on survey categories
+        const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === (surveyId || activeProfile.surveyId));
+        const scores: Record<string, number> = {};
+
+        if (currentSurvey) {
+          currentSurvey.categories.forEach(cat => {
+            scores[cat.id] = ProfileService.calculateCategoryScore(answers, cat.title.en);
+          });
+        } else {
+          // Fallback to defaults if survey not found
+          scores['Visual'] = calculateCategoryScore('Visual');
+          scores['Auditory'] = calculateCategoryScore('Auditory');
+          scores['Tactile'] = calculateCategoryScore('Tactile');
+          scores['Gustatory'] = calculateCategoryScore('Gustatory');
+          scores['Olfactory'] = calculateCategoryScore('Olfactory');
+        }
 
         try {
           if (!user) {
@@ -67,40 +90,64 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
               setGeminiRecs('');
               await ProfileService.streamAnalysisFromBackend(activeProfile, activeProfile.surveyId, scores, lang, (chunk) => {
                 setGeminiRecs(prev => (prev || '') + chunk);
-                // Optionally stop spinner after first chunk
                 setIsSaving(false);
               });
             }
           }
         } catch (error) {
           console.error("Error managing backend results", error);
-          const existingResult = await ProfileService.loadResultFromBackend();
-          if (existingResult && existingResult.gemini_recommendations) {
-            setGeminiRecs(existingResult.gemini_recommendations);
-          }
         } finally {
           setIsSaving(false);
         }
       }
     };
     saveAndGetRecs();
-  }, [user]);
+  }, [user, surveyId, survey]);
 
-  const labels: Record<string, Record<Language, string>> = {
-    Visual: { uk: 'Візуальна', en: 'Visual', ru: 'Визуальная' },
-    Auditory: { uk: 'Аудіальна', en: 'Auditory', ru: 'Аудиальная' },
-    Tactile: { uk: 'Тактильна', en: 'Tactile', ru: 'Тактильная' },
-    Gustatory: { uk: 'Смакова', en: 'Gustatory', ru: 'Вкусовая' },
-    Olfactory: { uk: 'Нюхова', en: 'Olfactory', ru: 'Обонятельная' },
-  };
+  const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
 
-  const radarData = [
-    { key: 'Visual', subject: labels['Visual'][lang], A: calculateCategoryScore('Visual'), fullMark: 5 },
-    { key: 'Auditory', subject: labels['Auditory'][lang], A: calculateCategoryScore('Auditory'), fullMark: 5 },
-    { key: 'Tactile', subject: labels['Tactile'][lang], A: calculateCategoryScore('Tactile'), fullMark: 5 },
-    { key: 'Gustatory', subject: labels['Gustatory'][lang], A: calculateCategoryScore('Gustatory'), fullMark: 5 },
-    { key: 'Olfactory', subject: labels['Olfactory'][lang], A: calculateCategoryScore('Olfactory'), fullMark: 5 },
-  ];
+  const radarData = React.useMemo(() => {
+    if (!currentSurvey) return [];
+
+    // If survey has multiple categories, use them
+    if (currentSurvey.categories.length > 1) {
+      return currentSurvey.categories.map(cat => ({
+        key: cat.id,
+        subject: cat.title[lang],
+        A: ProfileService.calculateCategoryScore(answers, cat.title.en),
+        fullMark: 5
+      }));
+    }
+
+    // If only one category, look for sub-categories in its questions
+    const cat = currentSurvey.categories[0];
+    const subCats = new Set<string>();
+    const subCatLabels: Record<string, string> = {};
+
+    cat.questions.forEach(q => {
+      if (q.subCategory) {
+        subCats.add(q.subCategory.en);
+        subCatLabels[q.subCategory.en] = q.subCategory[lang];
+      }
+    });
+
+    if (subCats.size > 0) {
+      return Array.from(subCats).map(sc => ({
+        key: sc,
+        subject: subCatLabels[sc],
+        A: ProfileService.calculateCategoryScore(answers, sc),
+        fullMark: 5
+      }));
+    }
+
+    // Fallback to the category itself
+    return [{
+      key: cat.id,
+      subject: cat.title[lang],
+      A: ProfileService.calculateCategoryScore(answers, cat.title.en),
+      fullMark: 5
+    }];
+  }, [currentSurvey, answers, lang]);
 
   // Prepare textual answers for display
   const textAnswers = (Object.values(answers) as Answer[]).filter(a => a.note && a.note.trim().length > 0);
@@ -113,7 +160,7 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
       content = JSON.stringify(answers, null, 2);
     }
 
-    const prefix = filenamePrefix || 'aphantasia_profile';
+    const prefix = filenamePrefix || 'neuro_profile';
     const date = new Date().toISOString().slice(0, 10);
     const fileName = `${prefix}_${date}.${extension}`;
 
@@ -127,51 +174,78 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
   };
 
   const getProfileDescription = () => {
+    // If it's a sensory survey, use visual score for general label
     const visualScore = calculateCategoryScore('Visual');
-    if (visualScore <= 1.5) return ui.profileAphantasia;
-    if (visualScore <= 3) return ui.profileHypophantasia;
-    if (visualScore >= 4.5) return ui.profileHyperphantasia;
-    return ui.profilePhantasia;
+    if (visualScore > 0) {
+      if (visualScore <= 1.5) return ui.profileAphantasia;
+      if (visualScore <= 3) return ui.profileHypophantasia;
+      if (visualScore >= 4.5) return ui.profileHyperphantasia;
+      return ui.profilePhantasia;
+    }
+
+    // Fallback or generic label for other tests
+    if (radarData.length > 0) {
+      const firstScore = radarData[0].A;
+      if (firstScore <= 2) return ui.profileAphantasia; // Approximate
+    }
+
+    return currentSurvey?.title[lang] || ui.resultsTitle;
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden mb-8 transition-colors">
-        <div className="bg-indigo-600 dark:bg-indigo-700 p-6 text-white text-center">
-          <h2 className="text-3xl font-bold mb-2">{ui.resultsTitle}</h2>
-          <p className="opacity-90">{getProfileDescription()}</p>
+    <div className="max-w-6xl mx-auto p-4 md:p-8 animate-fade-in text-left">
+      <div className="bg-brand-paper-accent/40 backdrop-blur-xl rounded-[2.5rem] border border-stone-line shadow-soft overflow-hidden mb-12">
+        <div className="bg-gradient-to-br from-brand-ink to-[#4A3B6D] p-10 md:p-14 text-white text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-clay/10 rounded-full blur-3xl -ml-32 -mb-32"></div>
+
+          <div className="relative z-10">
+            <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight leading-tight">{ui.resultsTitle}</h2>
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-brand-paper-accent/10 backdrop-blur-md rounded-full border border-brand-paper-accent/20">
+              <span className="text-xs font-bold tracking-[0.2em] uppercase">{getProfileDescription()}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="p-6 md:p-8">
-          {/* AI Analysis Block is now First! */}
-          <div className="mb-10 content-start">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-              <BrainCircuit className="w-6 h-6 text-indigo-500" />
-              AI Аналіз & Рекомендації
-            </h3>
+        <div className="p-6 md:p-12">
+          {/* AI Analysis Block */}
+          <div className="mb-20">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center">
+                <BrainCircuit className="w-6 h-6 text-brand-ink" />
+              </div>
+              <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">AI Analysis & Insights</h3>
+            </div>
+
             {isSaving ? (
-              <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent"></div>
-                <span>Аналізуємо результати...</span>
+              <div className="bg-brand-paper-accent/50 backdrop-blur-sm p-10 rounded-[2rem] border border-stone-line flex flex-col items-center gap-6 text-center shadow-sm">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full border-4 border-brand-ink/10 border-t-brand-ink animate-spin"></div>
+                  <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-brand-ink/40" />
+                </div>
+                <div className="space-y-2">
+                  <p className="font-serif text-xl font-bold text-brand-graphite">Synthesizing neurological insights...</p>
+                  <p className="text-stone-400 text-sm font-sans">Connecting sensory nodes to cognitive patterns</p>
+                </div>
               </div>
             ) : geminiRecs ? (
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-xl border border-indigo-100 dark:border-indigo-900/50 text-slate-700 dark:text-slate-300 prose dark:prose-invert prose-slate dark:prose-invert max-w-none">
+              <div className="bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight">
                 <ReactMarkdown>{geminiRecs}</ReactMarkdown>
               </div>
             ) : (
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-8 rounded-xl border-2 border-dashed border-indigo-300 dark:border-indigo-600 text-center space-y-4 shadow-sm relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none"></div>
-                <div className="flex justify-center relative z-10">
-                  <ShieldAlert className="w-16 h-16 text-indigo-500 dark:text-indigo-400 drop-shadow-md" />
+              <div className="bg-brand-paper/50 backdrop-blur-md p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-paper-accent/0 via-brand-paper-accent/0 to-brand-ink/[0.02] pointer-events-none"></div>
+                <div className="flex justify-center relative z-10 transition-transform group-hover:scale-110 duration-700">
+                  <div className="w-20 h-20 rounded-full bg-brand-paper-accent shadow-soft flex items-center justify-center border border-stone-line">
+                    <ShieldAlert className="w-10 h-10 text-brand-clay" />
+                  </div>
                 </div>
-                <div className="relative z-10">
-                  <p className="text-xl text-indigo-900 dark:text-indigo-100 font-bold mb-2">
-                    Ваш результат згенеровано!
+                <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">Unlock Your Full Narrative</h4>
+                  <p className="text-stone-500 text-lg leading-relaxed font-sans">
+                    Complete your journey of self-discovery. Sign in to unlock a comprehensive, personalized analysis and synchronize your cognitive profile across devices.
                   </p>
-                  <p className="text-base text-indigo-700 dark:text-indigo-300 mb-6 max-w-lg mx-auto">
-                    Залогіньтеся через Google, щоб розблокувати повний детальний аналіз вашого профілю від ШІ, а також зберегти та синхронізувати прогрес. Без авторизації деталі приховані.
-                  </p>
-                  <div className="inline-flex justify-center transform hover:scale-105 transition-transform">
+                  <div className="pt-4 flex justify-center">
                     <GoogleAuthButton />
                   </div>
                 </div>
@@ -180,65 +254,102 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
           </div>
 
           {!user ? (
-            <div className="text-center p-8 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 mt-4 filter blur-[2px] opacity-70 cursor-not-allowed select-none">
-              <h3 className="text-lg font-bold mb-4">Блок з деталями результатів (Приховано)</h3>
-              <p>Детальна мапа сенсорики та оцінки будуть доступні після авторизації.</p>
+            <div className="relative p-12 md:p-20 bg-stone-bg/30 rounded-[2.5rem] border border-stone-line overflow-hidden text-center">
+              <div className="absolute inset-0 backdrop-blur-[6px] bg-brand-paper/40 z-10 flex flex-col items-center justify-center p-8">
+                <div className="w-12 h-12 rounded-full bg-brand-paper-accent border border-stone-line flex items-center justify-center mb-4 shadow-sm">
+                  <Zap className="w-5 h-5 text-brand-clay" />
+                </div>
+                <h3 className="text-2xl font-serif font-bold mb-2 text-brand-graphite">Sensory Signature Pending</h3>
+                <p className="text-sm text-stone-400 font-sans">Full neurological mapping is available for authenticated profiles.</p>
+              </div>
+              <div className="opacity-10 grayscale select-none pointer-events-none">
+                <h3 className="text-2xl font-serif font-bold mb-8">Detailed Sensory Mapping</h3>
+                <div className="flex flex-col gap-4 max-w-xs mx-auto">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-2 bg-stone-200 rounded-full w-full"></div>)}
+                </div>
+              </div>
             </div>
           ) : (
             <>
-              <div className="flex flex-col md:flex-row gap-8 items-center mb-10 border-t dark:border-slate-700 pt-10">
-                <div className="w-full md:w-1/2 h-[350px] flex flex-col">
-                  <h3 className="text-center font-bold text-slate-700 dark:text-slate-200 mb-4">{ui.sensoryMap}</h3>
-                  <div className="flex-1 min-h-0 w-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24 pt-16 border-t border-stone-line">
+                <div className="flex flex-col items-center">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-bg text-stone-400 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] mb-10">
+                    <RadarIcon className="w-3 h-3" />
+                    Sensory Signature Map
+                  </div>
+                  <div className="w-full aspect-square max-w-[450px] relative">
+                    <div className="absolute inset-0 bg-brand-paper rounded-full blur-3xl opacity-30"></div>
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                        <PolarGrid stroke="#94a3b8" />
-                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 5]} stroke="#94a3b8" />
+                      <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+                        <PolarGrid stroke="#E5E7EB" strokeWidth={1} />
+                        <PolarAngleAxis
+                          dataKey="subject"
+                          tick={{ fill: '#4B5563', fontSize: 10, fontWeight: 700, fontVariant: 'small-caps', letterSpacing: '0.1em' }}
+                        />
+                        <PolarRadiusAxis angle={30} domain={[0, 5]} stroke="transparent" tick={false} />
                         <Radar
                           name="Intensity"
                           dataKey="A"
-                          stroke="#818cf8"
+                          stroke="#5E4B8B"
                           strokeWidth={3}
-                          fill="#6366f1"
-                          fillOpacity={0.4}
+                          fill="#5E4B8B"
+                          fillOpacity={0.12}
                         />
                         <Tooltip
-                          contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f8fafc' }}
-                          itemStyle={{ color: '#818cf8' }}
+                          contentStyle={{
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(229, 231, 235, 0.5)',
+                            borderRadius: '16px',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                            fontFamily: 'Manrope, sans-serif'
+                          }}
                         />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="w-full md:w-1/2">
-                  <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4 border-b dark:border-slate-700 pb-2">{ui.scoreDetails}</h3>
-                  <ul className="space-y-3">
-                    {radarData.map((item) => (
-                      <li key={item.key} className="flex items-center justify-between">
-                        <span className="text-slate-600 dark:text-slate-400 font-medium">{item.subject}</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-32 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className="space-y-8">
+                  <div className="space-y-1">
+                    <h3 className="text-[10px] font-bold text-stone-300 uppercase tracking-[0.25em] mb-8">{ui.scoreDetails}</h3>
+                    <div className="grid gap-8">
+                      {radarData.map((item) => (
+                        <div key={item.key} className="group">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-brand-graphite font-bold text-[13px] uppercase tracking-wider">{item.subject}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-serif font-bold text-brand-ink text-xl">{item.A}</span>
+                              <span className="text-stone-400 text-[10px] font-bold">/ 5.0</span>
+                            </div>
+                          </div>
+                          <div className="w-full h-2 bg-stone-bg/50 rounded-full overflow-hidden border border-stone-line/50">
                             <div
-                              className="h-full bg-indigo-500 rounded-full"
+                              className="h-full bg-gradient-to-r from-brand-ink to-brand-clay/60 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(94,75,139,0.2)]"
                               style={{ width: `${(item.A / 5) * 100}%` }}
                             />
                           </div>
-                          <span className="font-bold text-indigo-700 dark:text-indigo-400 w-8 text-right">{item.A}</span>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="border-t dark:border-slate-700 pt-8">
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-6">{ui.notesTitle}</h3>
+              <div className="border-t border-stone-line pt-12 mb-12">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-10 h-10 rounded-xl bg-stone-bg border border-stone-line flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-stone-400" />
+                  </div>
+                  <h3 className="text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.notesTitle}</h3>
+                </div>
+
                 {textAnswers.length === 0 ? (
-                  <p className="text-slate-400 dark:text-slate-500 italic">{ui.noNotes}</p>
+                  <div className="p-12 text-center bg-stone-bg/50 rounded-3xl border border-stone-line border-dashed">
+                    <p className="text-stone-400 italic font-sans">{ui.noNotes}</p>
+                  </div>
                 ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-8 md:grid-cols-2">
                     {Object.values(answers).map((ans) => {
                       const q = SURVEY_DATA.flatMap(c => c.questions).find(q => q.id === ans.questionId);
                       const isDrawing = q?.type === QuestionType.DRAWING && (ans.value as string)?.startsWith('data:image/');
@@ -248,28 +359,33 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
                       if (q?.type === QuestionType.TEXT && !ans.value && !ans.note) return null;
 
                       return (
-                        <div key={ans.questionId} className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700 text-sm">
-                          <p className="font-semibold text-slate-700 dark:text-slate-200 mb-2">{q?.text[lang]}</p>
+                        <div key={ans.questionId} className="bg-brand-paper-accent/60 backdrop-blur-sm p-6 rounded-[2rem] border border-stone-line shadow-sm hover:shadow-md transition-shadow flex flex-col gap-6">
+                          <div className="space-y-1">
+                            <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{q?.subCategory?.en || 'Perspective'}</div>
+                            <p className="font-serif font-bold text-brand-graphite leading-tight text-lg">{q?.text[lang]}</p>
+                          </div>
 
                           {isDrawing && (
-                            <div className="mb-3 border border-slate-200 dark:border-slate-600 rounded-lg overflow-hidden bg-white">
+                            <div className="rounded-2xl overflow-hidden border border-stone-line bg-brand-paper/50 p-4 shadow-inner">
                               <img
                                 src={ans.value as string}
                                 alt={q?.text[lang]}
-                                className="w-full h-auto max-h-[200px] object-contain mx-auto"
+                                className="w-full h-auto max-h-[250px] object-contain mx-auto mix-blend-multiply dark:mix-blend-normal opacity-90 transition-transform hover:scale-105 duration-500"
                               />
                             </div>
                           )}
 
                           {hasNote && (
-                            <p className="text-slate-600 dark:text-slate-400 italic">
-                              {q?.type === QuestionType.DRAWING ? "Коментар: " : ""}
-                              {ans.note}
-                            </p>
+                            <div className="bg-stone-bg/80 p-5 rounded-2xl border border-stone-line/50 relative">
+                              <div className="absolute top-4 left-0 w-1 h-8 bg-brand-clay/20 rounded-r-full"></div>
+                              <p className="text-stone-400 text-sm leading-relaxed italic">
+                                "{ans.note}"
+                              </p>
+                            </div>
                           )}
 
                           {q?.type === QuestionType.TEXT && ans.value && !isDrawing && (
-                            <p className="text-slate-600 dark:text-slate-400">{ans.value}</p>
+                            <p className="text-stone-400 leading-relaxed text-sm">{ans.value}</p>
                           )}
                         </div>
                       )
@@ -278,53 +394,45 @@ export const Results: React.FC<ResultsProps> = ({ answers, onReset, onGoHome, ui
                 )}
               </div>
 
-              <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 italic">
-                <p className="font-bold mb-1 uppercase tracking-wider text-[9px] text-slate-500 dark:text-slate-400">{ui.disclaimerTitle}</p>
-                <p>{ui.disclaimer}</p>
+              <div className="mt-20 p-10 bg-brand-paper/50 backdrop-blur-sm rounded-[2rem] border border-brand-clay/10 text-[11px] text-stone-400 leading-relaxed max-w-4xl mx-auto shadow-sm">
+                <div className="flex items-center gap-3 mb-4">
+                  <ShieldAlert className="w-4 h-4 text-brand-clay" />
+                  <h5 className="font-bold uppercase tracking-[0.2em] text-[10px] text-brand-clay">{ui.disclaimerTitle}</h5>
+                </div>
+                <p className="opacity-80 font-sans italic">{ui.disclaimer}</p>
               </div>
             </>
           )}
         </div>
 
-
-        <div className="border-t border-slate-100 dark:border-slate-800">
+        <div className="bg-stone-bg/50 border-t border-stone-line backdrop-blur-md">
           <button
             onClick={() => setShowActions(!showActions)}
-            className="w-full py-4 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-white dark:bg-slate-800 flex items-center justify-center gap-2"
+            className="w-full py-8 text-[11px] uppercase tracking-[0.25em] font-bold text-stone-400 hover:text-brand-ink transition-all flex items-center justify-center gap-4 group"
           >
-            {showActions ? 'Hide options' : 'Show options (Download, Restart...)'}
+            <div className="w-8 h-px bg-stone-line group-hover:bg-brand-ink/20 group-hover:w-16 transition-all"></div>
+            {showActions ? 'Archival Options' : 'Management & Archival'}
+            <div className="w-8 h-px bg-stone-line group-hover:bg-brand-ink/20 group-hover:w-16 transition-all"></div>
           </button>
 
           {showActions && (
-            <div className="bg-slate-50 dark:bg-slate-700/30 p-6 flex flex-wrap justify-center gap-4 animate-fade-in border-t border-slate-100 dark:border-slate-800">
-              <button
-                onClick={() => downloadFile('json')}
-                className="flex items-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 hover:shadow-sm transition-all"
-              >
-                <FileJson className="w-4 h-4" />
-                {ui.downloadJson}
+            <div className="p-12 md:p-20 flex flex-wrap justify-center gap-8 animate-fade-in border-t border-stone-line bg-brand-paper-accent/40 sticky bottom-0">
+              <button onClick={() => downloadFile('json')} className="btn-secondary group flex items-center gap-3">
+                <FileJson className="w-4 h-4 text-brand-ink group-hover:scale-110 transition-transform" />
+                <span>{ui.downloadJson}</span>
               </button>
-              <button
-                onClick={() => downloadFile('toon')}
-                className="flex items-center gap-2 px-6 py-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700/50 text-amber-700 dark:text-amber-400 font-semibold rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:shadow-sm transition-all"
-              >
-                <Download className="w-4 h-4" />
-                {ui.saveToon}
+              <button onClick={() => downloadFile('toon')} className="border-2 border-brand-clay/20 text-brand-clay hover:bg-brand-clay hover:text-white px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-sm hover:shadow-soft flex items-center gap-3 group">
+                <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                <span>{ui.saveToon}</span>
+              </button>
+              <button onClick={onGoHome} className="btn-primary px-10 py-4 shadow-soft">
+                {ui.goHome}
               </button>
               {!user && (
-                <button
-                  onClick={onReset}
-                  className="px-6 py-3 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-700 shadow-md hover:shadow-lg transition-all"
-                >
+                <button onClick={onReset} className="text-stone-400 hover:text-brand-clay font-bold text-xs uppercase tracking-widest transition-colors py-4">
                   {ui.retake}
                 </button>
               )}
-              <button
-                onClick={onGoHome}
-                className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all"
-              >
-                {ui.goHome}
-              </button>
             </div>
           )}
         </div>

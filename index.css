@@ -1,14 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,600&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-paper: #F9F8F6;
+  --color-brand-paper-accent: #FFFFFF;
+  --color-brand-graphite: #2D2C2A;
+  --color-brand-ink: #5E4B8B;
+  --color-brand-ink-hover: #4A3B70;
+  --color-brand-clay: #E87A5D;
+  --color-brand-sage: #4A7C59;
+
+  --color-stone-line: #E7E5E4;
+  /* stone-200 */
+  --color-stone-bg: #F5F5F4;
+  /* stone-100 */
+
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+
+  --shadow-soft: 0 4px 20px -2px rgba(45, 44, 42, 0.05);
+  --shadow-card: 0 2px 10px -1px rgba(45, 44, 42, 0.03), 0 1px 3px -1px rgba(45, 44, 42, 0.05);
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #f8fafc;
+.dark {
+  --color-brand-paper: #121211;
+  --color-brand-paper-accent: #1C1C1B;
+  --color-brand-graphite: #E4E3E0;
+  --color-brand-ink: #A799E3;
+  --color-brand-ink-hover: #C5B9F2;
+  --color-brand-clay: #FF9F85;
+  --color-brand-sage: #81B29A;
+
+  --color-stone-line: #2D2D2C;
+  --color-stone-bg: #1C1C1B;
+
+  --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 15px -2px rgba(0, 0, 0, 0.4);
+}
+
+@layer base {
+  body {
+    @apply bg-brand-paper text-brand-graphite antialiased transition-colors duration-300;
+    margin: 0;
+  }
+
+  ::selection {
+    @apply bg-brand-clay/20 text-brand-graphite;
+  }
+}
+
+@layer components {
+  .card-editorial {
+    @apply bg-brand-paper-accent border border-stone-line rounded-2xl shadow-card transition-all duration-300;
+  }
+
+  .card-editorial:hover {
+    @apply shadow-soft border-stone-300;
+  }
+
+  .btn-primary {
+    @apply px-6 py-2.5 bg-brand-ink text-white rounded-xl text-sm font-medium hover:bg-brand-ink-hover transition-colors flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-stone-bg text-brand-graphite font-medium rounded-xl hover:bg-brand-graphite hover:text-white transition-colors flex items-center justify-center gap-2 text-sm;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 bg-brand-sage/10 text-brand-sage text-[10px] font-bold uppercase tracking-wider rounded-full border border-brand-sage/20;
+  }
 }
 
 /* Custom scrollbar for textareas */
@@ -17,33 +78,15 @@ textarea::-webkit-scrollbar {
 }
 
 textarea::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  @apply bg-brand-paper;
   border-radius: 4px;
 }
 
 textarea::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  @apply bg-stone-200;
   border-radius: 4px;
 }
 
 textarea::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* Dark mode overrides for scrollbar */
-.dark textarea::-webkit-scrollbar-track {
-  background: #1e293b;
-}
-
-.dark textarea::-webkit-scrollbar-thumb {
-  background: #475569;
-}
-
-.dark textarea::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-.dark body {
-  background-color: #0f172a;
-  color: #f1f5f9;
+  @apply bg-stone-300;
 }

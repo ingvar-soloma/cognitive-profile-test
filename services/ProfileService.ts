@@ -251,4 +251,14 @@ export class ProfileService {
     const profiles = this.getProfiles().filter(p => p.id !== profileId);
     this.saveProfiles(profiles);
   }
+
+  static updateProfileSurveyId(profileId: string, surveyId: string): void {
+    const profiles = this.getProfiles();
+    const index = profiles.findIndex(p => p.id === profileId);
+    if (index !== -1) {
+      profiles[index].surveyId = surveyId;
+      profiles[index].lastUpdated = new Date().toISOString();
+      this.saveProfiles(profiles);
+    }
+  }
 }

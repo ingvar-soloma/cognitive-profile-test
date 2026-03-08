@@ -76,7 +76,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 
   const handleDownloadConfirm = (surveyId: string) => {
     if (!selectedProfileForDownload) return;
-    
+
     const profile = profiles.find(p => p.id === selectedProfileForDownload);
     if (!profile) return;
 
@@ -89,20 +89,20 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
     content += `Test: ${survey.title['en']}\n\n`; // Using English title as requested
 
     survey.categories.forEach(cat => {
-        content += `--- ${cat.title['en']} ---\n\n`;
-        cat.questions.forEach(q => {
-            const answer = profile.answers[q.id];
-            content += `Q: ${q.text['en']}\n`;
-            if (answer) {
-                content += `Answer: ${answer.value}\n`;
-                if (answer.note) {
-                    content += `Note: ${answer.note}\n`;
-                }
-            } else {
-                content += `Answer: [No Answer]\n`;
-            }
-            content += `\n`;
-        });
+      content += `--- ${cat.title['en']} ---\n\n`;
+      cat.questions.forEach(q => {
+        const answer = profile.answers[q.id];
+        content += `Q: ${q.text['en']}\n`;
+        if (answer) {
+          content += `Answer: ${answer.value}\n`;
+          if (answer.note) {
+            content += `Note: ${answer.note}\n`;
+          }
+        } else {
+          content += `Answer: [No Answer]\n`;
+        }
+        content += `\n`;
+      });
     });
 
     const dataStr = "data:text/plain;charset=utf-8," + encodeURIComponent(content);
@@ -118,38 +118,38 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden mb-6">
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-2">
-        <UserCircle className="w-5 h-5 text-indigo-500" />
-        <h3 className="font-bold text-slate-700 dark:text-slate-200">{ui.manageProfiles}</h3>
+    <div className="card-editorial overflow-hidden mb-12">
+      <div className="p-5 border-b border-stone-line bg-stone-bg/50 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center border border-brand-ink/10 text-brand-ink">
+          <UserCircle className="w-4 h-4" />
+        </div>
+        <h3 className="font-serif text-lg font-bold text-brand-graphite tracking-tight">{ui.manageProfiles}</h3>
       </div>
 
       <div className="p-4">
         {profiles.length > 0 ? (
-          <div className="grid gap-2 mb-4">
+          <div className="grid gap-3 mb-6">
             {profiles.map((profile) => (
               <div
                 key={profile.id}
-                className={`flex items-center justify-between p-3 rounded-xl transition-all border ${
-                  activeProfileId === profile.id
-                    ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800'
-                    : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-indigo-100 dark:hover:border-indigo-900 shadow-sm'
-                }`}
+                className={`flex items-center justify-between p-4 rounded-xl transition-all border ${activeProfileId === profile.id
+                    ? 'bg-brand-ink/5 border-brand-ink/20 shadow-sm'
+                    : 'bg-brand-paper-accent/50 border-stone-line hover:border-brand-ink/20 hover:bg-brand-paper-accent'
+                  }`}
               >
-                <div 
-                  className="flex-1 cursor-pointer flex items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-1 overflow-hidden" 
+                <div
+                  className="flex-1 cursor-pointer flex items-center gap-4 outline-none focus-visible:ring-2 focus-visible:ring-brand-ink/20 rounded-lg p-1 overflow-hidden"
                   onClick={() => onSelect(profile.id)}
                   onKeyDown={(e) => handleKeyDown(e, profile.id)}
                   role="button"
                   tabIndex={0}
                   aria-pressed={activeProfileId === profile.id}
                 >
-                  <div className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center ${
-                    activeProfileId === profile.id ? 'bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
-                  }`}>
+                  <div className={`w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center transition-all ${activeProfileId === profile.id ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-stone-400'
+                    }`}>
                     <User className="w-5 h-5" />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     {editingId === profile.id ? (
                       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -160,12 +160,12 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                           onKeyDown={(e) => handleEditKeyDown(e, profile.id)}
                           onBlur={() => handleSaveEdit(profile.id)}
                           autoFocus
-                          className="w-full bg-white dark:bg-slate-700 border border-indigo-500 rounded px-2 py-1 text-sm font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
+                          className="w-full bg-brand-paper-accent border border-brand-ink/50 rounded-lg px-3 py-1.5 text-sm font-bold text-brand-graphite focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
                         />
                       </div>
                     ) : (
-                      <div 
-                        className="font-semibold text-slate-700 dark:text-slate-200 text-left cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 flex flex-wrap items-center gap-x-2 outline-none focus-visible:underline group"
+                      <div
+                        className="font-bold text-brand-graphite text-left cursor-pointer hover:text-brand-ink flex flex-wrap items-center gap-x-2 outline-none focus-visible:underline group"
                         onClick={(e) => handleStartEdit(e, profile.id, profile.name)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -176,10 +176,10 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                         tabIndex={0}
                         title="Click to rename"
                       >
-                        <span className="truncate max-w-full">{profile.name}</span>
+                        <span className="truncate max-w-full font-serif text-base">{profile.name}</span>
                         {profile.type && (
-                          <span className="text-slate-400 font-normal text-xs whitespace-nowrap">
-                            — {getProfileTypeLabel(profile.type)}
+                          <span className="text-stone-400 font-normal text-xs whitespace-nowrap px-2 py-0.5 bg-stone-bg border border-stone-line/50 rounded uppercase tracking-wider text-[10px]">
+                            {getProfileTypeLabel(profile.type)}
                           </span>
                         )}
                       </div>
@@ -193,7 +193,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                 <div className="flex items-center gap-2 ml-4 flex-shrink-0">
                   <button
                     onClick={(e) => handleDownloadClick(e, profile.id)}
-                    className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all"
+                    className="p-2 text-stone-400 hover:text-brand-ink hover:bg-brand-ink/5 rounded-lg transition-all"
                     title={ui.downloadQuestions}
                     aria-label={ui.downloadQuestions}
                   >
@@ -201,7 +201,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                   </button>
 
                   {activeProfileId === profile.id ? (
-                    <span className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 rounded-md whitespace-nowrap">
+                    <span className="text-[9px] font-bold text-brand-ink uppercase tracking-widest px-2.5 py-1 bg-brand-ink/10 rounded-full border border-brand-ink/20 whitespace-nowrap">
                       {ui.activeProfile}
                     </span>
                   ) : (
@@ -210,7 +210,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                         e.stopPropagation();
                         onDelete(profile.id);
                       }}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                      className="p-2 text-stone-300 hover:text-brand-clay hover:bg-brand-clay/5 rounded-lg transition-all"
                       title={ui.deleteProfile}
                       aria-label={ui.deleteProfile}
                     >
@@ -227,19 +227,19 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleCreate} className="flex gap-2">
+        <form onSubmit={handleCreate} className="flex gap-3">
           <input
             type="text"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder={ui.profileName}
-            className="flex-1 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="flex-1 bg-stone-bg/50 border border-stone-line rounded-xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20 transition-all font-medium placeholder-stone-400"
             required
           />
           <button
             type="submit"
             disabled={!newName.trim()}
-            className="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="bg-brand-ink text-white px-5 rounded-xl hover:bg-brand-ink-hover disabled:opacity-40 disabled:grayscale transition-all shadow-md active:scale-95 flex items-center justify-center"
             aria-label={ui.createProfile}
           >
             <Plus className="w-5 h-5" />
@@ -249,32 +249,33 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 
       {/* Download Modal */}
       {showDownloadModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-200">{ui.selectTestToDownload}</h3>
-              <button onClick={() => setShowDownloadModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+        <div className="fixed inset-0 bg-brand-graphite/40 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in transition-all">
+          <div className="bg-brand-paper-accent rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden border border-stone-line">
+            <div className="p-8 border-b border-stone-line flex justify-between items-center">
+              <h3 className="font-serif text-2xl font-bold text-brand-graphite tracking-tight">{ui.selectTestToDownload}</h3>
+              <button
+                onClick={() => setShowDownloadModal(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-bg text-stone-400 transition-colors text-2xl"
+              >
                 &times;
               </button>
             </div>
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
-              <div className="grid gap-2">
-                {AVAILABLE_SURVEYS.map(survey => (
-                  <button
-                    key={survey.id}
-                    onClick={() => handleDownloadConfirm(survey.id)}
-                    className="text-left p-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all"
-                  >
-                    <div className="font-semibold text-slate-800 dark:text-slate-200">{survey.title[lang]}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-1">{survey.description?.[lang]}</div>
-                  </button>
-                ))}
-              </div>
+            <div className="p-8 max-h-[60vh] overflow-y-auto space-y-3">
+              {AVAILABLE_SURVEYS.map(survey => (
+                <button
+                  key={survey.id}
+                  onClick={() => handleDownloadConfirm(survey.id)}
+                  className="w-full text-left p-5 rounded-2xl border border-stone-line hover:bg-brand-ink/5 hover:border-brand-ink/20 transition-all group"
+                >
+                  <div className="font-serif text-lg font-bold text-brand-graphite group-hover:text-brand-ink transition-colors">{survey.title[lang]}</div>
+                  <div className="text-sm text-stone-500 mt-1 line-clamp-1 font-sans">{survey.description?.[lang]}</div>
+                </button>
+              ))}
             </div>
-            <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-right">
-              <button 
+            <div className="p-6 border-t border-stone-line bg-stone-bg/30 text-right">
+              <button
                 onClick={() => setShowDownloadModal(false)}
-                className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="px-8 py-3 text-brand-graphite font-bold text-xs uppercase tracking-widest hover:bg-stone-bg rounded-xl transition-colors"
               >
                 {ui.close}
               </button>

@@ -23,6 +23,7 @@ export interface Question {
   category: string; // Internal ID for logic
   subCategory?: LocalizedString; // Display text
   hint?: LocalizedString; // Added optional hint/example text
+  examples?: LocalizedString[]; // Short descriptions of how others experience this
 }
 
 // Flat version for components after localization is applied
@@ -35,6 +36,7 @@ export interface LocalizedQuestion {
   category: string;
   subCategory?: string;
   hint?: string;
+  examples?: string[];
 }
 
 export interface Answer {
@@ -169,6 +171,46 @@ export interface UIStrings {
   loginModalTitle: string;
   loginModalDesc: string;
   logout: string;
+  navTests: string;
+  navResults: string;
+  navRecommendations: string;
+  recommendationsTitle: string;
+  recommendationsLocked: string;
+  careerAdvisor: string;
+  worldview: string;
+  selfExploration: string;
+  mediaRecs: string;
+  creativityRecs: string;
+  creditsRequired: string;
+  resultsHistoryDesc: string;
+  noTestsYet: string;
+  goToTests: string;
+  answersLabel: string;
+  dateLabel: string;
+  recommendationsDesc: string;
+  credits: string;
+  recommendationsLockedDesc: string;
+  careerAdvisorDesc: string;
+  worldviewDesc: string;
+  selfExplorationDesc: string;
+  mediaRecsDesc: string;
+  creativityRecsDesc: string;
+  selectTestTitle: string;
+  whyTakeTest: string;
+  marketingTitle: string;
+  marketingPoint1Title: string;
+  marketingPoint1Desc: string;
+  marketingPoint2Title: string;
+  marketingPoint2Desc: string;
+  marketingPoint3Title: string;
+  marketingPoint3Desc: string;
+  marketingPoint4Title: string;
+  marketingPoint4Desc: string;
+  howOthersSeeIt: string;
+  timeSpent: string;
+  predictedTime: string;
+  minutesShort: string;
+  secondsShort: string;
 }
 
 export enum ProfileType {

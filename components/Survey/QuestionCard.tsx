@@ -36,40 +36,40 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   return (
     <div
       id={`question-${question.id}`}
-      className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border p-6 mb-6 transition-all hover:shadow-md relative
+      className={`bg-brand-paper-accent rounded-[2rem] border p-6 md:p-8 mb-6 md:mb-8 transition-all hover:shadow-card relative
         ${isUnanswered
-          ? 'border-red-300 dark:border-red-900 shadow-red-50 dark:shadow-none ring-1 ring-red-100 dark:ring-red-900/30'
-          : 'border-slate-200 dark:border-slate-700'}
+          ? 'border-brand-clay/30 bg-brand-clay/[0.02] ring-1 ring-brand-clay/10'
+          : 'border-stone-line'}
       `}
     >
       {isUnanswered && (
-        <div className="absolute -top-3 left-6 px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded uppercase tracking-wider animate-bounce">
+        <div className="absolute -top-3 left-8 px-2.5 py-1 bg-brand-clay text-white text-[9px] font-bold rounded-full uppercase tracking-wider shadow-sm">
           {ui.unanswered}
         </div>
       )}
-      <div className="flex items-start gap-3 mb-2">
-        <div className="bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg text-indigo-600 dark:text-indigo-400 mt-1 min-w-fit">
-          <span className="font-bold text-xs uppercase tracking-wider block">{question.subCategory || 'Question'}</span>
+      <div className="flex items-start gap-4 mb-6">
+        <div className="bg-stone-bg border border-stone-line px-3 py-1 rounded-full text-stone-400 mt-1 min-w-fit">
+          <span className="font-bold text-[9px] uppercase tracking-[0.1em] block">{question.subCategory || 'Question'}</span>
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-medium text-slate-800 dark:text-slate-100 leading-snug">{question.text}</h3>
+          <h3 className="text-2xl font-serif font-bold text-brand-graphite leading-snug tracking-tight">{question.text}</h3>
           {question.hint && (
-            <div className="flex items-start gap-2 mt-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-2 rounded-md border border-slate-100 dark:border-slate-600 italic">
-              <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 mt-4 text-sm text-stone-400 bg-stone-bg/50 p-3 rounded-2xl border border-stone-line italic">
+              <Lightbulb className="w-4 h-4 text-brand-clay flex-shrink-0 mt-0.5" />
               <span>{question.hint}</span>
             </div>
           )}
         </div>
       </div>
 
-      <div className="pl-0 md:pl-4 space-y-6 mt-4">
+      <div className="pl-0 md:pl-4 space-y-6 mt-6">
         {/* Input Area based on Type */}
         <div className="min-h-[60px]">
           {question.type === QuestionType.SCALE && (
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center px-1 text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wide">
-                <span>{min}</span>
-                <span>{max}</span>
+            <div className="flex flex-col gap-3">
+              <div className="flex justify-between items-center px-1 text-[10px] text-stone-400 font-bold uppercase tracking-[0.15em]">
+                <span>{min}: Total Absence</span>
+                <span>{max}: Extremely Realistic</span>
               </div>
               <div className="flex gap-2 w-full">
                 {scaleNumbers.map((num) => {
@@ -79,10 +79,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                       key={num}
                       onClick={() => handleValueChange(num)}
                       className={`
-                        flex-1 h-12 rounded-lg font-bold text-lg transition-all transform active:scale-95 border
+                        flex-1 h-14 rounded-2xl font-bold text-xl transition-all transform active:scale-95 border
                         ${isSelected
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg scale-105'
-                          : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-600'
+                          ? 'bg-brand-ink text-white border-brand-ink shadow-soft scale-[1.03]'
+                          : 'bg-stone-bg text-stone-400 border-stone-line hover:border-brand-ink/30 hover:bg-stone-bg/80'
                         }
                       `}
                     >
@@ -91,11 +91,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                   );
                 })}
               </div>
-              <div className="text-center h-5">
+              <div className="text-center h-6">
                 {answer?.value && typeof answer.value === 'number' && (
-                  <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400 animate-fade-in">
+                  <span className="text-sm font-bold text-brand-ink animate-fade-in uppercase tracking-wider">
                     {scaleConfig?.labels[answer.value] || (
-                      // Fallback to UI strings if no custom config or label missing
                       answer.value === 1 ? ui.scale1 :
                         answer.value === 2 ? ui.scale2 :
                           answer.value === 3 ? ui.scale3 :
@@ -122,23 +121,27 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                 <label
                   key={opt.value}
                   className={`
-                    flex items-center p-3 border rounded-lg cursor-pointer transition-all
+                    flex items-center p-4 border rounded-2xl cursor-pointer transition-all
                     ${answer?.value === opt.value
-                      ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 ring-1 ring-indigo-500'
-                      : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
+                      ? 'bg-brand-ink/[0.03] border-brand-ink/30 ring-1 ring-brand-ink/10 shadow-sm'
+                      : 'bg-stone-bg/50 border-stone-line hover:border-brand-ink/20 hover:bg-stone-bg'
                     }
                   `}
                 >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${answer?.value === opt.value ? 'border-brand-ink bg-brand-ink' : 'border-stone-line'
+                    }`}>
+                    {answer?.value === opt.value && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                  </div>
                   <input
                     type="radio"
                     name={question.id}
                     value={opt.value}
                     checked={answer?.value === opt.value}
                     onChange={() => handleValueChange(opt.value)}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500 dark:bg-slate-800 dark:border-slate-500"
+                    className="sr-only"
                   />
-                  <span className="ml-3 text-slate-700 dark:text-slate-200 font-medium">{opt.label}</span>
-                  {answer?.value === opt.value && <CheckCircle2 className="w-4 h-4 ml-auto text-indigo-600 dark:text-indigo-400" />}
+                  <span className={`ml-4 text-sm font-bold ${answer?.value === opt.value ? 'text-brand-ink' : 'text-brand-graphite'}`}>{opt.label}</span>
+                  {answer?.value === opt.value && <CheckCircle2 className="w-5 h-5 ml-auto text-brand-sage" />}
                 </label>
               ))}
             </div>
@@ -146,18 +149,42 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         </div>
 
         {/* Universal Text Area for elaboration */}
-        <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg border border-slate-100 dark:border-slate-700">
-          <label className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 mb-2">
-            <MessageSquare className="w-4 h-4" />
+        {/* Universal Text Area for elaboration */}
+        <div className="bg-brand-paper p-6 rounded-[1.5rem] border border-stone-line shadow-sm">
+          <label className="flex items-center gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">
+            <MessageSquare className="w-3 h-3" />
             {question.type === QuestionType.TEXT ? ui.yourAnswer : ui.optionalComment}
           </label>
           <textarea
             value={answer?.note || ''}
             onChange={handleNoteChange}
             placeholder={question.placeholder || ""}
-            className="w-full min-h-[80px] p-3 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-y placeholder-slate-400 dark:placeholder-slate-500"
+            className="w-full min-h-[100px] p-4 text-sm text-brand-graphite bg-brand-paper-accent border border-stone-line rounded-2xl focus:ring-2 focus:ring-brand-ink/20 focus:border-brand-ink/30 outline-none transition-all resize-y placeholder-stone-400"
           />
         </div>
+
+        {/* Community Examples - Show only after answering */}
+        {(answer?.value !== null && answer?.value !== undefined || (answer?.note && answer.note.length > 10)) && question.examples && question.examples.length > 0 && (
+          <div className="mt-6 animate-fade-in">
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-[9px] font-bold text-stone-300 uppercase tracking-[0.2em] whitespace-nowrap">
+                {ui.howOthersSeeIt}
+              </span>
+              <div className="h-px flex-1 bg-stone-100"></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {question.examples.map((ex, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl bg-stone-bg/50 border border-stone-line text-[11px] text-stone-400 leading-relaxed relative overflow-hidden group/ex italic"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-full bg-stone-line transition-all group-hover/ex:bg-brand-clay/30"></div>
+                  {ex}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

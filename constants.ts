@@ -1,10 +1,36 @@
 import { SurveyDefinition } from './types';
 import { APHANTASIA_CATEGORIES } from './db/aphantasia_test';
 import { PERSONALITY_CATEGORIES } from './db/personality_test';
+import { DEMO_CATEGORIES } from './db/demo_test';
 
-export const SURVEY_DATA = [...APHANTASIA_CATEGORIES, ...PERSONALITY_CATEGORIES];
+export const SURVEY_DATA = [...APHANTASIA_CATEGORIES, ...PERSONALITY_CATEGORIES, ...DEMO_CATEGORIES];
 
 export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
+  {
+    id: 'express_demo',
+    title: {
+      uk: 'Експрес-діагностика (2 хв)',
+      en: 'Express Diagnostics (2 min)',
+      ru: 'Экспресс-диагностика (2 мин)'
+    },
+    description: {
+      uk: 'Швидкий погляд на вашу уяву. Ідеально, якщо ви вперше на сайті.',
+      en: 'A quick look at your imagination. Perfect for first-time visitors.',
+      ru: 'Быстрый взгляд на ваше воображение. Идеально, если вы впервые на сайте.'
+    },
+    categories: [...DEMO_CATEGORIES],
+    scaleConfig: {
+      min: 1,
+      max: 5,
+      labels: {
+        1: { uk: "Повна відсутність", en: "Total absence", ru: "Полное отсутствие" },
+        2: { uk: "Слабко", en: "Weak", ru: "Слабо" },
+        3: { uk: "Середньо", en: "Moderate", ru: "Средне" },
+        4: { uk: "Чітко", en: "Clear", ru: "Четко" },
+        5: { uk: "Максимально", en: "Vivid", ru: "Максимально" }
+      }
+    }
+  },
   {
     id: 'full_aphantasia_profile',
     title: {
@@ -13,9 +39,9 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
       ru: 'Полный Профиль Афантазии'
     },
     description: {
-       uk: 'Детальний аналіз сенсорної уяви, процесів мислення та стратегій пам\'яті.',
-       en: 'Detailed analysis of sensory imagination, thinking processes, and memory strategies.',
-       ru: 'Детальный анализ сенсорного воображения, процессов мышления и стратегий памяти.'
+      uk: 'Детальний аналіз сенсорної уяви, процесів мислення та стратегій пам\'яті.',
+      en: 'Detailed analysis of sensory imagination, thinking processes, and memory strategies.',
+      ru: 'Детальный анализ сенсорного воображения, процессов мышления и стратегий памяти.'
     },
     categories: [...APHANTASIA_CATEGORIES],
     scaleConfig: {
@@ -38,9 +64,9 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
       ru: '↳ Только Сенсорное Воображение'
     },
     description: {
-       uk: 'Скорочений тест, що фокусується лише на візуальних, аудіальних та інших відчуттях.',
-       en: 'Shortened test focusing only on visual, auditory, and other sensations.',
-       ru: 'Сокращенный тест, фокусирующийся только на визуальных, аудиальных и других ощущениях.'
+      uk: 'Скорочений тест, що фокусується лише на візуальних, аудіальних та інших відчуттях.',
+      en: 'Shortened test focusing only on visual, auditory, and other sensations.',
+      ru: 'Сокращенный тест, фокусирующийся только на визуальных, аудиальных и других ощущениях.'
     },
     categories: [APHANTASIA_CATEGORIES[0]],
     scaleConfig: {
@@ -63,9 +89,9 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
       ru: '↳ Только Процессы Воображения'
     },
     description: {
-       uk: 'Як саме ваш мозок конструює образи та думки.',
-       en: 'How exactly your brain constructs images and thoughts.',
-       ru: 'Как именно ваш мозг конструирует образы и мысли.'
+      uk: 'Як саме ваш мозок конструює образи та думки.',
+      en: 'How exactly your brain constructs images and thoughts.',
+      ru: 'Как именно ваш мозг конструирует образы и мысли.'
     },
     categories: [APHANTASIA_CATEGORIES[1]],
     scaleConfig: {
@@ -88,9 +114,9 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
       ru: '↳ Только Стратегии и Память'
     },
     description: {
-       uk: 'Аналіз стилю мислення, пам\'яті та соціальної взаємодії.',
-       en: 'Analysis of thinking style, memory, and social interaction.',
-       ru: 'Анализ стиля мышления, памяти и социального взаимодействия.'
+      uk: 'Аналіз стилю мислення, пам\'яті та соціальної взаємодії.',
+      en: 'Analysis of thinking style, memory, and social interaction.',
+      ru: 'Анализ стиля мышления, памяти и социального взаимодействия.'
     },
     categories: [APHANTASIA_CATEGORIES[2]],
     scaleConfig: {

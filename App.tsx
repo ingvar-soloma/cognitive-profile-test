@@ -14,11 +14,16 @@ import { ProfileService } from './services/ProfileService';
 import { decode } from '@toon-format/toon';
 import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/Auth/LoginModal';
+import { Recommendations } from './components/Recommendations/Recommendations';
+import { DashboardResults } from './components/Results/DashboardResults';
+import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
 
-enum AppState {
+export enum AppState {
   INTRO = 'INTRO',
   SURVEY = 'SURVEY',
   RESULTS = 'RESULTS',
+  RECOMMENDATIONS = 'RECOMMENDATIONS',
+  DASHBOARD_RESULTS = 'DASHBOARD_RESULTS',
 }
 
 const LOCAL_STORAGE_KEY = 'neuroprofile_survey_state';
@@ -36,7 +41,27 @@ interface User {
 }
 
 const App: React.FC = () => {
-  const [appState, setAppState] = useState<AppState>(AppState.INTRO);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [appState, setAppState] = useState<AppState>(() => {
+    const path = window.location.pathname;
+    if (path === '/results') return AppState.RESULTS;
+    if (path === '/recommendations') return AppState.RECOMMENDATIONS;
+    if (path === '/dashboard') return AppState.DASHBOARD_RESULTS;
+    if (path.startsWith('/survey/')) return AppState.SURVEY;
+    return AppState.INTRO;
+  });
+
+  // Sync state with URL
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') setAppState(AppState.INTRO);
+    else if (path === '/results') setAppState(AppState.RESULTS);
+    else if (path === '/recommendations') setAppState(AppState.RECOMMENDATIONS);
+    else if (path === '/dashboard') setAppState(AppState.DASHBOARD_RESULTS);
+    else if (path.startsWith('/survey/')) setAppState(AppState.SURVEY);
+  }, [location.pathname]);
+
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [language, setLanguage] = useState<Language>(() => {
@@ -47,6 +72,8 @@ const App: React.FC = () => {
     return 'uk';
   });
   const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('neuroprofile_theme') as Theme;
+    if (saved && (saved === 'light' || saved === 'dark')) return saved;
     if (globalThis.window !== undefined && globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
@@ -61,6 +88,16 @@ const App: React.FC = () => {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [loginModalConfig, setLoginModalConfig] = useState<{ title?: string, description?: string }>({});
+
+  // Sync activeSurveyId from URL if in survey mode
+  useEffect(() => {
+    if (location.pathname.startsWith('/survey/')) {
+      const idStr = location.pathname.split('/survey/')[1];
+      if (idStr && idStr !== activeSurveyId) {
+        setActiveSurveyId(idStr);
+      }
+    }
+  }, [location.pathname, activeSurveyId]);
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('auth_token') || localStorage.getItem('telegram_auth');
     if (saved) {
@@ -163,7 +200,6 @@ const App: React.FC = () => {
         if (result && result.answers) {
           setAnswers(result.answers);
           setHasExistingResults(true);
-          setAppState(AppState.RESULTS);
         } else {
           setHasExistingResults(false);
         }
@@ -206,7 +242,7 @@ const App: React.FC = () => {
       });
   }, [activeSurveyId]);
 
-  const handleStartSurvey = () => {
+  const handleStartSurvey = (surveyId?: string) => {
     if (!user) {
       setLoginModalConfig({});
       setShowLoginModal(true);
@@ -214,12 +250,22 @@ const App: React.FC = () => {
     }
 
     setIsLoading(true);
-    // Simulate loading delay or wait for data if not ready
-    SurveyService.getSurveyById(activeSurveyId)
+    const surveyIdToStart = surveyId || activeSurveyId;
+
+    // If starting a DIFFERENT survey on the same profile, update the profile's primary survey ID
+    if (activeProfileId && surveyIdToStart) {
+      const profile = profiles.find(p => p.id === activeProfileId);
+      if (profile && profile.surveyId !== surveyIdToStart) {
+        ProfileService.updateProfileSurveyId(activeProfileId, surveyIdToStart);
+        setProfiles(ProfileService.getProfiles());
+      }
+    }
+
+    SurveyService.getSurveyById(surveyIdToStart)
       .then((data) => {
         if (data) {
           setCurrentSurvey(data);
-          setAppState(AppState.SURVEY);
+          navigate(`/survey/${surveyIdToStart}`);
         }
       })
       .finally(() => setIsLoading(false));
@@ -237,7 +283,9 @@ const App: React.FC = () => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('neuroprofile_theme', newTheme);
   };
 
   const handleLogout = () => {
@@ -405,16 +453,29 @@ const App: React.FC = () => {
     setProfiles(ProfileService.getProfiles());
   };
 
-  const handleRetake = () => {
-    if (activeProfile) {
-      const baseName = activeProfile.name.split(' (Retake')[0];
+  const handleRetake = (profileId?: string) => {
+    const targetProfile = profileId ? profiles.find(p => p.id === profileId) : activeProfile;
+    if (targetProfile) {
+      const baseName = targetProfile.name.split(' (Retake')[0];
       const retakes = profiles.filter(p => p.name.startsWith(baseName)).length;
       const newName = `${baseName} (Retake ${retakes})`;
-      const newProfile = ProfileService.createProfile(newName, activeSurveyId);
+      const newProfile = ProfileService.createProfile(newName, targetProfile.surveyId || activeSurveyId);
       setProfiles(ProfileService.getProfiles());
       setActiveProfileId(newProfile.id);
-      setAppState(AppState.INTRO);
+      setActiveSurveyId(targetProfile.surveyId || activeSurveyId);
+      navigate('/');
     }
+  };
+
+  const handleNavigate = (state: AppState) => {
+    switch (state) {
+      case AppState.INTRO: navigate('/'); break;
+      case AppState.RESULTS: navigate('/results'); break;
+      case AppState.RECOMMENDATIONS: navigate('/recommendations'); break;
+      case AppState.DASHBOARD_RESULTS: navigate('/dashboard'); break;
+      case AppState.SURVEY: navigate(`/survey/${activeSurveyId}`); break;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const nextCategory = () => {
@@ -432,10 +493,12 @@ const App: React.FC = () => {
     if (currentCategoryIndex < localizedCategories.length - 1) {
       setCurrentCategoryIndex((prev) => prev + 1);
     } else {
-      setAppState(AppState.RESULTS);
       if (activeProfileId) {
         ProfileService.updateProfile(activeProfileId, answers);
         setProfiles(ProfileService.getProfiles());
+        navigate(`/results/${activeProfileId}`);
+      } else {
+        navigate('/results');
       }
     }
   };
@@ -555,7 +618,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 pb-20 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-brand-paper text-brand-graphite pb-20 font-sans transition-colors duration-300">
       <Header
         appState={appState}
         ui={ui}
@@ -567,78 +630,104 @@ const App: React.FC = () => {
         onSetLanguage={setLanguage}
         onToggleTheme={toggleTheme}
         onDownloadProgress={downloadProgress}
-        onGoToIntro={() => setAppState(AppState.INTRO)}
+        onNavigate={handleNavigate}
         onLogout={handleLogout}
       />
 
-      <main className={`${appState === AppState.RESULTS ? 'max-w-5xl' : 'max-w-3xl'} mx-auto p-4 md:p-8 transition-all duration-500`}>
-        {appState === AppState.RESULTS && (
-          <Results
-            answers={answers}
-            onReset={handleRetake}
-            onGoHome={() => setAppState(AppState.INTRO)}
-            ui={ui}
-            lang={language}
-            filenamePrefix={`${activeProfile?.name || 'anonymous'}_${ProfileService.getProfileTypeLabel(activeProfile?.type, language) || 'unknown'}`}
-            user={user}
-          />
-        )}
+      <main className={`${location.pathname === '/results' ? 'max-w-5xl' : 'max-w-3xl'} mx-auto p-4 md:p-8 transition-all duration-500`}>
+        <Routes>
+          <Route path="/" element={
+            <>
+              {(isAdmin) && (
+                <AdminDashboard
+                  ui={ui}
+                  lang={language}
+                  onViewResult={handleViewAdminResult}
+                />
+              )}
 
-        {appState === AppState.INTRO && (
-          <>
-            {(isAdmin) && (
-              <AdminDashboard
+              {(!user || isAdmin) && (
+                <ProfileManager
+                  profiles={profiles}
+                  activeProfileId={activeProfileId}
+                  onSelect={handleSelectProfile}
+                  onCreate={handleCreateProfile}
+                  onDelete={handleDeleteProfile}
+                  onRename={handleRenameProfile}
+                  ui={ui}
+                  lang={language}
+                />
+              )}
+              <Intro
                 ui={ui}
-                lang={language}
-                onViewResult={handleViewAdminResult}
+                language={language}
+                activeSurveyId={activeSurveyId}
+                onSetActiveSurveyId={setActiveSurveyId}
+                onStartSurvey={handleStartSurvey}
+                onTriggerFileUpload={triggerFileUpload}
+                fileInputRef={fileInputRef}
+                onFileUpload={handleFileUpload}
+                isLoading={isLoading}
+                surveyProgress={surveyProgress}
+                hasExistingResults={hasExistingResults}
+                onShowResults={() => navigate('/results')}
               />
-            )}
+            </>
+          } />
 
-            {(!user || isAdmin) && (
-              <ProfileManager
-                profiles={profiles}
-                activeProfileId={activeProfileId}
-                onSelect={handleSelectProfile}
-                onCreate={handleCreateProfile}
-                onDelete={handleDeleteProfile}
-                onRename={handleRenameProfile}
-                ui={ui}
-                lang={language}
-              />
-            )}
-            <Intro
+          <Route path="/results/:profileId?" element={
+            <ResultsWrapper
+              profiles={profiles}
+              onReset={(id) => handleRetake(id)}
+              onGoHome={() => navigate('/')}
+              ui={ui}
+              lang={language}
+              user={user}
+              activeSurveyId={activeSurveyId}
+              setActiveProfileId={setActiveProfileId}
+            />
+          } />
+
+          <Route path="/dashboard" element={
+            <DashboardResults
+              profiles={profiles}
+              onViewResult={(id) => {
+                navigate(`/results/${id}`);
+              }}
               ui={ui}
               language={language}
-              activeSurveyId={activeSurveyId}
-              onSetActiveSurveyId={setActiveSurveyId}
-              onStartSurvey={handleStartSurvey}
-              onTriggerFileUpload={triggerFileUpload}
-              fileInputRef={fileInputRef}
-              onFileUpload={handleFileUpload}
-              isLoading={isLoading}
-              surveyProgress={surveyProgress}
-              hasExistingResults={hasExistingResults}
-              onShowResults={() => setAppState(AppState.RESULTS)}
             />
-          </>
-        )}
+          } />
 
-        {appState === AppState.SURVEY && (
-          <Survey
-            ui={ui}
-            currentCategoryIndex={currentCategoryIndex}
-            totalCategories={localizedCategories.length}
-            activeCategory={activeCategory}
-            answers={answers}
-            onAnswerChange={handleAnswerChange}
-            onPrevCategory={prevCategory}
-            onNextCategory={nextCategory}
-            isLoading={isLoading}
-            scaleConfig={localizedScaleConfig}
-            isQuestionAnswered={isQuestionAnswered}
-            showUnansweredIndicators={true}
-          />
-        )}
+          <Route path="/recommendations" element={
+            <Recommendations
+              ui={ui}
+              isLocked={!profiles.some(p => Object.keys(p.answers).length > 0)}
+              user={user}
+            />
+          } />
+
+          <Route path="/survey/:surveyId" element={
+            <Survey
+              ui={ui}
+              currentCategoryIndex={currentCategoryIndex}
+              totalCategories={localizedCategories.length}
+              activeCategory={activeCategory}
+              answers={answers}
+              onAnswerChange={handleAnswerChange}
+              onPrevCategory={prevCategory}
+              onNextCategory={nextCategory}
+              isLoading={isLoading}
+              scaleConfig={localizedScaleConfig}
+              isQuestionAnswered={isQuestionAnswered}
+              showUnansweredIndicators={true}
+              totalQuestions={totalQuestions}
+              answeredCount={answeredCountInCurrentSurvey}
+            />
+          } />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {importingAnswers && (
@@ -660,6 +749,43 @@ const App: React.FC = () => {
         description={loginModalConfig.description}
       />
     </div>
+  );
+};
+
+
+const ResultsWrapper: React.FC<any> = ({ profiles, onReset, ui, lang, user, activeSurveyId, setActiveProfileId }) => {
+  const { profileId } = useParams();
+  const navigate = useNavigate();
+
+  const profile = useMemo(() => {
+    if (profileId) {
+      return profiles.find((p: any) => p.id === profileId);
+    }
+    const activeId = localStorage.getItem('neuroprofile_active_profile_id');
+    return profiles.find((p: any) => p.id === activeId);
+  }, [profileId, profiles]);
+
+  useEffect(() => {
+    if (profile && profile.id !== localStorage.getItem('neuroprofile_active_profile_id')) {
+      setActiveProfileId(profile.id);
+    }
+  }, [profile, setActiveProfileId]);
+
+  if (!profile) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <Results
+      answers={profile.answers}
+      onReset={() => onReset(profile.id)}
+      onGoHome={() => navigate('/')}
+      ui={ui}
+      lang={lang}
+      filenamePrefix={`${profile.name || 'anonymous'}_${ProfileService.getProfileTypeLabel(profile.type, lang) || 'unknown'}`}
+      user={user}
+      surveyId={profile.surveyId || activeSurveyId}
+    />
   );
 };
 

@@ -91,7 +91,7 @@ def verify_auth(auth_data: UserAuth) -> bool:
         raise HTTPException(status_code=401, detail="Invalid Session Token")
 
 
-async def get_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en"):
+async def get_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", **kwargs):
     if not client:
         return "Gemini API key not configured."
     
@@ -159,8 +159,11 @@ async def get_gemini_recommendations(test_results: Dict[str, Any], lang: str = "
 
         user_data_block = f"\n### INPUT TEST RESULTS (JSON):\n{json.dumps(test_results, indent=2)}"
         
+        # Use provided model or default
+        selected_model = kwargs.get('model_name', 'gemini-3-flash-preview')
+
         response = await client.aio.models.generate_content(
-            model='gemini-3-flash-preview',
+            model=selected_model,
             contents=system_instruction + user_data_block
         )
         return response.text
@@ -168,7 +171,7 @@ async def get_gemini_recommendations(test_results: Dict[str, Any], lang: str = "
         logger.error(f"Gemini error: {e}")
         return f"Error getting recommendations: {str(e)}"
 
-async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en"):
+async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", model_name: str = 'gemini-3.1-pro-preview'):
     if not client:
         yield "Gemini API key not configured."
         return
@@ -263,7 +266,7 @@ async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str 
         content_parts.append(f"\n### INPUT TEST RESULTS (JSON):\n{json.dumps(test_results, indent=2)}")
 
         response = await client.aio.models.generate_content_stream(
-            model='gemini-3.1-pro-preview',
+            model=model_name,
             contents=content_parts
         )
         
@@ -341,7 +344,10 @@ async def analyze_result(data: SaveResult):
     
     async def event_generator():
         full_text = ""
-        async for chunk in stream_gemini_recommendations({"answers": data.answers, "scores": data.scores}, lang=data.lang or "en"):
+        # Determine model based on test_type
+        model_to_use = 'gemini-3-flash-preview' if data.test_type == 'express_demo' else 'gemini-3.1-pro-preview'
+        
+        async for chunk in stream_gemini_recommendations({"answers": data.answers, "scores": data.scores}, lang=data.lang or "en", model_name=model_to_use):
             full_text += chunk
             yield chunk
             
