@@ -19,6 +19,7 @@ interface ResultsProps {
   user: any;
   surveyId?: string;
   survey?: SurveyDefinition | null;
+  initialRecommendations?: Record<string, string>;
 }
 
 const RadarIcon = ({ className }: { className?: string }) => (
@@ -31,7 +32,7 @@ const RadarIcon = ({ className }: { className?: string }) => (
 );
 
 export const Results: React.FC<ResultsProps> = ({
-  answers, onReset, onGoHome, ui, lang, filenamePrefix, user, surveyId, survey
+  answers, onReset, onGoHome, ui, lang, filenamePrefix, user, surveyId, survey, initialRecommendations = {}
 }) => {
   const [geminiRecs, setGeminiRecs] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -48,26 +49,29 @@ export const Results: React.FC<ResultsProps> = ({
       const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
       const profiles = ProfileService.getProfiles();
       const activeProfile = profiles.find(p => p.id === activeProfileId);
+      
+      const targetSurveyId = surveyId || activeProfile?.surveyId;
 
-      if (activeProfile) {
+      if (activeProfile && targetSurveyId) {
+        // Step 0: Check if we ALREADY have recommendations from initial props or state
+        const existingRec = initialRecommendations[targetSurveyId];
+        if (existingRec && existingRec.trim().length > 0) {
+           setGeminiRecs(existingRec);
+           hasAttemptedSave.current = true;
+           return;
+        }
+
         hasAttemptedSave.current = true;
         setIsSaving(true);
 
         // Generate dynamic scores based on survey categories
-        const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === (surveyId || activeProfile.surveyId));
+        const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === targetSurveyId);
         const scores: Record<string, number> = {};
 
         if (currentSurvey) {
           currentSurvey.categories.forEach(cat => {
             scores[cat.id] = ProfileService.calculateCategoryScore(answers, cat.title.en);
           });
-        } else {
-          // Fallback to defaults if survey not found
-          scores['Visual'] = calculateCategoryScore('Visual');
-          scores['Auditory'] = calculateCategoryScore('Auditory');
-          scores['Tactile'] = calculateCategoryScore('Tactile');
-          scores['Gustatory'] = calculateCategoryScore('Gustatory');
-          scores['Olfactory'] = calculateCategoryScore('Olfactory');
         }
 
         try {
@@ -77,20 +81,28 @@ export const Results: React.FC<ResultsProps> = ({
           }
 
           // Step 1: Fast save
-          const result = await ProfileService.saveResultToBackend(activeProfile, activeProfile.surveyId, scores, lang);
+          const result = await ProfileService.saveResultToBackend(activeProfile, targetSurveyId, scores, lang);
 
           if (result && result.status === 'success') {
-            // Check if there are already existing recommendations
+            let existingRecForThisTest = null;
+            
+            // Check backend if not in initial props
             const existingResult = await ProfileService.loadResultFromBackend();
-            if (existingResult && existingResult.gemini_recommendations && existingResult.gemini_recommendations.trim().length > 0) {
-              setGeminiRecs(existingResult.gemini_recommendations);
-              setIsSaving(false);
+            if (existingResult && existingResult.gemini_recommendations) {
+              if (typeof existingResult.gemini_recommendations === 'string') {
+                existingRecForThisTest = existingResult.gemini_recommendations;
+              } else if (existingResult.gemini_recommendations[targetSurveyId]) {
+                existingRecForThisTest = existingResult.gemini_recommendations[targetSurveyId];
+              }
+            }
+
+            if (existingRecForThisTest && existingRecForThisTest.trim().length > 0) {
+              setGeminiRecs(existingRecForThisTest);
             } else {
               // Step 2: Stream LLM Analysis if missing
               setGeminiRecs('');
-              await ProfileService.streamAnalysisFromBackend(activeProfile, activeProfile.surveyId, scores, lang, (chunk) => {
+              await ProfileService.streamAnalysisFromBackend(activeProfile, targetSurveyId, scores, lang, (chunk) => {
                 setGeminiRecs(prev => (prev || '') + chunk);
-                setIsSaving(false);
               });
             }
           }
@@ -229,7 +241,11 @@ export const Results: React.FC<ResultsProps> = ({
                 </div>
               </div>
             ) : geminiRecs ? (
-              <div className="bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight">
+              <div className="bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans 
+                prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-brand-ink dark:prose-headings:text-brand-clay
+                prose-p:leading-relaxed prose-strong:text-brand-ink dark:prose-strong:text-brand-clay prose-strong:font-bold
+                prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
+                transition-all duration-700">
                 <ReactMarkdown>{geminiRecs}</ReactMarkdown>
               </div>
             ) : (
@@ -277,9 +293,9 @@ export const Results: React.FC<ResultsProps> = ({
                     <RadarIcon className="w-3 h-3" />
                     Sensory Signature Map
                   </div>
-                  <div className="w-full aspect-square max-w-[450px] relative">
+                  <div className="w-full aspect-square max-w-[450px] min-h-[350px] relative">
                     <div className="absolute inset-0 bg-brand-paper rounded-full blur-3xl opacity-30"></div>
-                    <ResponsiveContainer width="100%" height="100%">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={350}>
                       <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
                         <PolarGrid stroke="#E5E7EB" strokeWidth={1} />
                         <PolarAngleAxis

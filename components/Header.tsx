@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               onClick={() => onNavigate('DASHBOARD_RESULTS')}
-              className={`px-3 lg:px-5 py-1.5 rounded-full text-[10px] lg:text-[11px] uppercase tracking-widest font-bold transition-all duration-300 ${appState === 'DASHBOARD_RESULTS' ? 'bg-brand-paper-accent text-brand-ink shadow-sm ring-1 ring-stone-line' : 'text-stone-400 hover:text-brand-graphite'}`}
+              className={`px-3 lg:px-5 py-1.5 rounded-full text-[10px] lg:text-[11px] uppercase tracking-widest font-bold transition-all duration-300 ${appState === 'DASHBOARD_RESULTS' || appState === 'RESULTS' ? 'bg-brand-paper-accent text-brand-ink shadow-sm ring-1 ring-stone-line' : 'text-stone-400 hover:text-brand-graphite'}`}
             >
               {ui.navResults}
             </button>
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
           ) : (
-            <GoogleAuthButton />
+            <GoogleAuthButton useOneTap={true} />
           )}
         </div>
       </div>
@@ -133,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
   );
 };
 
-export const GoogleAuthButton: React.FC = () => {
+export const GoogleAuthButton: React.FC<{ useOneTap?: boolean }> = ({ useOneTap = false }) => {
   return (
     <div className="ml-2">
       <GoogleLogin
@@ -157,7 +157,7 @@ export const GoogleAuthButton: React.FC = () => {
         onError={() => {
           console.error('Google Login Failed');
         }}
-        useOneTap
+        useOneTap={useOneTap}
         shape="pill"
       />
     </div>

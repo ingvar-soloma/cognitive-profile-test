@@ -16,7 +16,8 @@ interface IntroProps {
     isLoading?: boolean;
     surveyProgress?: Record<string, { answered: number; total: number; percent: number }>;
     hasExistingResults?: boolean;
-    onShowResults?: () => void;
+    backendRecommendations?: Record<string, string>;
+    onShowResults?: (surveyId?: string) => void;
 }
 
 export const Intro: React.FC<IntroProps> = ({
@@ -31,6 +32,7 @@ export const Intro: React.FC<IntroProps> = ({
     isLoading = false,
     surveyProgress = {},
     hasExistingResults = false,
+    backendRecommendations = {},
     onShowResults
 }) => {
     const [showConsent, setShowConsent] = useState(false);
@@ -98,7 +100,9 @@ export const Intro: React.FC<IntroProps> = ({
                             const isSubTest = survey.id === 'sensory_only' || survey.id === 'processes_only' || survey.id === 'strategies_only';
                             const progress = surveyProgress[survey.id] || { answered: 0, total: 0, percent: 0 };
                             const isActive = activeSurveyId === survey.id;
-                            const isCompleted = progress.percent === 100;
+                            const hasAllAnswers = progress.percent === 100;
+                            const hasRecommendation = !!backendRecommendations[survey.id];
+                            const isCompleted = hasAllAnswers && hasRecommendation;
 
                             if (isSubTest) return null; // We'll handle sub-tests differently inside the full profile
 
@@ -120,7 +124,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                 </h3>
                                                 {isCompleted ? (
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-sage/10 text-brand-sage text-[9px] font-bold uppercase tracking-wider rounded-full border border-brand-sage/20">
-                                                        Completed <CheckCircle className="w-3 h-3" />
+                                                        {hasRecommendation ? 'Completed' : 'Ready for Analysis'} <CheckCircle className="w-3 h-3" />
                                                     </span>
                                                 ) : survey.disabled ? (
                                                     <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded uppercase tracking-wider">Soon</span>
@@ -147,7 +151,7 @@ export const Intro: React.FC<IntroProps> = ({
                                             )}
                                         </div>
 
-                                        {!isCompleted ? (
+                                        {!hasAllAnswers ? (
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); checkConsentAndProceed('start', survey.id); }}
                                                 className={`shrink-0 h-10 px-6 ${isActive ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-brand-graphite'} rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2`}
@@ -156,11 +160,11 @@ export const Intro: React.FC<IntroProps> = ({
                                             </button>
                                         ) : (
                                             <button
-                                                onClick={(e) => { e.stopPropagation(); onShowResults?.(); }}
-                                                className="shrink-0 h-10 px-6 bg-brand-ink text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-2"
-                                            >
-                                                View Results
-                                            </button>
+                                                 onClick={(e) => { e.stopPropagation(); onShowResults?.(survey.id); }}
+                                                 className="shrink-0 h-10 px-6 bg-brand-ink text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-2"
+                                             >
+                                                 {hasRecommendation ? ui.viewResults || 'View Results' : 'Analyze'}
+                                             </button>
                                         )}
                                     </div>
                                 </div>
@@ -244,11 +248,14 @@ export const Intro: React.FC<IntroProps> = ({
                             <h4 className="text-[9px] font-bold uppercase tracking-[0.2em] text-stone-300 mb-4">{ui.howToRateTitle}</h4>
                             <div className="space-y-3 font-sans text-[11px]">
                                 {scaleNumbers.filter(n => [1, 3, 5].includes(n)).map(num => (
-                                    <div key={num} className="flex items-center justify-between p-3 rounded-xl bg-stone-bg/30 border border-stone-line hover:bg-stone-bg/50 transition-colors">
-                                        <span className={`font-bold ${num === 1 ? 'text-brand-ink' : num === 5 ? 'text-brand-clay' : 'text-stone-600'}`}>
+                                    <div key={num} className="flex items-center justify-between p-3 rounded-xl bg-stone-bg/30 border border-stone-line hover:bg-stone-bg/50 transition-colors overflow-hidden group/item">
+                                        <span
+                                            className={`font-bold truncate max-w-[140px] ${num === 1 ? 'text-brand-ink' : num === 5 ? 'text-brand-clay' : 'text-stone-600'}`}
+                                            title={scaleConfig?.labels[num]?.[language] || ''}
+                                        >
                                             {num}: {scaleConfig?.labels[num]?.[language] || ''}
                                         </span>
-                                        <span className="text-stone-300 uppercase text-[8px] font-bold tracking-widest shrink-0 ml-2">
+                                        <span className="text-stone-300 uppercase text-[8px] font-bold tracking-widest shrink-0 ml-2 group-hover/item:text-stone-400 transition-colors">
                                             {num === 1 ? 'Aphantasia' : num === 5 ? 'Hyperphantasia' : 'Vague'}
                                         </span>
                                     </div>

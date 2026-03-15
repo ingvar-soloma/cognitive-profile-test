@@ -16,7 +16,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/Auth/LoginModal';
 import { Recommendations } from './components/Recommendations/Recommendations';
 import { DashboardResults } from './components/Results/DashboardResults';
-import { Routes, Route, useNavigate, useLocation, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate, useParams, useSearchParams } from 'react-router-dom';
 
 export enum AppState {
   INTRO = 'INTRO',
@@ -45,8 +45,8 @@ const App: React.FC = () => {
   const location = useLocation();
   const [appState, setAppState] = useState<AppState>(() => {
     const path = window.location.pathname;
-    if (path === '/results') return AppState.RESULTS;
-    if (path === '/recommendations') return AppState.RECOMMENDATIONS;
+    if (path === '/results') return AppState.DASHBOARD_RESULTS;
+    if (path.startsWith('/results/')) return AppState.RESULTS;
     if (path === '/dashboard') return AppState.DASHBOARD_RESULTS;
     if (path.startsWith('/survey/')) return AppState.SURVEY;
     return AppState.INTRO;
@@ -56,9 +56,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const path = location.pathname;
     if (path === '/') setAppState(AppState.INTRO);
-    else if (path === '/results') setAppState(AppState.RESULTS);
+    else if (path === '/results') setAppState(AppState.DASHBOARD_RESULTS);
+    else if (path.startsWith('/results/')) setAppState(AppState.RESULTS);
     else if (path === '/recommendations') setAppState(AppState.RECOMMENDATIONS);
-    else if (path === '/dashboard') setAppState(AppState.DASHBOARD_RESULTS);
+    else if (path === '/history' || path === '/dashboard') setAppState(AppState.DASHBOARD_RESULTS);
     else if (path.startsWith('/survey/')) setAppState(AppState.SURVEY);
   }, [location.pathname]);
 
@@ -84,8 +85,18 @@ const App: React.FC = () => {
   const [currentSurvey, setCurrentSurvey] = useState<SurveyDefinition | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>(() => ProfileService.getProfiles());
+  const [activeProfileId, setActiveProfileId] = useState<string | null>(() => {
+    const loadedProfiles = ProfileService.getProfiles();
+    const storedProfileId = localStorage.getItem('neuroprofile_active_profile_id');
+    if (storedProfileId && loadedProfiles.some(p => p.id === storedProfileId)) {
+      return storedProfileId;
+    } else if (loadedProfiles.length > 0) {
+      return loadedProfiles[0].id;
+    }
+    return null;
+  });
+  const [backendRecommendations, setBackendRecommendations] = useState<Record<string, string>>({});
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [loginModalConfig, setLoginModalConfig] = useState<{ title?: string, description?: string }>({});
 
@@ -127,6 +138,8 @@ const App: React.FC = () => {
   const [importingAnswers, setImportingAnswers] = useState<Record<string, Answer> | null>(null);
   const [hasExistingResults, setHasExistingResults] = useState<boolean>(false);
 
+  const initialLoadRef = useRef(false);
+
   // Initialize
   useEffect(() => {
     let storedUserId = localStorage.getItem('neuroprofile_user_id');
@@ -135,16 +148,7 @@ const App: React.FC = () => {
       localStorage.setItem('neuroprofile_user_id', storedUserId);
     }
 
-    // Load profiles
-    const loadedProfiles = ProfileService.getProfiles();
-    setProfiles(loadedProfiles);
-
-    const storedProfileId = localStorage.getItem('neuroprofile_active_profile_id');
-    if (storedProfileId && loadedProfiles.some(p => p.id === storedProfileId)) {
-      setActiveProfileId(storedProfileId);
-    } else if (loadedProfiles.length > 0) {
-      setActiveProfileId(loadedProfiles[0].id);
-    }
+    // Initial profiles state already set in constructor/useState
 
     // Show login modal on entry if not authenticated
     const savedAuth = localStorage.getItem('auth_token');
@@ -196,18 +200,34 @@ const App: React.FC = () => {
       }
 
       // Check if user already has results on backend
-      ProfileService.loadResultFromBackend().then(result => {
-        if (result && result.answers) {
-          setAnswers(result.answers);
-          setHasExistingResults(true);
-        } else {
-          setHasExistingResults(false);
-        }
-      });
+      if (!initialLoadRef.current) {
+        initialLoadRef.current = true;
+        ProfileService.loadResultFromBackend().then(result => {
+          if (result && result.answers) {
+            setAnswers(result.answers);
+            setHasExistingResults(true);
+
+            if (result.gemini_recommendations) {
+              setBackendRecommendations(
+                typeof result.gemini_recommendations === 'string'
+                  ? { [result.test_type || 'unknown']: result.gemini_recommendations }
+                  : result.gemini_recommendations
+              );
+            }
+          } else {
+            setHasExistingResults(false);
+          }
+        }).catch(err => {
+          console.error('[App] Failed to load results:', err);
+          initialLoadRef.current = false;
+        });
+      }
     } else {
       setHasExistingResults(false);
+      setBackendRecommendations({});
+      initialLoadRef.current = false;
     }
-  }, [user, activeSurveyId]);
+  }, [user]); // Removed activeSurveyId from deps to avoid multiple loads when it changes
 
   // One-time cleanup: Deduplicate profiles by ID if they somehow got duplicated
   useEffect(() => {
@@ -472,7 +492,7 @@ const App: React.FC = () => {
       case AppState.INTRO: navigate('/'); break;
       case AppState.RESULTS: navigate('/results'); break;
       case AppState.RECOMMENDATIONS: navigate('/recommendations'); break;
-      case AppState.DASHBOARD_RESULTS: navigate('/dashboard'); break;
+      case AppState.DASHBOARD_RESULTS: navigate('/results'); break;
       case AppState.SURVEY: navigate(`/survey/${activeSurveyId}`); break;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -670,12 +690,24 @@ const App: React.FC = () => {
                 isLoading={isLoading}
                 surveyProgress={surveyProgress}
                 hasExistingResults={hasExistingResults}
-                onShowResults={() => navigate('/results')}
+                backendRecommendations={backendRecommendations}
+                onShowResults={(sid) => navigate(`/results/${activeProfileId}${sid ? `?surveyId=${sid}` : ''}`)}
               />
             </>
           } />
 
-          <Route path="/results/:profileId?" element={
+           <Route path="/results" element={
+            <DashboardResults
+              profiles={profiles}
+              onViewResult={(id, sid) => {
+                navigate(`/results/${id}${sid ? `?surveyId=${sid}` : ''}`);
+              }}
+              ui={ui}
+              language={language}
+            />
+          } />
+
+          <Route path="/results/:profileId" element={
             <ResultsWrapper
               profiles={profiles}
               onReset={(id) => handleRetake(id)}
@@ -685,19 +717,12 @@ const App: React.FC = () => {
               user={user}
               activeSurveyId={activeSurveyId}
               setActiveProfileId={setActiveProfileId}
+              backendRecommendations={backendRecommendations}
             />
           } />
 
-          <Route path="/dashboard" element={
-            <DashboardResults
-              profiles={profiles}
-              onViewResult={(id) => {
-                navigate(`/results/${id}`);
-              }}
-              ui={ui}
-              language={language}
-            />
-          } />
+          <Route path="/history" element={<Navigate to="/results" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/results" replace />} />
 
           <Route path="/recommendations" element={
             <Recommendations
@@ -753,8 +778,10 @@ const App: React.FC = () => {
 };
 
 
-const ResultsWrapper: React.FC<any> = ({ profiles, onReset, ui, lang, user, activeSurveyId, setActiveProfileId }) => {
+const ResultsWrapper: React.FC<any> = ({ profiles, onReset, ui, lang, user, activeSurveyId, setActiveProfileId, backendRecommendations }) => {
   const { profileId } = useParams();
+  const [searchParams] = useSearchParams();
+  const surveyIdFromQuery = searchParams.get('surveyId');
   const navigate = useNavigate();
 
   const profile = useMemo(() => {
@@ -784,7 +811,8 @@ const ResultsWrapper: React.FC<any> = ({ profiles, onReset, ui, lang, user, acti
       lang={lang}
       filenamePrefix={`${profile.name || 'anonymous'}_${ProfileService.getProfileTypeLabel(profile.type, lang) || 'unknown'}`}
       user={user}
-      surveyId={profile.surveyId || activeSurveyId}
+      surveyId={surveyIdFromQuery || profile.surveyId || activeSurveyId}
+      initialRecommendations={backendRecommendations}
     />
   );
 };

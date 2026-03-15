@@ -13,17 +13,23 @@ def get_db():
     if not database_url:
         db_user = os.getenv("DB_USER", "user")
         db_password = os.getenv("DB_PASSWORD", "password")
-        db_name = os.getenv("DB_NAME", "lugabus")
+        db_name = os.getenv("DB_NAME", "postgres")
         db_host = os.getenv("DB_HOST", "host.docker.internal")
-        db_port = os.getenv("LOCAL_DB_PORT", "5432")
+        db_port = os.getenv("DB_PORT", os.getenv("LOCAL_DB_PORT", "5432"))
         database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
         
-    try:
-        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-        return conn
-    except Exception as e:
-        logger.error(f"Could not connect to database: {e}")
-        raise e
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+            return conn
+        except Exception as e:
+            if i == max_retries - 1:
+                logger.error(f"Could not connect to database after {max_retries} attempts: {e}")
+                raise e
+            logger.warning(f"Database connection attempt {i+1} failed, retrying in 2s...")
+            import time
+            time.sleep(2)
 
 def init_db():
     try:

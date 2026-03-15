@@ -73,6 +73,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def add_coop_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    return response
+
 def verify_auth(auth_data: UserAuth) -> bool:
     """Verifies user authentication data or JWT token."""
     if not AUTH_SECRET:
@@ -305,15 +311,24 @@ async def save_result(data: SaveResult):
     file_path = get_result_file_path(user_id)
     
     # Check if we already have recommendations saved
-    existing_recs = ""
+    existing_recs = {}
     if os.path.exists(file_path):
         try:
             async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
                 content = await f.read()
                 existing_data = json.loads(content)
-                existing_recs = existing_data.get("gemini_recommendations", "")
-        except:
-            pass
+                recs = existing_data.get("gemini_recommendations", {})
+                if isinstance(recs, str):
+                    # Migrate old format
+                    if recs.strip():
+                        old_type = existing_data.get("test_type", "unknown")
+                        existing_recs = {old_type: recs}
+                    else:
+                        existing_recs = {}
+                else:
+                    existing_recs = recs
+        except Exception as e:
+            logger.error(f"Error reading existing file: {e}")
 
     result_data = {
         "username": data.auth_data.username,
@@ -358,7 +373,17 @@ async def analyze_result(data: SaveResult):
                     content = await f.read()
                     existing_data = json.loads(content)
                 
-                existing_data["gemini_recommendations"] = full_text
+                recs = existing_data.get("gemini_recommendations", {})
+                if isinstance(recs, str):
+                    # Migrate old format
+                    if recs.strip():
+                        old_type = existing_data.get("test_type", "unknown")
+                        recs = {old_type: recs}
+                    else:
+                        recs = {}
+                
+                recs[data.test_type] = full_text
+                existing_data["gemini_recommendations"] = recs
                 
                 async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
                     await f.write(json.dumps(existing_data, ensure_ascii=False, indent=2))

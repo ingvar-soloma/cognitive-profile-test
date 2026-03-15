@@ -4,6 +4,8 @@ import { SURVEY_DATA } from '../constants';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export class ProfileService {
+  private static loadPromise: Promise<any> | null = null;
+
   static async saveResultToBackend(profile: Profile, testType: string, scores: any, lang: Language) {
     const authDataString = localStorage.getItem('auth_token');
     if (!authDataString) {
@@ -37,6 +39,7 @@ export class ProfileService {
       });
 
       const result = await response.json();
+      this.loadPromise = null; // Invalidate cache on save
       console.log('[ProfileService] Save result response:', result);
       return result;
     } catch (e) {
@@ -90,49 +93,62 @@ export class ProfileService {
   }
 
   static async loadResultFromBackend() {
-    const authDataString = localStorage.getItem('auth_token');
-    if (!authDataString) return null;
+    if (this.loadPromise) return this.loadPromise;
 
-    try {
-      const authData = JSON.parse(authDataString);
-      const user = authData.user || authData;
+    this.loadPromise = (async () => {
+      const authDataString = localStorage.getItem('auth_token');
+      if (!authDataString) {
+        this.loadPromise = null;
+        return null;
+      }
 
-      if (!user || !user.id || user.error) {
-        if (user?.error) {
-          console.warn('[ProfileService] Auth contains error:', user.error);
+      try {
+        const authData = JSON.parse(authDataString);
+        const user = authData.user || authData;
+
+        if (!user || !user.id || user.error) {
+          if (user?.error) {
+            console.warn('[ProfileService] Auth contains error:', user.error);
+          }
+          this.loadPromise = null;
+          return null;
         }
+
+        console.log('[ProfileService] Loading result for user:', user.id);
+        const response = await fetch(`${API_BASE_URL}/api/me/result`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(user),
+        });
+
+        if (response.status === 401) {
+          console.warn('[ProfileService] 401 Unauthorized. Clearing invalid session.');
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('telegram_auth');
+          globalThis.dispatchEvent(new CustomEvent('auth-logout'));
+          this.loadPromise = null;
+          return null;
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[ProfileService] Loaded result:', data ? 'Success' : 'None');
+          return data;
+        }
+
+        console.error('[ProfileService] Load result failed:', response.status, response.statusText);
+        this.loadPromise = null;
+        return null;
+      } catch (e) {
+        console.error('[ProfileService] Failed to load from backend', e);
+        this.loadPromise = null;
         return null;
       }
+    })();
 
-      console.log('[ProfileService] Loading result for user:', user.id);
-      const response = await fetch(`${API_BASE_URL}/api/me/result`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(user),
-      });
-
-      if (response.status === 401) {
-        console.warn('[ProfileService] 401 Unauthorized. Clearing invalid session.');
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('telegram_auth');
-        globalThis.dispatchEvent(new CustomEvent('auth-logout'));
-        return null;
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('[ProfileService] Loaded result:', data ? 'Success' : 'None');
-        return data;
-      }
-
-      console.error('[ProfileService] Load result failed:', response.status, response.statusText);
-      return null;
-    } catch (e) {
-      console.error('[ProfileService] Failed to load from backend', e);
-      return null;
-    }
+    return this.loadPromise;
   }
 
   static async fetchAllResults() {

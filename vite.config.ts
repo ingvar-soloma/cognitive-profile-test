@@ -11,7 +11,11 @@ export default defineConfig(({ mode }) => {
     server: {
       port: Number.parseInt(env.VITE_PORT || '3000'),
       host: env.VITE_HOST || '0.0.0.0',
-      allowedHosts: (env.VITE_ALLOWED_HOSTS || 'localhost').split(',')
+      allowedHosts: (env.VITE_ALLOWED_HOSTS || 'localhost').split(','),
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+      }
     },
     plugins: [
       tailwindcss(),

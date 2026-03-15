@@ -28,52 +28,50 @@ export const SurveyTimer: React.FC<SurveyTimerProps> = ({ totalQuestions, answer
     };
 
     useEffect(() => {
+        let rawRemaining = 0;
+        let factor = 0.005;
+
         if (answeredCount > 0) {
             const avgTimePerQuestion = elapsedSeconds / answeredCount;
             const remainingQuestions = totalQuestions - answeredCount;
-            const rawRemaining = avgTimePerQuestion * remainingQuestions;
-
-            if (smoothedRemaining === null) {
-                setSmoothedRemaining(rawRemaining);
-            } else {
-                // Smoothly adjust the prediction (Dampened EMA for stability)
-                // We use a very high smoothing factor to make it change SLOWLY as requested
-                setSmoothedRemaining(prev => prev! * 0.995 + rawRemaining * 0.005);
-            }
+            rawRemaining = avgTimePerQuestion * remainingQuestions;
+            factor = 0.005; // EMA factor for answered
         } else if (totalQuestions > 0) {
-            // Hard estimate if no questions answered yet (e.g. 15 seconds per question)
-            const rawRemaining = 15 * totalQuestions;
-            if (smoothedRemaining === null) {
-                setSmoothedRemaining(rawRemaining);
-            } else {
-                setSmoothedRemaining(prev => prev! * 0.998 + rawRemaining * 0.002);
-            }
+            rawRemaining = 15 * totalQuestions;
+            factor = 0.002; // Slower EMA factor for initial estimate
+        } else {
+            return;
         }
-    }, [elapsedSeconds, answeredCount, totalQuestions, smoothedRemaining]);
+
+        setSmoothedRemaining(prev => {
+            if (prev === null) return rawRemaining;
+            return prev * (1 - factor) + rawRemaining * factor;
+        });
+    }, [elapsedSeconds, answeredCount, totalQuestions]);
 
     return (
-        <div className="flex flex-wrap gap-4 mb-6 p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-stone-line shadow-sm transition-all duration-500">
+        <div className="flex flex-wrap gap-4 mb-6 p-4 bg-white/70 dark:bg-brand-graphite/40 backdrop-blur-md rounded-2xl border border-stone-line dark:border-white/10 shadow-sm transition-all duration-500">
             <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-brand-blue/10 rounded-lg">
-                    <Timer className="w-4 h-4 text-brand-blue" />
+                <div className="p-2 bg-brand-ink/10 dark:bg-brand-ink/30 rounded-lg">
+                    <Timer className="w-4 h-4 text-brand-ink dark:text-brand-clay" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-[0.1em]">{ui.timeSpent}</span>
-                    <span className="text-sm font-bold text-brand-graphite dark:text-brand-paper tabular-nums">
+                    <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-[0.1em]">{ui.timeSpent}</span>
+                    <span className="text-sm font-bold text-brand-graphite dark:text-white tabular-nums">
                         {formatTime(elapsedSeconds)}
                     </span>
                 </div>
             </div>
 
-            <div className="w-px h-10 bg-stone-line hidden sm:block mx-2" />
+            <div className="w-px h-10 bg-stone-line dark:bg-white/10 hidden sm:block mx-2" />
 
             <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-brand-green/10 rounded-lg">
-                    <Clock className="w-4 h-4 text-brand-green" />
+                <div className="p-2 bg-brand-clay/10 dark:bg-brand-clay/30 rounded-lg">
+                    <Clock className="w-4 h-4 text-brand-clay dark:text-brand-ink/90" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-[0.1em]">{ui.predictedTime}</span>
-                    <span className="text-sm font-bold text-brand-graphite dark:text-brand-paper tabular-nums transition-all duration-1000">
+                    <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-[0.1em]">{ui.predictedTime}</span>
+                    <span className="text-sm font-bold text-brand-graphite dark:text-white tabular-nums transition-all duration-1000">
                         {smoothedRemaining !== null ? formatTime(Math.round(smoothedRemaining)) : '...'}
                     </span>
                 </div>

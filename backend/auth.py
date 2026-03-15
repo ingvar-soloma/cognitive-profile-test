@@ -46,6 +46,7 @@ async def create_guest_session():
 @router.post("/auth/google/exchange")
 async def exchange_google_code(req: GoogleExchangeRequest):
     client_id = os.getenv("VITE_GOOGLE_CLIENT_ID", "")
+    logger.info(f"Exchanging Google code. Client ID: {client_id[:10]}... Length: {len(req.credential)}")
     try:
         idinfo = id_token.verify_oauth2_token(req.credential, requests.Request(), client_id, clock_skew_in_seconds=10)
         
@@ -112,5 +113,8 @@ async def exchange_google_code(req: GoogleExchangeRequest):
 
         return auth_data
     except Exception as e:
-        logger.error(f"Google verification failed: {e}")
-        raise HTTPException(status_code=400, detail="Invalid Google token")
+        logger.error(f"Google verification failed: {str(e)}")
+        # Log more details to help debugging
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=400, detail=f"Invalid Google token: {str(e)}")

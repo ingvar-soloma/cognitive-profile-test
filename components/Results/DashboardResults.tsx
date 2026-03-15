@@ -5,14 +5,28 @@ import { AVAILABLE_SURVEYS } from '@/constants';
 
 interface DashboardResultsProps {
     profiles: Profile[];
-    onViewResult: (profileId: string) => void;
+    onViewResult: (profileId: string, surveyId: string) => void;
     ui: UIStrings;
     language: 'uk' | 'en' | 'ru';
 }
 
 export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, onViewResult, ui, language }) => {
-    // Filter only profiles that have some answers
-    const completedProfiles = profiles.filter(p => Object.keys(p.answers).length > 0);
+    const surveyResults = profiles.flatMap(profile => {
+        // Find which surveys have answers in this profile, excluding sub-tests
+        return AVAILABLE_SURVEYS
+            .filter(survey => {
+                const isSubTest = survey.id === 'sensory_only' || survey.id === 'processes_only' || survey.id === 'strategies_only';
+                if (isSubTest) return false;
+                
+                const questions = survey.categories.flatMap(c => c.questions);
+                return questions.some(q => profile.answers[q.id]);
+            })
+            .map(survey => ({
+                profile,
+                survey,
+                answerCount: survey.categories.flatMap(c => c.questions).filter(q => profile.answers[q.id]).length
+            }));
+    });
 
     return (
         <div className="animate-fade-in text-left">
@@ -26,7 +40,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                 </div>
             </div>
 
-            {completedProfiles.length === 0 ? (
+            {surveyResults.length === 0 ? (
                 <div className="card-editorial p-10 md:p-16 text-center">
                     <div className="w-16 h-16 bg-stone-bg border border-stone-line rounded-full flex items-center justify-center mx-auto mb-6 text-stone-200">
                         <FileText className="w-8 h-8" />
@@ -41,14 +55,11 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                 </div>
             ) : (
                 <div className="grid gap-5">
-                    {completedProfiles.map(profile => {
-                        const survey = AVAILABLE_SURVEYS.find(s => s.id === profile.surveyId);
-                        const answerCount = Object.keys(profile.answers).length;
-
+                    {surveyResults.map(({ profile, survey, answerCount }) => {
                         return (
                             <button
-                                key={profile.id}
-                                onClick={() => onViewResult(profile.id)}
+                                key={`${profile.id}_${survey.id}`}
+                                onClick={() => onViewResult(profile.id, survey.id)}
                                 className="flex items-center justify-between p-6 bg-brand-paper-accent border border-stone-line rounded-[2rem] shadow-card hover:shadow-soft hover:border-brand-ink/30 transition-all text-left group"
                             >
                                 <div className="flex items-center gap-5">
