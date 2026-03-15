@@ -74,6 +74,7 @@ export interface LocalizedScaleConfig {
 
 export interface SurveyDefinition {
   id: string;
+  parentId?: string;
   disabled?: boolean;
   title: LocalizedString;
   description?: LocalizedString;
@@ -158,6 +159,21 @@ export interface UIStrings {
   gdprText: string;
   contactTitle: string;
   contactText: string;
+  privacyPolicy: string;
+  dataUsage: string;
+  deleteData: string;
+  emailTemplateTitle: string;
+  emailTemplateBody: string;
+  dataFromGoogle: string;
+  deleteDataDesc: string;
+  contactAdmin: string;
+  principles: string;
+  anonymity: string;
+  anonymityDesc: string;
+  security: string;
+  securityDesc: string;
+  transparency: string;
+  transparencyDesc: string;
   accept: string;
   consentTitle: string;
   consentCheckbox: string;
@@ -224,7 +240,7 @@ export interface Profile {
   id: string;
   name: string;
   type?: ProfileType; // Based on results
-  answers: Record<string, Answer>;
+  answers: Record<string, Record<string, Answer>>; // surveyId -> questions
   lastUpdated: string;
   surveyId: string;
 }

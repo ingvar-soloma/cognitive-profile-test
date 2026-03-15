@@ -16,6 +16,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/Auth/LoginModal';
 import { Recommendations } from './components/Recommendations/Recommendations';
 import { DashboardResults } from './components/Results/DashboardResults';
+import { PrivacyPolicy } from './components/Legal/PrivacyPolicy';
 import { Routes, Route, useNavigate, useLocation, Navigate, useParams, useSearchParams } from 'react-router-dom';
 
 export enum AppState {
@@ -24,6 +25,7 @@ export enum AppState {
   RESULTS = 'RESULTS',
   RECOMMENDATIONS = 'RECOMMENDATIONS',
   DASHBOARD_RESULTS = 'DASHBOARD_RESULTS',
+  USERS = 'USERS',
 }
 
 const LOCAL_STORAGE_KEY = 'neuroprofile_survey_state';
@@ -46,6 +48,7 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => {
     const path = window.location.pathname;
     if (path === '/results') return AppState.DASHBOARD_RESULTS;
+    if (path === '/users') return AppState.USERS;
     if (path.startsWith('/results/')) return AppState.RESULTS;
     if (path === '/dashboard') return AppState.DASHBOARD_RESULTS;
     if (path.startsWith('/survey/')) return AppState.SURVEY;
@@ -60,6 +63,8 @@ const App: React.FC = () => {
     else if (path.startsWith('/results/')) setAppState(AppState.RESULTS);
     else if (path === '/recommendations') setAppState(AppState.RECOMMENDATIONS);
     else if (path === '/history' || path === '/dashboard') setAppState(AppState.DASHBOARD_RESULTS);
+    else if (path === '/users') setAppState(AppState.USERS);
+    else if (path === '/privacy') setAppState(AppState.INTRO); // Or a new state if needed, but INTRO/NONE is fine
     else if (path.startsWith('/survey/')) setAppState(AppState.SURVEY);
   }, [location.pathname]);
 
@@ -99,6 +104,7 @@ const App: React.FC = () => {
   const [backendRecommendations, setBackendRecommendations] = useState<Record<string, string>>({});
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [loginModalConfig, setLoginModalConfig] = useState<{ title?: string, description?: string }>({});
+  const [adminResults, setAdminResults] = useState<any[]>([]);
 
   // Sync activeSurveyId from URL if in survey mode
   useEffect(() => {
@@ -132,7 +138,7 @@ const App: React.FC = () => {
   const isAdmin = useMemo(() => {
     if (!user) return false;
     const adminIds = (import.meta.env.VITE_ADMIN_USER_IDS || import.meta.env.VITE_ADMIN_TELEGRAM_IDS || '').split(',');
-    return adminIds.includes(String(user.id));
+    return adminIds.some(id => String(id).trim() === String(user.id).trim());
   }, [user]);
 
   const [importingAnswers, setImportingAnswers] = useState<Record<string, Answer> | null>(null);
@@ -149,12 +155,6 @@ const App: React.FC = () => {
     }
 
     // Initial profiles state already set in constructor/useState
-
-    // Show login modal on entry if not authenticated
-    const savedAuth = localStorage.getItem('auth_token');
-    if (!savedAuth) {
-      setTimeout(() => setShowLoginModal(true), 1500);
-    }
 
     // Login Listener
     const handleLogin = (e: any) => {
@@ -204,8 +204,24 @@ const App: React.FC = () => {
         initialLoadRef.current = true;
         ProfileService.loadResultFromBackend().then(result => {
           if (result && result.answers) {
-            setAnswers(result.answers);
+            // result.answers is now keyed by test_type from backend migration
             setHasExistingResults(true);
+
+            // Merge into local profiles
+            setProfiles(prev => {
+              const next = [...prev];
+              const idx = next.findIndex(p => p.id === userProfileId);
+              if (idx !== -1) {
+                next[idx].answers = result.answers;
+                ProfileService.saveProfiles(next);
+              }
+              return next;
+            });
+
+            // Set current answers buffer
+            if (activeSurveyId && result.answers[activeSurveyId]) {
+              setAnswers(result.answers[activeSurveyId]);
+            }
 
             if (result.gemini_recommendations) {
               setBackendRecommendations(
@@ -316,23 +332,23 @@ const App: React.FC = () => {
     window.location.reload(); // Hard reload to clear all states and re-trigger initial modal
   };
 
-  // Load answers from active profile
+  // Load answers from active profile for current survey
   useEffect(() => {
     if (activeProfileId) {
       const profile = profiles.find(p => p.id === activeProfileId);
       if (profile) {
-        setAnswers(profile.answers);
+        setAnswers(profile.answers[activeSurveyId] || {});
         localStorage.setItem('neuroprofile_active_profile_id', activeProfileId);
       }
     }
-  }, [activeProfileId]);
+  }, [activeProfileId, activeSurveyId]);
 
   useEffect(() => {
     // Save state whenever it changes
     if (activeProfileId && Object.keys(answers).length > 0) {
-      ProfileService.updateProfile(activeProfileId, answers);
+      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers);
     }
-  }, [answers, activeProfileId]);
+  }, [answers, activeProfileId, activeSurveyId]);
 
   useEffect(() => {
     // Warn on exit if in survey
@@ -412,7 +428,14 @@ const App: React.FC = () => {
     AVAILABLE_SURVEYS.forEach(survey => {
       const questions = survey.categories.flatMap(c => c.questions);
       const total = questions.length;
-      const answered = questions.filter(q => isQuestionAnswered(q, activeProfile.answers[q.id])).length;
+      
+      // Merge answers from self and parent (if any) to show unified progress
+      let surveyAnswers = { ...(activeProfile.answers[survey.id] || {}) };
+      if (survey.parentId && activeProfile.answers[survey.parentId]) {
+        surveyAnswers = { ...activeProfile.answers[survey.parentId], ...surveyAnswers };
+      }
+
+      const answered = questions.filter(q => isQuestionAnswered(q, surveyAnswers[q.id])).length;
       progress[survey.id] = {
         answered,
         total,
@@ -441,7 +464,7 @@ const App: React.FC = () => {
 
       // Update profile immediately
       if (activeProfileId) {
-        ProfileService.updateProfile(activeProfileId, newAnswers);
+        ProfileService.updateProfile(activeProfileId, activeSurveyId, newAnswers);
         setProfiles(ProfileService.getProfiles());
       }
 
@@ -493,6 +516,7 @@ const App: React.FC = () => {
       case AppState.RESULTS: navigate('/results'); break;
       case AppState.RECOMMENDATIONS: navigate('/recommendations'); break;
       case AppState.DASHBOARD_RESULTS: navigate('/results'); break;
+      case AppState.USERS: navigate('/users'); break;
       case AppState.SURVEY: navigate(`/survey/${activeSurveyId}`); break;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -514,7 +538,7 @@ const App: React.FC = () => {
       setCurrentCategoryIndex((prev) => prev + 1);
     } else {
       if (activeProfileId) {
-        ProfileService.updateProfile(activeProfileId, answers);
+        ProfileService.updateProfile(activeProfileId, activeSurveyId, answers);
         setProfiles(ProfileService.getProfiles());
         navigate(`/results/${activeProfileId}`);
       } else {
@@ -533,7 +557,7 @@ const App: React.FC = () => {
     }
 
     if (targetId) {
-      ProfileService.updateProfile(targetId, loadedAnswers);
+      ProfileService.updateProfile(targetId, activeSurveyId, loadedAnswers);
       setProfiles(ProfileService.getProfiles());
       if (targetId === activeProfileId) {
         setAnswers(loadedAnswers);
@@ -631,9 +655,12 @@ const App: React.FC = () => {
   };
 
   const handleViewAdminResult = (result: any) => {
-    if (result.answers) {
-      setAnswers(result.answers);
-      setAppState(AppState.RESULTS);
+    // result here is either the full object or we just need the userId and test_type
+    const userId = result.user_id;
+    const testType = result.test_type;
+    
+    if (userId && testType) {
+        navigate(`/results/admin?userId=${userId}&surveyId=${testType}`);
     }
   };
 
@@ -652,21 +679,14 @@ const App: React.FC = () => {
         onDownloadProgress={downloadProgress}
         onNavigate={handleNavigate}
         onLogout={handleLogout}
+        isAdmin={isAdmin}
       />
 
-      <main className={`${location.pathname === '/results' ? 'max-w-5xl' : 'max-w-3xl'} mx-auto p-4 md:p-8 transition-all duration-500`}>
+      <main className="max-w-6xl mx-auto p-4 md:p-8 transition-all duration-500">
         <Routes>
           <Route path="/" element={
             <>
-              {(isAdmin) && (
-                <AdminDashboard
-                  ui={ui}
-                  lang={language}
-                  onViewResult={handleViewAdminResult}
-                />
-              )}
-
-              {(!user || isAdmin) && (
+              {isAdmin && (
                 <ProfileManager
                   profiles={profiles}
                   activeProfileId={activeProfileId}
@@ -700,10 +720,17 @@ const App: React.FC = () => {
             <DashboardResults
               profiles={profiles}
               onViewResult={(id, sid) => {
-                navigate(`/results/${id}${sid ? `?surveyId=${sid}` : ''}`);
+                if (id === 'ADMIN_OBJECT') {
+                  handleViewAdminResult(sid); // sid contains the admin result object
+                } else {
+                  navigate(`/results/${id}${sid ? `?surveyId=${sid}` : ''}`);
+                }
               }}
               ui={ui}
               language={language}
+              isAdmin={isAdmin}
+              adminResults={adminResults}
+              onSetAdminResults={setAdminResults}
             />
           } />
 
@@ -718,6 +745,7 @@ const App: React.FC = () => {
               activeSurveyId={activeSurveyId}
               setActiveProfileId={setActiveProfileId}
               backendRecommendations={backendRecommendations}
+              adminResults={adminResults}
             />
           } />
 
@@ -751,6 +779,22 @@ const App: React.FC = () => {
             />
           } />
 
+          <Route path="/users" element={
+            isAdmin ? (
+                <AdminDashboard
+                  ui={ui}
+                  lang={language}
+                  onViewResult={handleViewAdminResult}
+                  results={adminResults}
+                  onSetResults={setAdminResults}
+                />
+            ) : <Navigate to="/" replace />
+          } />
+
+          <Route path="/privacy" element={
+            <PrivacyPolicy ui={ui} language={language} />
+          } />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -778,25 +822,87 @@ const App: React.FC = () => {
 };
 
 
-const ResultsWrapper: React.FC<any> = ({ profiles, onReset, ui, lang, user, activeSurveyId, setActiveProfileId, backendRecommendations }) => {
+const ResultsWrapper: React.FC<any> = ({ 
+  profiles, 
+  onReset, 
+  ui, 
+  lang, 
+  user, 
+  activeSurveyId, 
+  setActiveProfileId, 
+  backendRecommendations, 
+  adminResults = [] 
+}) => {
   const { profileId } = useParams();
   const [searchParams] = useSearchParams();
   const surveyIdFromQuery = searchParams.get('surveyId');
+  const userIdFromQuery = searchParams.get('userId');
   const navigate = useNavigate();
 
+  const [adminProfile, setAdminProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(profileId === 'admin' ? true : false);
+
+  useEffect(() => {
+    if (userIdFromQuery && profileId === 'admin') {
+      // 1. Try to find in adminResults first
+      const cached = adminResults.find(r => r.user_id === userIdFromQuery && (r.test_type === surveyIdFromQuery || !surveyIdFromQuery));
+      if (cached) {
+         setAdminProfile({
+            id: 'admin',
+            name: `${cached.first_name} ${cached.last_name || ''}`,
+            answers: cached.answers,
+            surveyId: surveyIdFromQuery || cached.test_type,
+            type: cached.scores?.Visual ? ProfileService.getProfileType(cached.scores.Visual) : undefined,
+            recommendations: cached.gemini_recommendations
+         });
+         setLoading(false);
+         return;
+      }
+
+      // 2. Fallback to fetch
+      setAdminProfile(null);
+      setLoading(true);
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/results?user_id=${user?.id}&hash=${user?.hash}&target_user_id=${userIdFromQuery}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            const result = data[0];
+            setAdminProfile({
+              id: 'admin',
+              name: `${result.first_name} ${result.last_name || ''}`,
+              answers: result.answers,
+              surveyId: surveyIdFromQuery || result.test_type,
+              type: result.scores?.Visual ? ProfileService.getProfileType(result.scores.Visual) : undefined,
+              recommendations: result.gemini_recommendations
+            });
+          }
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [userIdFromQuery, profileId, user, adminResults]);
+
   const profile = useMemo(() => {
+    if (profileId === 'admin') return adminProfile;
     if (profileId) {
       return profiles.find((p: any) => p.id === profileId);
     }
     const activeId = localStorage.getItem('neuroprofile_active_profile_id');
     return profiles.find((p: any) => p.id === activeId);
-  }, [profileId, profiles]);
+  }, [profileId, profiles, adminProfile]);
 
   useEffect(() => {
-    if (profile && profile.id !== localStorage.getItem('neuroprofile_active_profile_id')) {
+    if (profile && profile.id !== 'admin' && profile.id !== localStorage.getItem('neuroprofile_active_profile_id')) {
       setActiveProfileId(profile.id);
     }
   }, [profile, setActiveProfileId]);
+
+  if (loading || (profileId === 'admin' && !adminProfile)) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-ink"></div>
+      </div>
+    );
+  }
 
   if (!profile) {
     return <Navigate to="/" replace />;
@@ -804,15 +910,16 @@ const ResultsWrapper: React.FC<any> = ({ profiles, onReset, ui, lang, user, acti
 
   return (
     <Results
+      key={`${profile.id}_${userIdFromQuery || ''}_${surveyIdFromQuery || ''}`}
       answers={profile.answers}
       onReset={() => onReset(profile.id)}
       onGoHome={() => navigate('/')}
       ui={ui}
       lang={lang}
-      filenamePrefix={`${profile.name || 'anonymous'}_${ProfileService.getProfileTypeLabel(profile.type, lang) || 'unknown'}`}
+      filenamePrefix={userIdFromQuery ? `${profile.name || 'user'}_${userIdFromQuery}` : `${profile.name || 'anonymous'}_results`}
       user={user}
       surveyId={surveyIdFromQuery || profile.surveyId || activeSurveyId}
-      initialRecommendations={backendRecommendations}
+      initialRecommendations={profile.recommendations || (userIdFromQuery ? {} : backendRecommendations)}
     />
   );
 };

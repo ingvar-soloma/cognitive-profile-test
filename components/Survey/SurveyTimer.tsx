@@ -50,28 +50,28 @@ export const SurveyTimer: React.FC<SurveyTimerProps> = ({ totalQuestions, answer
     }, [elapsedSeconds, answeredCount, totalQuestions]);
 
     return (
-        <div className="flex flex-wrap gap-4 mb-6 p-4 bg-white/70 dark:bg-brand-graphite/40 backdrop-blur-md rounded-2xl border border-stone-line dark:border-white/10 shadow-sm transition-all duration-500">
-            <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-brand-ink/10 dark:bg-brand-ink/30 rounded-lg">
-                    <Timer className="w-4 h-4 text-brand-ink dark:text-brand-clay" />
+        <div className="flex flex-wrap items-center gap-6 mb-12 p-5 bg-brand-paper-accent/40 dark:bg-stone-bg/30 backdrop-blur-xl rounded-2xl border border-stone-line dark:border-white/5 shadow-sm transition-all duration-500">
+            <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 flex items-center justify-center bg-brand-ink/5 dark:bg-brand-ink/10 rounded-xl border border-brand-ink/10">
+                    <Timer className="w-5 h-5 text-brand-ink" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-[0.1em]">{ui.timeSpent}</span>
-                    <span className="text-sm font-bold text-brand-graphite dark:text-white tabular-nums">
+                    <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">{ui.timeSpent}</span>
+                    <span className="text-base font-bold text-brand-graphite dark:text-white tabular-nums leading-tight">
                         {formatTime(elapsedSeconds)}
                     </span>
                 </div>
             </div>
 
-            <div className="w-px h-10 bg-stone-line dark:bg-white/10 hidden sm:block mx-2" />
+            <div className="w-px h-10 bg-gradient-to-b from-transparent via-stone-line dark:via-white/10 to-transparent hidden sm:block" />
 
-            <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-brand-clay/10 dark:bg-brand-clay/30 rounded-lg">
-                    <Clock className="w-4 h-4 text-brand-clay dark:text-brand-ink/90" />
+            <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 flex items-center justify-center bg-brand-clay/5 dark:bg-brand-clay/10 rounded-xl border border-brand-clay/10">
+                    <Clock className="w-5 h-5 text-brand-clay" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-[0.1em]">{ui.predictedTime}</span>
-                    <span className="text-sm font-bold text-brand-graphite dark:text-white tabular-nums transition-all duration-1000">
+                    <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">{ui.predictedTime}</span>
+                    <span className="text-base font-bold text-brand-graphite dark:text-white tabular-nums transition-all duration-1000 leading-tight">
                         {smoothedRemaining !== null ? formatTime(Math.round(smoothedRemaining)) : '...'}
                     </span>
                 </div>

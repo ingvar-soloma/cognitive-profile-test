@@ -58,6 +58,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'sensory_only',
+    parentId: 'full_aphantasia_profile',
     title: {
       uk: '↳ Тільки Сенсорна Уява',
       en: '↳ Sensory Imagination Only',
@@ -83,6 +84,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'processes_only',
+    parentId: 'full_aphantasia_profile',
     title: {
       uk: '↳ Тільки Процеси Уяви',
       en: '↳ Imagination Processes Only',
@@ -108,6 +110,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'strategies_only',
+    parentId: 'full_aphantasia_profile',
     title: {
       uk: '↳ Тільки Стратегії та Пам\'ять',
       en: '↳ Strategies and Memory Only',

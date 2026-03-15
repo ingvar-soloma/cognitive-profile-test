@@ -38,7 +38,17 @@ export const Results: React.FC<ResultsProps> = ({
   const [isSaving, setIsSaving] = React.useState(false);
   const [showActions, setShowActions] = React.useState(false);
 
-  const calculateCategoryScore = (subCatKey: string) => ProfileService.calculateCategoryScore(answers, subCatKey);
+  const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
+  const surveyAnswers = React.useMemo(() => {
+    if (!currentSurvey) return answers;
+    // Check if answers follow the new nested structure { surveyId: { questionId: Answer } }
+    if (answers[currentSurvey.id] && typeof answers[currentSurvey.id] === 'object' && !('questionId' in answers[currentSurvey.id])) {
+      return (answers[currentSurvey.id] as unknown) as Record<string, Answer>;
+    }
+    return answers;
+  }, [answers, currentSurvey]);
+
+  const calculateCategoryScore = (subCatKey: string) => ProfileService.calculateCategoryScore(surveyAnswers, subCatKey);
 
   const hasAttemptedSave = React.useRef(false);
 
@@ -70,7 +80,7 @@ export const Results: React.FC<ResultsProps> = ({
 
         if (currentSurvey) {
           currentSurvey.categories.forEach(cat => {
-            scores[cat.id] = ProfileService.calculateCategoryScore(answers, cat.title.en);
+            scores[cat.id] = ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en);
           });
         }
 
@@ -116,7 +126,7 @@ export const Results: React.FC<ResultsProps> = ({
     saveAndGetRecs();
   }, [user, surveyId, survey]);
 
-  const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
+
 
   const radarData = React.useMemo(() => {
     if (!currentSurvey) return [];
@@ -126,7 +136,7 @@ export const Results: React.FC<ResultsProps> = ({
       return currentSurvey.categories.map(cat => ({
         key: cat.id,
         subject: cat.title[lang],
-        A: ProfileService.calculateCategoryScore(answers, cat.title.en),
+        A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
         fullMark: 5
       }));
     }
@@ -147,22 +157,23 @@ export const Results: React.FC<ResultsProps> = ({
       return Array.from(subCats).map(sc => ({
         key: sc,
         subject: subCatLabels[sc],
-        A: ProfileService.calculateCategoryScore(answers, sc),
+        A: ProfileService.calculateCategoryScore(surveyAnswers, sc),
         fullMark: 5
       }));
     }
 
-    // Fallback to the category itself
     return [{
       key: cat.id,
       subject: cat.title[lang],
-      A: ProfileService.calculateCategoryScore(answers, cat.title.en),
+      A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
       fullMark: 5
     }];
-  }, [currentSurvey, answers, lang]);
+  }, [currentSurvey, surveyAnswers, lang]);
 
   // Prepare textual answers for display
-  const textAnswers = (Object.values(answers) as Answer[]).filter(a => a.note && a.note.trim().length > 0);
+  const textAnswers = React.useMemo(() => {
+    return (Object.values(surveyAnswers) as Answer[]).filter(a => a.note && a.note.trim().length > 0);
+  }, [surveyAnswers]);
 
   const downloadFile = (extension: string) => {
     let content = "";
@@ -198,14 +209,17 @@ export const Results: React.FC<ResultsProps> = ({
     // Fallback or generic label for other tests
     if (radarData.length > 0) {
       const firstScore = radarData[0].A;
-      if (firstScore <= 2) return ui.profileAphantasia; // Approximate
+      if (firstScore <= 1.5) return ui.profileAphantasia;
+      if (firstScore <= 3) return ui.profileHypophantasia;
+      if (firstScore >= 4.5) return ui.profileHyperphantasia;
+      return ui.profilePhantasia;
     }
 
     return currentSurvey?.title[lang] || ui.resultsTitle;
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 animate-fade-in text-left">
+    <div className="animate-fade-in text-left">
       <div className="bg-brand-paper-accent/40 backdrop-blur-xl rounded-[2.5rem] border border-stone-line shadow-soft overflow-hidden mb-12">
         <div className="bg-gradient-to-br from-brand-ink to-[#4A3B6D] p-10 md:p-14 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
@@ -366,7 +380,7 @@ export const Results: React.FC<ResultsProps> = ({
                   </div>
                 ) : (
                   <div className="grid gap-8 md:grid-cols-2">
-                    {Object.values(answers).map((ans) => {
+                    {Object.values(surveyAnswers).map((ans: any) => {
                       const q = SURVEY_DATA.flatMap(c => c.questions).find(q => q.id === ans.questionId);
                       const isDrawing = q?.type === QuestionType.DRAWING && (ans.value as string)?.startsWith('data:image/');
                       const hasNote = ans.note && ans.note.trim() !== '';
@@ -382,11 +396,11 @@ export const Results: React.FC<ResultsProps> = ({
                           </div>
 
                           {isDrawing && (
-                            <div className="rounded-2xl overflow-hidden border border-stone-line bg-brand-paper/50 p-4 shadow-inner">
+                            <div className="rounded-2xl overflow-hidden border border-stone-line bg-white/50 dark:bg-stone-bg/20 p-4 shadow-inner">
                               <img
                                 src={ans.value as string}
                                 alt={q?.text[lang]}
-                                className="w-full h-auto max-h-[250px] object-contain mx-auto mix-blend-multiply dark:mix-blend-normal opacity-90 transition-transform hover:scale-105 duration-500"
+                                className="w-full h-auto max-h-[250px] object-contain mx-auto mix-blend-multiply dark:mix-blend-normal dark:invert dark:brightness-150 dark:hue-rotate-180 opacity-90 transition-transform hover:scale-105 duration-500"
                               />
                             </div>
                           )}
@@ -415,7 +429,15 @@ export const Results: React.FC<ResultsProps> = ({
                   <ShieldAlert className="w-4 h-4 text-brand-clay" />
                   <h5 className="font-bold uppercase tracking-[0.2em] text-[10px] text-brand-clay">{ui.disclaimerTitle}</h5>
                 </div>
-                <p className="opacity-80 font-sans italic">{ui.disclaimer}</p>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-brand-clay/5">
+                  <p className="opacity-80 font-sans italic">{ui.disclaimer}</p>
+                  <a 
+                    href="/privacy" 
+                    className="text-brand-ink hover:underline font-bold uppercase tracking-widest text-[9px] whitespace-nowrap"
+                  >
+                    {ui.privacyPolicy}
+                  </a>
+                </div>
               </div>
             </>
           )}

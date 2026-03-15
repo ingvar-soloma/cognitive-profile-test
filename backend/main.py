@@ -28,7 +28,7 @@ AUTH_SECRET = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_GROUP_ID = os.getenv("TELEGRAM_GROUP_ID")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-ADMIN_USER_IDS = os.getenv("ADMIN_USER_IDS", os.getenv("ADMIN_TELEGRAM_IDS", "")).split(",")
+ADMIN_USER_IDS = [id.strip() for id in os.getenv("ADMIN_USER_IDS", os.getenv("ADMIN_TELEGRAM_IDS", "")).split(",") if id.strip()]
 DATA_DIR = os.getenv("DATA_DIR", "/app/data/results")
 
 # Ensure data directory exists
@@ -96,6 +96,43 @@ def verify_auth(auth_data: UserAuth) -> bool:
         logger.error(f"JWT Verification failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid Session Token")
 
+
+def migrate_answers(flat_answers: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Migrates old flat answers to keyed answers."""
+    if not isinstance(flat_answers, dict):
+        return {}
+    
+    # Check if already migrated
+    if any(isinstance(v, dict) and "questionId" not in v for v in flat_answers.values()):
+         # Likely already keyed (nested dicts where outer keys are survey IDs)
+         return flat_answers
+
+    new_answers = {}
+    for q_id, ans in flat_answers.items():
+        # Determine test type from question ID
+        test_type = "full_aphantasia_profile"
+        if q_id.startswith("demo_"):
+            test_type = "express_demo"
+        
+        if test_type not in new_answers:
+            new_answers[test_type] = {}
+        new_answers[test_type][q_id] = ans
+    return new_answers
+
+def migrate_scores(flat_scores: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Migrates old flat scores to keyed scores."""
+    if not isinstance(flat_scores, dict):
+        return {}
+        
+    # Check if already migrated
+    if any(isinstance(v, dict) for v in flat_scores.values()):
+        return flat_scores
+
+    # Since old scores were usually for one test anyway, we'll assign them to the most likely test
+    # based on keys like 'demo'
+    has_demo = any("demo" in k.lower() for k in flat_scores.keys())
+    test_type = "express_demo" if has_demo else "full_aphantasia_profile"
+    return {test_type: flat_scores}
 
 async def get_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", **kwargs):
     if not client:
@@ -310,25 +347,40 @@ async def save_result(data: SaveResult):
     user_id = str(data.auth_data.id)
     file_path = get_result_file_path(user_id)
     
-    # Check if we already have recommendations saved
-    existing_recs = {}
+    # Check if we already have existing data
+    existing_data = {}
     if os.path.exists(file_path):
         try:
             async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
                 content = await f.read()
                 existing_data = json.loads(content)
-                recs = existing_data.get("gemini_recommendations", {})
-                if isinstance(recs, str):
-                    # Migrate old format
-                    if recs.strip():
-                        old_type = existing_data.get("test_type", "unknown")
-                        existing_recs = {old_type: recs}
-                    else:
-                        existing_recs = {}
-                else:
-                    existing_recs = recs
         except Exception as e:
             logger.error(f"Error reading existing file: {e}")
+
+    # Migrate Recommendations
+    recs = existing_data.get("gemini_recommendations", {})
+    if isinstance(recs, str):
+        if recs.strip():
+            old_type = existing_data.get("test_type", "unknown")
+            recs = {old_type: recs}
+        else:
+            recs = {}
+            
+    # Migrate Answers
+    all_answers = existing_data.get("answers", {})
+    # Detect flat answers (old format)
+    if all_answers and any(not isinstance(v, dict) for v in all_answers.values()):
+         all_answers = migrate_answers(all_answers)
+    
+    # Update answers for current test
+    all_answers[data.test_type] = data.answers
+    
+    # Migrate Scores
+    all_scores = existing_data.get("scores", {})
+    if all_scores and (not isinstance(all_scores, dict) or not any(isinstance(v, dict) for v in all_scores.values())):
+        all_scores = migrate_scores(all_scores)
+        
+    all_scores[data.test_type] = data.scores
 
     result_data = {
         "username": data.auth_data.username,
@@ -337,10 +389,10 @@ async def save_result(data: SaveResult):
         "last_name": data.auth_data.last_name,
         "photo_url": data.auth_data.photo_url,
         "auth_date": data.auth_data.auth_date,
-        "test_type": data.test_type,
-        "answers": data.answers,
-        "scores": data.scores,
-        "gemini_recommendations": existing_recs,
+        "test_type": data.test_type, # Keep for backward compat
+        "answers": all_answers,
+        "scores": all_scores,
+        "gemini_recommendations": recs,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
@@ -420,22 +472,89 @@ async def get_my_result(auth_data: UserAuth):
     
     async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
         content = await f.read()
-        return json.loads(content)
+        data = json.loads(content)
+        
+        # In-place migration for load
+        needs_update = False
+        
+        # Answers
+        ans = data.get("answers", {})
+        if ans and any(not isinstance(v, dict) for v in ans.values()):
+            data["answers"] = migrate_answers(ans)
+            needs_update = True
+            
+        # Scores
+        scores = data.get("scores", {})
+        if scores and (not isinstance(scores, dict) or not any(isinstance(v, dict) for v in scores.values())):
+            data["scores"] = migrate_scores(scores)
+            needs_update = True
+            
+        # Recs
+        recs = data.get("gemini_recommendations", {})
+        if isinstance(recs, str):
+            old_type = data.get("test_type", "unknown")
+            data["gemini_recommendations"] = {old_type: recs} if recs.strip() else {}
+            needs_update = True
+            
+        if needs_update:
+            try:
+                async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
+                    await f.write(json.dumps(data, ensure_ascii=False, indent=2))
+            except Exception as e:
+                logger.error(f"Failed to save migrated data: {e}")
+        
+        return data
 
 @app.get("/api/results", responses={403: {"description": "Not authorized as admin"}})
-async def get_results(user_id: str, hash: str):
+async def get_results(user_id: str, hash: str, q: Optional[str] = None, target_user_id: Optional[str] = None):
     # Check admin
     if user_id not in ADMIN_USER_IDS:
+        logger.warning(f"Unauthorized admin access attempt by user {user_id}")
         raise HTTPException(status_code=403, detail="Not authorized as admin")
     
-    # In a real app we'd verify auth here too, but following existing pattern for admin check
+    # In a real app we'd verify hash too, but following existing pattern
+    
     results = []
+    
+    # Optimization: if target_user_id is provided, just load that specific file
+    if target_user_id:
+        file_path = get_result_file_path(target_user_id)
+        if os.path.exists(file_path):
+            try:
+                async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
+                    content = await f.read()
+                    results.append(json.loads(content))
+            except Exception as e:
+                logger.error(f"Error reading specific result file {target_user_id}: {e}")
+        return results
+
     if os.path.exists(DATA_DIR):
         for filename in os.listdir(DATA_DIR):
             if filename.endswith(".json"):
-                async with aiofiles.open(os.path.join(DATA_DIR, filename), mode="r", encoding="utf-8") as f:
-                    content = await f.read()
-                    results.append(json.loads(content))
+                try:
+                    async with aiofiles.open(os.path.join(DATA_DIR, filename), mode="r", encoding="utf-8") as f:
+                        content = await f.read()
+                        res = json.loads(content)
+                        
+                        # Apply search filter if present
+                        if q:
+                            q_low = q.lower()
+                            first_name = str(res.get("first_name", "")).lower()
+                            last_name = str(res.get("last_name", "")).lower()
+                            username = str(res.get("username", "")).lower()
+                            u_id = str(res.get("user_id", "")).lower()
+                            
+                            match = (q_low in first_name or 
+                                     q_low in last_name or 
+                                     q_low in username or 
+                                     q_low in u_id)
+                            
+                            if not match:
+                                continue
+                                
+                        results.append(res)
+                except Exception as e:
+                    logger.error(f"Error reading result file {filename}: {e}")
     
     return sorted(results, key=lambda x: x.get("created_at", ""), reverse=True)
 

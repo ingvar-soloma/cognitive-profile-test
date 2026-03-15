@@ -16,6 +16,7 @@ interface HeaderProps {
   onNavigate: (state: any) => void;
   onLogout: () => void;
   user: any;
+  isAdmin?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -30,7 +31,8 @@ export const Header: React.FC<HeaderProps> = ({
   onDownloadProgress,
   onNavigate,
   onLogout,
-  user
+  user,
+  isAdmin
 }) => {
   return (
     <header className="border-b border-stone-line bg-brand-paper/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300">
@@ -66,6 +68,14 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {ui.navRecommendations}
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => onNavigate('USERS')}
+                className={`px-3 lg:px-5 py-1.5 rounded-full text-[10px] lg:text-[11px] uppercase tracking-widest font-bold transition-all duration-300 ${appState === 'USERS' ? 'bg-brand-paper-accent text-brand-ink shadow-sm ring-1 ring-stone-line' : 'text-stone-400 hover:text-brand-graphite'}`}
+              >
+                Users
+              </button>
+            )}
           </nav>
         </div>
 
