@@ -7,6 +7,7 @@ import { Intro } from './components/Home/Intro';
 import { Survey } from './components/Survey/Survey';
 import { ProfileManager } from './components/Home/ProfileManager';
 import { ImportManager } from './components/Home/ImportManager';
+import { ShieldAlert } from 'lucide-react';
 import { UI_TRANSLATIONS } from './translations';
 import { AVAILABLE_SURVEYS } from './constants';
 import { ProfileService } from './services/ProfileService';
@@ -18,6 +19,13 @@ import { Recommendations } from './components/Recommendations/Recommendations';
 import { DashboardResults } from './components/Results/DashboardResults';
 import { PrivacyPolicy } from './components/Legal/PrivacyPolicy';
 import { Routes, Route, useNavigate, useLocation, Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { FinishConfirmationModal } from './components/Survey/FinishConfirmationModal';
+import { AboutPage } from './components/Info/AboutPage';
+import { FaqPage } from './components/Info/FaqPage';
+import { TermsPage } from './components/Info/TermsPage';
+import { HowItWorksPage } from './components/Info/HowItWorksPage';
+import { LandingPage } from './components/Info/LandingPage';
+import { NewsPage } from './components/Info/NewsPage';
 
 export enum AppState {
   INTRO = 'INTRO',
@@ -41,6 +49,15 @@ interface User {
   auth_date: number;
   hash: string;
 }
+
+/** Redirects to landing page if user is not authenticated. */
+const ProtectedRoute: React.FC<{ user: User | null; children: React.ReactNode }> = ({ user, children }) => {
+  const location = useLocation();
+  if (!user) {
+    return <Navigate to={`/?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+  }
+  return <>{children}</>;
+};
 
 const App: React.FC = () => {
   const navigate = useNavigate();
@@ -105,6 +122,7 @@ const App: React.FC = () => {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [loginModalConfig, setLoginModalConfig] = useState<{ title?: string, description?: string }>({});
   const [adminResults, setAdminResults] = useState<any[]>([]);
+  const [showFinishConfirmation, setShowFinishConfirmation] = useState<boolean>(false);
 
   // Sync activeSurveyId from URL if in survey mode
   useEffect(() => {
@@ -135,6 +153,14 @@ const App: React.FC = () => {
     return null;
   });
 
+  // Auto-open login modal if redirected from a protected route
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('redirect') && !user) {
+      setShowLoginModal(true);
+    }
+  }, []);
+
   const isAdmin = useMemo(() => {
     if (!user) return false;
     const adminIds = (import.meta.env.VITE_ADMIN_USER_IDS || import.meta.env.VITE_ADMIN_TELEGRAM_IDS || '').split(',');
@@ -163,6 +189,13 @@ const App: React.FC = () => {
         console.log('[App] Login event received:', userData.first_name);
         setUser(userData);
         setShowLoginModal(false);
+
+        // Redirect back to the page the user was trying to access
+        const params = new URLSearchParams(window.location.search);
+        const redirectTo = params.get('redirect');
+        if (redirectTo && redirectTo.startsWith('/')) {
+          navigate(redirectTo, { replace: true });
+        }
       } else {
         console.warn('[App] Invalid login event ignored:', userData);
       }
@@ -328,6 +361,9 @@ const App: React.FC = () => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('telegram_auth');
     localStorage.removeItem('neuroprofile_active_profile_id');
+    localStorage.removeItem('neuroprofile_profiles');
+    localStorage.removeItem('neuroprofile_user_id');
+    localStorage.removeItem('aphantasia_consent_accepted');
     setUser(null);
     window.location.reload(); // Hard reload to clear all states and re-trigger initial modal
   };
@@ -537,13 +573,18 @@ const App: React.FC = () => {
     if (currentCategoryIndex < localizedCategories.length - 1) {
       setCurrentCategoryIndex((prev) => prev + 1);
     } else {
-      if (activeProfileId) {
-        ProfileService.updateProfile(activeProfileId, activeSurveyId, answers);
-        setProfiles(ProfileService.getProfiles());
-        navigate(`/results/${activeProfileId}`);
-      } else {
-        navigate('/results');
-      }
+      setShowFinishConfirmation(true);
+    }
+  };
+
+  const finalizeFinish = () => {
+    setShowFinishConfirmation(false);
+    if (activeProfileId) {
+      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers);
+      setProfiles(ProfileService.getProfiles());
+      navigate(`/results/${activeProfileId}`);
+    } else {
+      navigate('/results');
     }
   };
 
@@ -682,82 +723,104 @@ const App: React.FC = () => {
         isAdmin={isAdmin}
       />
 
+      {/* Landing page routes render full-width, without max-w container */}
+      <Routes>
+        <Route path="/" element={
+          !user ? (
+            <LandingPage ui={ui} onStartSurvey={() => handleStartSurvey()} />
+          ) : null
+        } />
+        <Route path="/landing" element={
+          <LandingPage ui={ui} onStartSurvey={() => handleStartSurvey()} />
+        } />
+        <Route path="*" element={null} />
+      </Routes>
+
+      {/* All other routes get the standard padded container */}
       <main className="max-w-6xl mx-auto p-4 md:p-8 transition-all duration-500">
         <Routes>
           <Route path="/" element={
-            <>
-              {isAdmin && (
-                <ProfileManager
-                  profiles={profiles}
-                  activeProfileId={activeProfileId}
-                  onSelect={handleSelectProfile}
-                  onCreate={handleCreateProfile}
-                  onDelete={handleDeleteProfile}
-                  onRename={handleRenameProfile}
+            user ? (
+              <>
+                {isAdmin && (
+                  <ProfileManager
+                    profiles={profiles}
+                    activeProfileId={activeProfileId}
+                    onSelect={handleSelectProfile}
+                    onCreate={handleCreateProfile}
+                    onDelete={handleDeleteProfile}
+                    onRename={handleRenameProfile}
+                    ui={ui}
+                    lang={language}
+                  />
+                )}
+                <Intro
                   ui={ui}
-                  lang={language}
+                  language={language}
+                  activeSurveyId={activeSurveyId}
+                  onSetActiveSurveyId={setActiveSurveyId}
+                  onStartSurvey={handleStartSurvey}
+                  onTriggerFileUpload={triggerFileUpload}
+                  fileInputRef={fileInputRef}
+                  onFileUpload={handleFileUpload}
+                  isLoading={isLoading}
+                  surveyProgress={surveyProgress}
+                  hasExistingResults={hasExistingResults}
+                  backendRecommendations={backendRecommendations}
+                  onShowResults={(sid) => navigate(`/results/${activeProfileId}${sid ? `?surveyId=${sid}` : ''}`)}
                 />
-              )}
-              <Intro
-                ui={ui}
-                language={language}
-                activeSurveyId={activeSurveyId}
-                onSetActiveSurveyId={setActiveSurveyId}
-                onStartSurvey={handleStartSurvey}
-                onTriggerFileUpload={triggerFileUpload}
-                fileInputRef={fileInputRef}
-                onFileUpload={handleFileUpload}
-                isLoading={isLoading}
-                surveyProgress={surveyProgress}
-                hasExistingResults={hasExistingResults}
-                backendRecommendations={backendRecommendations}
-                onShowResults={(sid) => navigate(`/results/${activeProfileId}${sid ? `?surveyId=${sid}` : ''}`)}
-              />
-            </>
+              </>
+            ) : null
           } />
 
            <Route path="/results" element={
-            <DashboardResults
-              profiles={profiles}
-              onViewResult={(id, sid) => {
-                if (id === 'ADMIN_OBJECT') {
-                  handleViewAdminResult(sid); // sid contains the admin result object
-                } else {
-                  navigate(`/results/${id}${sid ? `?surveyId=${sid}` : ''}`);
-                }
-              }}
-              ui={ui}
-              language={language}
-              isAdmin={isAdmin}
-              adminResults={adminResults}
-              onSetAdminResults={setAdminResults}
-            />
+            <ProtectedRoute user={user}>
+              <DashboardResults
+                profiles={profiles}
+                onViewResult={(id, sid) => {
+                  if (id === 'ADMIN_OBJECT') {
+                    handleViewAdminResult(sid);
+                  } else {
+                    navigate(`/results/${id}${sid ? `?surveyId=${sid}` : ''}`);
+                  }
+                }}
+                ui={ui}
+                language={language}
+                isAdmin={isAdmin}
+                adminResults={adminResults}
+                onSetAdminResults={setAdminResults}
+              />
+            </ProtectedRoute>
           } />
 
           <Route path="/results/:profileId" element={
-            <ResultsWrapper
-              profiles={profiles}
-              onReset={(id) => handleRetake(id)}
-              onGoHome={() => navigate('/')}
-              ui={ui}
-              lang={language}
-              user={user}
-              activeSurveyId={activeSurveyId}
-              setActiveProfileId={setActiveProfileId}
-              backendRecommendations={backendRecommendations}
-              adminResults={adminResults}
-            />
+            <ProtectedRoute user={user}>
+              <ResultsWrapper
+                profiles={profiles}
+                onReset={(id) => handleRetake(id)}
+                onGoHome={() => navigate('/')}
+                ui={ui}
+                lang={language}
+                user={user}
+                activeSurveyId={activeSurveyId}
+                setActiveProfileId={setActiveProfileId}
+                backendRecommendations={backendRecommendations}
+                adminResults={adminResults}
+              />
+            </ProtectedRoute>
           } />
 
           <Route path="/history" element={<Navigate to="/results" replace />} />
           <Route path="/dashboard" element={<Navigate to="/results" replace />} />
 
           <Route path="/recommendations" element={
-            <Recommendations
-              ui={ui}
-              isLocked={!profiles.some(p => Object.keys(p.answers).length > 0)}
-              user={user}
-            />
+            <ProtectedRoute user={user}>
+              <Recommendations
+                ui={ui}
+                isLocked={!profiles.some(p => Object.keys(p.answers).length > 0)}
+                user={user}
+              />
+            </ProtectedRoute>
           } />
 
           <Route path="/survey/:surveyId" element={
@@ -780,7 +843,8 @@ const App: React.FC = () => {
           } />
 
           <Route path="/users" element={
-            isAdmin ? (
+            <ProtectedRoute user={user}>
+              {isAdmin ? (
                 <AdminDashboard
                   ui={ui}
                   lang={language}
@@ -788,17 +852,50 @@ const App: React.FC = () => {
                   results={adminResults}
                   onSetResults={setAdminResults}
                 />
-            ) : <Navigate to="/" replace />
+              ) : <Navigate to="/" replace />}
+            </ProtectedRoute>
           } />
 
           <Route path="/privacy" element={
             <PrivacyPolicy ui={ui} language={language} />
           } />
 
+          <Route path="/about" element={
+            <AboutPage ui={ui} onStartSurvey={() => handleStartSurvey()} />
+          } />
+
+          <Route path="/faq" element={
+            <FaqPage ui={ui} language={language} />
+          } />
+
+          <Route path="/terms" element={
+            <TermsPage ui={ui} />
+          } />
+
+          <Route path="/how-it-works" element={
+            <HowItWorksPage ui={ui} language={language} onStartSurvey={() => handleStartSurvey()} />
+          } />
+
+          <Route path="/news" element={
+            <NewsPage
+              ui={ui}
+              language={language}
+              onStartSurvey={() => handleStartSurvey()}
+            />
+          } />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
+      <FinishConfirmationModal
+        isOpen={showFinishConfirmation}
+        onClose={() => setShowFinishConfirmation(false)}
+        onConfirm={finalizeFinish}
+        ui={ui}
+        language={language}
+        onLanguageChange={setLanguage}
+      />
       {importingAnswers && (
         <ImportManager
           profiles={profiles}
@@ -840,12 +937,20 @@ const ResultsWrapper: React.FC<any> = ({
   const navigate = useNavigate();
 
   const [adminProfile, setAdminProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(profileId === 'admin' ? true : false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (profileId !== 'admin') {
+      // Small timeout to allow profiles to be loaded/synced if needed
+      // or just check if it's already there
+      setLoading(false);
+    }
+  }, [profileId]);
 
   useEffect(() => {
     if (userIdFromQuery && profileId === 'admin') {
       // 1. Try to find in adminResults first
-      const cached = adminResults.find(r => r.user_id === userIdFromQuery && (r.test_type === surveyIdFromQuery || !surveyIdFromQuery));
+      const cached = adminResults.find((r: any) => r.user_id === userIdFromQuery && (r.test_type === surveyIdFromQuery || !surveyIdFromQuery));
       if (cached) {
          setAdminProfile({
             id: 'admin',
@@ -879,7 +984,7 @@ const ResultsWrapper: React.FC<any> = ({
         })
         .finally(() => setLoading(false));
     }
-  }, [userIdFromQuery, profileId, user, adminResults]);
+  }, [userIdFromQuery, profileId, user, adminResults, surveyIdFromQuery]);
 
   const profile = useMemo(() => {
     if (profileId === 'admin') return adminProfile;
@@ -896,11 +1001,21 @@ const ResultsWrapper: React.FC<any> = ({
     }
   }, [profile, setActiveProfileId]);
 
-  if (loading || (profileId === 'admin' && !adminProfile)) {
+  if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-ink"></div>
       </div>
+    );
+  }
+
+  if (profileId === 'admin' && !adminProfile && !loading) {
+    return (
+       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
+         <ShieldAlert className="w-12 h-12 text-brand-clay mb-4" />
+         <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-2">{ui.noRecordsFound}</h2>
+         <button onClick={() => navigate('/')} className="btn-primary px-8 mt-4">{ui.goHome}</button>
+       </div>
     );
   }
 

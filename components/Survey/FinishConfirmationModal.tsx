@@ -62,6 +62,7 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                     <div className="w-full space-y-3 mb-8">
                         <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-2">
                             {ui.changeLanguage}
+                            <span className="block mt-1 font-normal lowercase opacity-60">{ui.languageSyncNote}</span>
                         </p>
                         <div className="flex flex-wrap justify-center gap-2">
                             {languages.map((lang) => (

@@ -237,7 +237,9 @@ export const GoogleAuthButton: React.FC<{ useOneTap?: boolean }> = ({ useOneTap 
             <GoogleLogin
                 onSuccess={(credentialResponse) => {
                     if (!credentialResponse.credential) return;
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                    const apiUrl = (import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== null)
+                        ? import.meta.env.VITE_API_URL
+                        : 'http://localhost:8000';
                     fetch(`${apiUrl}/api/auth/google/exchange`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },

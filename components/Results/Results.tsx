@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Answer, UIStrings, Language, QuestionType, SurveyDefinition } from '@/types';
 import { SURVEY_DATA, AVAILABLE_SURVEYS } from '@/constants';
-import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare } from 'lucide-react';
+import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight } from 'lucide-react';
 import { ProfileService } from '@/services/ProfileService';
 // @ts-ignore
 import { encode } from '@toon-format/toon';
@@ -34,13 +35,14 @@ const RadarIcon = ({ className }: { className?: string }) => (
 export const Results: React.FC<ResultsProps> = ({
   answers, onReset, onGoHome, ui, lang, filenamePrefix, user, surveyId, survey, initialRecommendations = {}
 }) => {
-  const [geminiRecs, setGeminiRecs] = React.useState<string | null>(null);
-  const [isSaving, setIsSaving] = React.useState(false);
-  const [isAnalyzing, setIsAnalyzing] = React.useState(false);
-  const [showActions, setShowActions] = React.useState(false);
+  const navigate = useNavigate();
+  const [geminiRecs, setGeminiRecs] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
-  const surveyAnswers = React.useMemo(() => {
+  const surveyAnswers = useMemo(() => {
     if (!currentSurvey) return answers;
     // Check if answers follow the new nested structure { surveyId: { questionId: Answer } }
     if (answers[currentSurvey.id] && typeof answers[currentSurvey.id] === 'object' && !('questionId' in answers[currentSurvey.id])) {
@@ -51,25 +53,25 @@ export const Results: React.FC<ResultsProps> = ({
 
   const calculateCategoryScore = (subCatKey: string) => ProfileService.calculateCategoryScore(surveyAnswers, subCatKey);
 
-  const hasAttemptedSave = React.useRef(false);
+  const hasAttemptedSave = useRef(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (hasAttemptedSave.current) return;
 
     const saveAndGetRecs = async () => {
       const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
       const profiles = ProfileService.getProfiles();
       const activeProfile = profiles.find(p => p.id === activeProfileId);
-      
+
       const targetSurveyId = surveyId || activeProfile?.surveyId;
 
       if (activeProfile && targetSurveyId) {
         // Step 0: Check if we ALREADY have recommendations from initial props or state
         const existingRec = initialRecommendations[targetSurveyId];
         if (existingRec && existingRec.trim().length > 0) {
-           setGeminiRecs(existingRec);
-           hasAttemptedSave.current = true;
-           return;
+          setGeminiRecs(existingRec);
+          hasAttemptedSave.current = true;
+          return;
         }
 
         hasAttemptedSave.current = true;
@@ -96,7 +98,7 @@ export const Results: React.FC<ResultsProps> = ({
 
           if (result && result.status === 'success') {
             let existingRecForThisTest = null;
-            
+
             // Check backend if not in initial props
             const existingResult = await ProfileService.loadResultFromBackend();
             if (existingResult && existingResult.gemini_recommendations) {
@@ -114,11 +116,11 @@ export const Results: React.FC<ResultsProps> = ({
               setGeminiRecs('');
               setIsSaving(false); // Stop showing the full-block saving spinner
               setIsAnalyzing(true);
-              
+
               await ProfileService.streamAnalysisFromBackend(activeProfile, targetSurveyId, scores, lang, (chunk) => {
                 setGeminiRecs(prev => (prev || '') + chunk);
               });
-              
+
               setIsAnalyzing(false);
             }
           }
@@ -134,7 +136,7 @@ export const Results: React.FC<ResultsProps> = ({
 
 
 
-  const radarData = React.useMemo(() => {
+  const radarData = useMemo(() => {
     if (!currentSurvey) return [];
 
     // If survey has multiple categories, use them
@@ -177,7 +179,7 @@ export const Results: React.FC<ResultsProps> = ({
   }, [currentSurvey, surveyAnswers, lang]);
 
   // Prepare textual answers for display
-  const textAnswers = React.useMemo(() => {
+  const textAnswers = useMemo(() => {
     return (Object.values(surveyAnswers) as Answer[]).filter(a => a.note && a.note.trim().length > 0);
   }, [surveyAnswers]);
 
@@ -240,6 +242,36 @@ export const Results: React.FC<ResultsProps> = ({
         </div>
 
         <div className="p-6 md:p-12">
+          {surveyId === 'express_demo' && (
+            <div className="mb-12 p-8 md:p-10 bg-gradient-to-br from-brand-ink/5 via-brand-paper to-brand-clay/5 rounded-[2rem] border border-brand-ink/10 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-brand-clay/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-brand-clay/10 transition-colors"></div>
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-brand-ink/5 rounded-full blur-3xl -ml-16 -mb-16 group-hover:bg-brand-ink/10 transition-colors"></div>
+
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 text-center lg:text-left">
+                <div className="flex-1">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-clay/10 text-brand-clay rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-4">
+                    <Sparkles className="w-3 h-3" />
+                    {ui.readyForAnalysis}
+                  </div>
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite mb-2">
+                    {ui.demoCtaTitle}
+                  </h3>
+                  <p className="text-stone-500 text-base max-w-xl font-sans leading-relaxed">
+                    {ui.demoCtaDesc}
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/survey/full_aphantasia_profile')}
+                  className="shrink-0 h-14 px-8 bg-brand-ink text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-3 group/btn"
+                >
+                  <BrainCircuit className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
+                  {ui.demoCtaButton}
+                  <ChevronRight className="w-4 h-4 opacity-70 transition-transform group-hover/btn:translate-x-1" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* AI Analysis Block */}
           <div className="mb-20">
             <div className="flex items-center gap-4 mb-8">
@@ -260,16 +292,24 @@ export const Results: React.FC<ResultsProps> = ({
                   <p className="text-stone-400 text-sm font-sans">{ui.connectingNodes}</p>
                 </div>
               </div>
-            ) : geminiRecs ? (
+            ) : (geminiRecs !== null) ? (
               <div className="relative transition-all duration-700">
                 <div className={`bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans 
                   prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-brand-ink dark:prose-headings:text-brand-clay
                   prose-p:leading-relaxed prose-strong:text-brand-ink dark:prose-strong:text-brand-clay prose-strong:font-bold
                   prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
                   ${isAnalyzing ? 'animate-pulse-subtle' : ''}`}>
+
+                  {isAnalyzing && !geminiRecs && (
+                    <div className="flex flex-col items-center gap-4 py-12">
+                      <div className="w-10 h-10 rounded-full border-4 border-brand-ink/10 border-t-brand-ink animate-spin"></div>
+                      <p className="text-stone-400 text-xs font-bold uppercase tracking-widest animate-pulse">{ui.synthesizingInsights}</p>
+                    </div>
+                  )}
+
                   <ReactMarkdown>{geminiRecs}</ReactMarkdown>
-                  
-                  {isAnalyzing && (
+
+                  {isAnalyzing && geminiRecs && (
                     <div className="mt-8 flex items-center gap-3 text-brand-ink animate-pulse">
                       <Zap className="w-4 h-4 fill-current" />
                       <span className="text-[10px] items-center uppercase font-bold tracking-widest">{ui.predictedTime?.split(' ')[0] || 'AI'} is typing...</span>
@@ -298,164 +338,143 @@ export const Results: React.FC<ResultsProps> = ({
             )}
           </div>
 
-          {!user ? (
-            <div className="relative p-12 md:p-20 bg-stone-bg/30 rounded-[2.5rem] border border-stone-line overflow-hidden text-center">
-              <div className="absolute inset-0 backdrop-blur-[6px] bg-brand-paper/40 z-10 flex flex-col items-center justify-center p-8">
-                <div className="w-12 h-12 rounded-full bg-brand-paper-accent border border-stone-line flex items-center justify-center mb-4 shadow-sm">
-                  <Zap className="w-5 h-5 text-brand-clay" />
-                </div>
-                <h3 className="text-2xl font-serif font-bold mb-2 text-brand-graphite">{ui.sensorySignaturePending}</h3>
-                <p className="text-sm text-stone-400 font-sans">{ui.authenticatedProfilesOnly}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24 pt-16 border-t border-stone-line">
+            <div className="flex flex-col items-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-bg text-stone-400 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] mb-10">
+                <RadarIcon className="w-3 h-3" />
+                {ui.sensorySignatureMap}
               </div>
-              <div className="opacity-10 grayscale select-none pointer-events-none">
-                <h3 className="text-2xl font-serif font-bold mb-8">{ui.detailedSensoryMapping}</h3>
-                <div className="flex flex-col gap-4 max-w-xs mx-auto">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="h-2 bg-stone-200 rounded-full w-full"></div>)}
+              <div className="w-full h-[350px] md:h-[450px] min-h-[350px]">
+              <ResponsiveContainer width="100%" height="100%" minHeight={350}>
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                    <PolarGrid stroke="#E5E7EB" strokeWidth={1} />
+                    <PolarAngleAxis
+                      dataKey="subject"
+                      tick={{ fill: '#4B5563', fontSize: 10, fontWeight: 700, fontVariant: 'small-caps', letterSpacing: '0.1em' }}
+                    />
+                    <PolarRadiusAxis angle={30} domain={[0, 5]} stroke="transparent" tick={false} />
+                    <Radar
+                      name={ui.intensity}
+                      dataKey="A"
+                      stroke="#5E4B8B"
+                      strokeWidth={3}
+                      fill="#5E4B8B"
+                      fillOpacity={0.12}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(229, 231, 235, 0.5)',
+                        borderRadius: '16px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        fontFamily: 'Manrope, sans-serif'
+                      }}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="space-y-1">
+                <h3 className="text-[10px] font-bold text-stone-300 uppercase tracking-[0.25em] mb-8">{ui.scoreDetails}</h3>
+                <div className="grid gap-8">
+                  {radarData.map((item) => (
+                    <div key={item.key} className="group">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-brand-graphite font-bold text-[13px] uppercase tracking-wider">{item.subject}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif font-bold text-brand-ink text-xl">{item.A}</span>
+                          <span className="text-stone-400 text-[10px] font-bold">/ 5.0</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-2 bg-stone-bg/50 rounded-full overflow-hidden border border-stone-line/50">
+                        <div
+                          className="h-full bg-gradient-to-r from-brand-ink to-brand-clay/60 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(94,75,139,0.2)]"
+                          style={{ width: `${(item.A / 5) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24 pt-16 border-t border-stone-line">
-                <div className="flex flex-col items-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-bg text-stone-400 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] mb-10">
-                    <RadarIcon className="w-3 h-3" />
-                    {ui.sensorySignatureMap}
-                  </div>
-                  <div className="w-full aspect-square max-w-[450px] min-h-[350px] relative">
-                    <div className="absolute inset-0 bg-brand-paper rounded-full blur-3xl opacity-30"></div>
-                    <ResponsiveContainer width="100%" height="100%" minHeight={350}>
-                      <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-                        <PolarGrid stroke="#E5E7EB" strokeWidth={1} />
-                        <PolarAngleAxis
-                          dataKey="subject"
-                          tick={{ fill: '#4B5563', fontSize: 10, fontWeight: 700, fontVariant: 'small-caps', letterSpacing: '0.1em' }}
-                        />
-                        <PolarRadiusAxis angle={30} domain={[0, 5]} stroke="transparent" tick={false} />
-                        <Radar
-                          name={ui.intensity}
-                          dataKey="A"
-                          stroke="#5E4B8B"
-                          strokeWidth={3}
-                          fill="#5E4B8B"
-                          fillOpacity={0.12}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            backdropFilter: 'blur(8px)',
-                            border: '1px solid rgba(229, 231, 235, 0.5)',
-                            borderRadius: '16px',
-                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                            fontFamily: 'Manrope, sans-serif'
-                          }}
-                        />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+          </div>
 
-                <div className="space-y-8">
-                  <div className="space-y-1">
-                    <h3 className="text-[10px] font-bold text-stone-300 uppercase tracking-[0.25em] mb-8">{ui.scoreDetails}</h3>
-                    <div className="grid gap-8">
-                      {radarData.map((item) => (
-                        <div key={item.key} className="group">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-brand-graphite font-bold text-[13px] uppercase tracking-wider">{item.subject}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-serif font-bold text-brand-ink text-xl">{item.A}</span>
-                              <span className="text-stone-400 text-[10px] font-bold">/ 5.0</span>
-                            </div>
-                          </div>
-                          <div className="w-full h-2 bg-stone-bg/50 rounded-full overflow-hidden border border-stone-line/50">
-                            <div
-                              className="h-full bg-gradient-to-r from-brand-ink to-brand-clay/60 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(94,75,139,0.2)]"
-                              style={{ width: `${(item.A / 5) * 100}%` }}
-                            />
-                          </div>
+          <div className="border-t border-stone-line pt-12 mb-12">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 rounded-xl bg-stone-bg border border-stone-line flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-stone-400" />
+              </div>
+              <h3 className="text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.notesTitle}</h3>
+            </div>
+
+            {textAnswers.length === 0 ? (
+              <div className="p-12 text-center bg-stone-bg/50 rounded-3xl border border-stone-line border-dashed">
+                <p className="text-stone-400 italic font-sans">{ui.noNotes}</p>
+              </div>
+            ) : (
+              <div className="grid gap-8 md:grid-cols-2">
+                {Object.values(surveyAnswers).map((ans: any) => {
+                  const q = SURVEY_DATA.flatMap(c => c.questions).find(q => q.id === ans.questionId);
+                  const isDrawing = q?.type === QuestionType.DRAWING && (ans.value as string)?.startsWith('data:image/');
+                  const hasNote = ans.note && ans.note.trim() !== '';
+
+                  if (!isDrawing && !hasNote && q?.type !== QuestionType.TEXT) return null;
+                  if (q?.type === QuestionType.TEXT && !ans.value && !ans.note) return null;
+
+                  return (
+                    <div key={ans.questionId} className="bg-brand-paper-accent/60 backdrop-blur-sm p-6 rounded-[2rem] border border-stone-line shadow-sm hover:shadow-md transition-shadow flex flex-col gap-6">
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{q?.subCategory?.en || 'Perspective'}</div>
+                        <p className="font-serif font-bold text-brand-graphite leading-tight text-lg">{q?.text[lang]}</p>
+                      </div>
+
+                      {isDrawing && (
+                        <div className="rounded-2xl overflow-hidden border border-stone-line bg-white/50 dark:bg-stone-bg/20 p-4 shadow-inner">
+                          <img
+                            src={ans.value as string}
+                            alt={q?.text[lang]}
+                            className="w-full h-auto max-h-[250px] object-contain mx-auto mix-blend-multiply dark:mix-blend-normal dark:invert dark:brightness-150 dark:hue-rotate-180 opacity-90 transition-transform hover:scale-105 duration-500"
+                          />
                         </div>
-                      ))}
+                      )}
+
+                      {hasNote && (
+                        <div className="bg-stone-bg/80 p-5 rounded-2xl border border-stone-line/50 relative">
+                          <div className="absolute top-4 left-0 w-1 h-8 bg-brand-clay/20 rounded-r-full"></div>
+                          <p className="text-stone-400 text-sm leading-relaxed italic">
+                            "{ans.note}"
+                          </p>
+                        </div>
+                      )}
+
+                      {q?.type === QuestionType.TEXT && ans.value && !isDrawing && (
+                        <p className="text-stone-400 leading-relaxed text-sm">{ans.value}</p>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  )
+                })}
               </div>
+            )}
+          </div>
 
-              <div className="border-t border-stone-line pt-12 mb-12">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-10 h-10 rounded-xl bg-stone-bg border border-stone-line flex items-center justify-center">
-                    <MessageSquare className="w-5 h-5 text-stone-400" />
-                  </div>
-                  <h3 className="text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.notesTitle}</h3>
-                </div>
-
-                {textAnswers.length === 0 ? (
-                  <div className="p-12 text-center bg-stone-bg/50 rounded-3xl border border-stone-line border-dashed">
-                    <p className="text-stone-400 italic font-sans">{ui.noNotes}</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-8 md:grid-cols-2">
-                    {Object.values(surveyAnswers).map((ans: any) => {
-                      const q = SURVEY_DATA.flatMap(c => c.questions).find(q => q.id === ans.questionId);
-                      const isDrawing = q?.type === QuestionType.DRAWING && (ans.value as string)?.startsWith('data:image/');
-                      const hasNote = ans.note && ans.note.trim() !== '';
-
-                      if (!isDrawing && !hasNote && q?.type !== QuestionType.TEXT) return null;
-                      if (q?.type === QuestionType.TEXT && !ans.value && !ans.note) return null;
-
-                      return (
-                        <div key={ans.questionId} className="bg-brand-paper-accent/60 backdrop-blur-sm p-6 rounded-[2rem] border border-stone-line shadow-sm hover:shadow-md transition-shadow flex flex-col gap-6">
-                          <div className="space-y-1">
-                            <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{q?.subCategory?.en || 'Perspective'}</div>
-                            <p className="font-serif font-bold text-brand-graphite leading-tight text-lg">{q?.text[lang]}</p>
-                          </div>
-
-                          {isDrawing && (
-                            <div className="rounded-2xl overflow-hidden border border-stone-line bg-white/50 dark:bg-stone-bg/20 p-4 shadow-inner">
-                              <img
-                                src={ans.value as string}
-                                alt={q?.text[lang]}
-                                className="w-full h-auto max-h-[250px] object-contain mx-auto mix-blend-multiply dark:mix-blend-normal dark:invert dark:brightness-150 dark:hue-rotate-180 opacity-90 transition-transform hover:scale-105 duration-500"
-                              />
-                            </div>
-                          )}
-
-                          {hasNote && (
-                            <div className="bg-stone-bg/80 p-5 rounded-2xl border border-stone-line/50 relative">
-                              <div className="absolute top-4 left-0 w-1 h-8 bg-brand-clay/20 rounded-r-full"></div>
-                              <p className="text-stone-400 text-sm leading-relaxed italic">
-                                "{ans.note}"
-                              </p>
-                            </div>
-                          )}
-
-                          {q?.type === QuestionType.TEXT && ans.value && !isDrawing && (
-                            <p className="text-stone-400 leading-relaxed text-sm">{ans.value}</p>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-20 p-10 bg-brand-paper/50 backdrop-blur-sm rounded-[2rem] border border-brand-clay/10 text-[11px] text-stone-400 leading-relaxed max-w-4xl mx-auto shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <ShieldAlert className="w-4 h-4 text-brand-clay" />
-                  <h5 className="font-bold uppercase tracking-[0.2em] text-[10px] text-brand-clay">{ui.disclaimerTitle}</h5>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-brand-clay/5">
-                  <p className="opacity-80 font-sans italic">{ui.disclaimer}</p>
-                  <a 
-                    href="/privacy" 
-                    className="text-brand-ink hover:underline font-bold uppercase tracking-widest text-[9px] whitespace-nowrap"
-                  >
-                    {ui.privacyPolicy}
-                  </a>
-                </div>
-              </div>
-            </>
-          )}
+          <div className="mt-20 p-10 bg-brand-paper/50 backdrop-blur-sm rounded-[2rem] border border-brand-clay/10 text-[11px] text-stone-400 leading-relaxed max-w-4xl mx-auto shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <ShieldAlert className="w-4 h-4 text-brand-clay" />
+              <h5 className="font-bold uppercase tracking-[0.2em] text-[10px] text-brand-clay">{ui.disclaimerTitle}</h5>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-brand-clay/5">
+              <p className="opacity-80 font-sans italic">{ui.disclaimer}</p>
+              <a
+                href="/privacy"
+                className="text-brand-ink hover:underline font-bold uppercase tracking-widest text-[9px] whitespace-nowrap"
+              >
+                {ui.privacyPolicy}
+              </a>
+            </div>
+          </div>
         </div>
 
         <div className="bg-stone-bg/50 border-t border-stone-line backdrop-blur-md">

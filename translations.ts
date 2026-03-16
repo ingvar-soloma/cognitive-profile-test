@@ -236,6 +236,10 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     subscribeAlreadySubscribed: "Ця адреса ел. пошти вже підписана.",
     subscribeInvalidEmail: "Будь ласка, введіть коректну адресу el. пошти.",
     subscribeError: "Сталася помилка. Спробуйте пізніше.",
+    languageSyncNote: "(також змінить мову інтерфейсу)",
+    demoCtaTitle: "Бажаєте точніший аналіз?",
+    demoCtaDesc: "Це був лише експрес-тест. Пройдіть повне дослідження, щоб отримати детальну карту вашого когнітивного профілю та глибші AI-інсайти.",
+    demoCtaButton: "Пройти повний тест"
   },
   en: {
     title: "Cognitive Profile Assessment",
@@ -472,6 +476,10 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     subscribeAlreadySubscribed: "This email is already subscribed.",
     subscribeInvalidEmail: "Please enter a valid email address.",
     subscribeError: "An error occurred. Please try again later.",
+    languageSyncNote: "(will also change the interface language)",
+    demoCtaTitle: "Want a more accurate analysis?",
+    demoCtaDesc: "This was just an express test. Take the full assessment to get a detailed map of your cognitive profile and deeper AI insights.",
+    demoCtaButton: "Take Full Test"
   },
   ru: {
     title: "Оценка Когнитивного Профиля",
@@ -708,6 +716,10 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     subscribeAlreadySubscribed: "Этот email уже подписан.",
     subscribeInvalidEmail: "Пожалуйста, введите корректный адрес эл. почты.",
     subscribeError: "Произошла ошибка. Попробуйте позже.",
+    languageSyncNote: "(также изменит язык интерфейса)",
+    demoCtaTitle: "Хотите более точный анализ?",
+    demoCtaDesc: "Это был лишь экспрес-тест. Пройдите полное исследование, чтобы получить детальную карту вашего когнитивного профиля и более глубокие AI-инсайты.",
+    demoCtaButton: "Пройти полный тест"
   }
 
 };

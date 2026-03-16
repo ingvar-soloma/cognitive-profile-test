@@ -1,7 +1,9 @@
 import { Answer, ProfileType, Profile, Language } from '../types';
 import { SURVEY_DATA } from '../constants';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = (import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== null) 
+  ? import.meta.env.VITE_API_URL 
+  : 'http://localhost:8000';
 
 export class ProfileService {
   private static loadPromise: Promise<any> | null = null;

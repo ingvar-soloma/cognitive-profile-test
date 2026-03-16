@@ -326,6 +326,10 @@ export interface UIStrings {
   subscribeAlreadySubscribed: string;
   subscribeInvalidEmail: string;
   subscribeError: string;
+  languageSyncNote: string;
+  demoCtaTitle: string;
+  demoCtaDesc: string;
+  demoCtaButton: string;
 }
 
 export enum ProfileType {
