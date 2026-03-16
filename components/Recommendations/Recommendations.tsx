@@ -99,6 +99,11 @@ export const Recommendations: React.FC<RecommendationsProps> = ({ ui, isLocked, 
                             key={cat.id}
                             className="group relative bg-brand-paper-accent p-6 rounded-[2rem] border border-stone-line shadow-card hover:shadow-soft hover:border-brand-ink/30 transition-all text-left overflow-hidden flex flex-col"
                         >
+                            {/* Soon badge */}
+                            <span className="absolute top-4 right-4 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 border border-amber-200">
+                                {ui.soon}
+                            </span>
+
                             <div className="w-12 h-12 bg-brand-ink/5 border border-brand-ink/10 rounded-2xl flex items-center justify-center text-brand-ink mb-6 group-hover:scale-110 group-hover:bg-brand-ink group-hover:text-white transition-all duration-300 shadow-sm">
                                 <cat.icon className="w-5 h-5" />
                             </div>

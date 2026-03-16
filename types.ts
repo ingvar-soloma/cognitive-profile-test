@@ -227,6 +227,105 @@ export interface UIStrings {
   predictedTime: string;
   minutesShort: string;
   secondsShort: string;
+  cognitiveAssessment: string;
+  heroTitle: string;
+  heroSubtitle: string;
+  selectExplorationFormat: string;
+  readyForAnalysis: string;
+  soon: string;
+  minutesLabel: string;
+  analyze: string;
+  viewResults: string;
+  editAnswers: string;
+  sectionLabel: string;
+  whyExploreTitle: string;
+  aphantasiaLabel: string;
+  hyperphantasiaLabel: string;
+  vagueLabel: string;
+  systemDatabase: string;
+  activeUsersCount: string;
+  searchUsersPlaceholder: string;
+  testsFound: string;
+  noUsersFound: string;
+  securityPrivacy: string;
+  systemRecords: string;
+  totalEntriesAnalyzed: string;
+  searchAdminPlaceholder: string;
+  userProfile: string;
+  testSpecification: string;
+  timestamp: string;
+  actions: string;
+  fullCognitiveProfile: string;
+  expressDiagnostics: string;
+  answersProvided: string;
+  details: string;
+  noRecordsFound: string;
+  aiAnalysisTitle: string;
+  synthesizingInsights: string;
+  connectingNodes: string;
+  unlockNarrativeTitle: string;
+  unlockNarrativeDesc: string;
+  sensorySignaturePending: string;
+  authenticatedProfilesOnly: string;
+  detailedSensoryMapping: string;
+  sensorySignatureMap: string;
+  intensity: string;
+  archivalOptions: string;
+  managementArchival: string;
+  finishLanguageTitle: string;
+  finishLanguageNote: string;
+  finishLanguageQuestion: string;
+  confirmFinishAndGenerate: string;
+  changeLanguage: string;
+  // About page
+  navAbout: string;
+  aboutTitle: string;
+  aboutSubtitle: string;
+  aboutWhatIsAphantasia: string;
+  aboutWhatIsAphantasiaDesc: string;
+  aboutSpectrum: string;
+  aboutSpectrumDesc: string;
+  aboutHowCommon: string;
+  aboutHowCommonDesc: string;
+  aboutWhoDiscovered: string;
+  aboutWhoDiscoveredDesc: string;
+  aboutCtaTitle: string;
+  aboutCtaDesc: string;
+  // FAQ page
+  navFaq: string;
+  faqTitle: string;
+  faqSubtitle: string;
+  // Terms page
+  navTerms: string;
+  termsTitle: string;
+  termsSubtitle: string;
+  termsUsage: string;
+  termsUsageDesc: string;
+  termsAiDisclaimer: string;
+  termsAiDisclaimerDesc: string;
+  termsCredits: string;
+  termsCreditsDesc: string;
+  termsChanges: string;
+  termsChangesDesc: string;
+  termsLastUpdated: string;
+  // HowItWorks page
+  navHowItWorks: string;
+  howItWorksTitle: string;
+  howItWorksSubtitle: string;
+  // Landing page nav
+  navLanding: string;
+  landingCtaButton: string;
+  landingLearnMore: string;
+  navNews: string;
+  // Newsletter
+  subscribeTitle: string;
+  subscribeSubtitle: string;
+  subscribePlaceholder: string;
+  subscribeButton: string;
+  subscribeSuccess: string;
+  subscribeAlreadySubscribed: string;
+  subscribeInvalidEmail: string;
+  subscribeError: string;
 }
 
 export enum ProfileType {

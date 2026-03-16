@@ -80,13 +80,13 @@ export const Intro: React.FC<IntroProps> = ({
             <div className="mb-12 md:mb-16 max-w-3xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-bg text-stone-500 rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-stone-line backdrop-blur-sm">
                     <Sparkles className="w-3 h-3 text-brand-clay" />
-                    Cognitive Assessment
+                    {ui.cognitiveAssessment}
                 </div>
                 <h1 className="text-4xl md:text-6xl font-serif font-bold text-brand-graphite leading-[1.1] mb-6 tracking-tight">
-                    Discover the unique architecture <br className="hidden md:block" /> of your imagination.
+                    {ui.heroTitle}
                 </h1>
                 <p className="text-lg md:text-xl text-stone-500 leading-relaxed max-w-2xl font-sans">
-                    A scientifically grounded exploration of your cognitive profile. Get a personal mind map and AI recommendations.
+                    {ui.heroSubtitle}
                 </p>
             </div>
 
@@ -95,7 +95,7 @@ export const Intro: React.FC<IntroProps> = ({
 
                 {/* Left Column: Test Selection */}
                 <div className="lg:col-span-8 flex flex-col gap-6">
-                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">Select Exploration Format</h2>
+                    <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 mb-2">{ui.selectExplorationFormat}</h2>
 
                     <div className="flex flex-col gap-5">
                         {AVAILABLE_SURVEYS.filter(s => !s.parentId).map(survey => {
@@ -127,13 +127,13 @@ export const Intro: React.FC<IntroProps> = ({
                                                     </h3>
                                                     {isCompleted ? (
                                                         <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-sage/10 text-brand-sage text-[9px] font-bold uppercase tracking-wider rounded-full border border-brand-sage/20">
-                                                            {hasRecommendation ? 'Completed' : 'Ready for Analysis'} <CheckCircle className="w-3 h-3" />
+                                                            {hasRecommendation ? ui.completed : ui.readyForAnalysis} <CheckCircle className="w-3 h-3" />
                                                         </span>
                                                     ) : survey.disabled ? (
-                                                        <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded uppercase tracking-wider">Soon</span>
+                                                        <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded uppercase tracking-wider">{ui.soon}</span>
                                                     ) : (
                                                         <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded border border-stone-line uppercase tracking-wider">
-                                                            {survey.id === 'express_demo' ? '2 min' : '15 min'}
+                                                            {survey.id === 'express_demo' ? `2 ${ui.minutesLabel}` : `15 ${ui.minutesLabel}`}
                                                         </span>
                                                     )}
                                                 </div>
@@ -159,7 +159,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                     onClick={(e) => { e.stopPropagation(); checkConsentAndProceed('start', survey.id); }}
                                                     className={`shrink-0 h-10 px-6 ${isActive ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-brand-graphite'} rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2`}
                                                 >
-                                                    {isActive ? ui.start : 'Start'} <ChevronRight className="w-4 h-4" />
+                                                    {isActive ? ui.start : ui.start || 'Start'} <ChevronRight className="w-4 h-4" />
                                                 </button>
                                             ) : (
                                                 <div className="flex items-center gap-2 shrink-0">
@@ -167,7 +167,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); checkConsentAndProceed('start', survey.id); }}
                                                             className="h-10 px-4 bg-stone-bg text-brand-graphite rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-stone-100 transition-all flex items-center justify-center gap-2"
-                                                            title="Edit Answers"
+                                                            title={ui.editAnswers}
                                                         >
                                                             <Pencil className="w-4 h-4" />
                                                         </button>
@@ -176,7 +176,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                         onClick={(e) => { e.stopPropagation(); onShowResults?.(survey.id); }}
                                                         className="h-10 px-6 bg-brand-ink text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-2"
                                                     >
-                                                        {hasRecommendation ? ui.viewResults || 'View Results' : 'Analyze'}
+                                                        {hasRecommendation ? ui.viewResults : ui.analyze}
                                                     </button>
                                                 </div>
                                             )}
@@ -197,11 +197,11 @@ export const Intro: React.FC<IntroProps> = ({
                                                         <div className="absolute -left-6 top-1/2 w-6 h-px bg-stone-line"></div>
                                                         <div>
                                                             <h4 className="text-sm font-bold text-brand-graphite">{child.title[language].replace('↳ ', '')}</h4>
-                                                            <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider">{ui.navTests} Section</p>
+                                                            <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider">{ui.navTests} {ui.sectionLabel}</p>
                                                         </div>
                                                         <div className="flex items-center gap-4">
                                                             {isChildCompleted ? (
-                                                                <span className="text-[9px] font-bold uppercase tracking-wider text-brand-sage">Completed</span>
+                                                                <span className="text-[9px] font-bold uppercase tracking-wider text-brand-sage">{ui.completed}</span>
                                                             ) : childProgress.answered > 0 ? (
                                                                 <span className="text-[9px] font-bold uppercase tracking-wider text-stone-400">{childProgress.answered} / {childProgress.total}</span>
                                                             ) : null}
@@ -236,7 +236,7 @@ export const Intro: React.FC<IntroProps> = ({
                             <div className="w-8 h-8 rounded-full bg-stone-bg flex items-center justify-center border border-stone-line">
                                 <BarChart3 className="w-4 h-4 text-brand-ink" />
                             </div>
-                            <h3 className="font-serif text-lg font-bold text-brand-graphite tracking-tight">Why explore your profile?</h3>
+                            <h3 className="font-serif text-lg font-bold text-brand-graphite tracking-tight">{ui.whyExploreTitle}</h3>
                         </div>
 
                         <div className="space-y-6 mb-8">
@@ -274,7 +274,7 @@ export const Intro: React.FC<IntroProps> = ({
                                             {num}: {scaleConfig?.labels[num]?.[language] || ''}
                                         </span>
                                         <span className="text-stone-300 uppercase text-[8px] font-bold tracking-widest shrink-0 ml-2 group-hover/item:text-stone-400 transition-colors">
-                                            {num === 1 ? 'Aphantasia' : num === 5 ? 'Hyperphantasia' : 'Vague'}
+                                            {num === 1 ? ui.aphantasiaLabel : num === 5 ? ui.hyperphantasiaLabel : ui.vagueLabel}
                                         </span>
                                     </div>
                                 ))}

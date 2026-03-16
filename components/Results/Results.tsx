@@ -36,6 +36,7 @@ export const Results: React.FC<ResultsProps> = ({
 }) => {
   const [geminiRecs, setGeminiRecs] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [showActions, setShowActions] = React.useState(false);
 
   const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
@@ -111,9 +112,14 @@ export const Results: React.FC<ResultsProps> = ({
             } else {
               // Step 2: Stream LLM Analysis if missing
               setGeminiRecs('');
+              setIsSaving(false); // Stop showing the full-block saving spinner
+              setIsAnalyzing(true);
+              
               await ProfileService.streamAnalysisFromBackend(activeProfile, targetSurveyId, scores, lang, (chunk) => {
                 setGeminiRecs(prev => (prev || '') + chunk);
               });
+              
+              setIsAnalyzing(false);
             }
           }
         } catch (error) {
@@ -240,27 +246,36 @@ export const Results: React.FC<ResultsProps> = ({
               <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center">
                 <BrainCircuit className="w-6 h-6 text-brand-ink" />
               </div>
-              <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">AI Analysis & Insights</h3>
+              <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.aiAnalysisTitle}</h3>
             </div>
 
-            {isSaving ? (
+            {(isSaving && !geminiRecs) ? (
               <div className="bg-brand-paper-accent/50 backdrop-blur-sm p-10 rounded-[2rem] border border-stone-line flex flex-col items-center gap-6 text-center shadow-sm">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full border-4 border-brand-ink/10 border-t-brand-ink animate-spin"></div>
                   <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-brand-ink/40" />
                 </div>
                 <div className="space-y-2">
-                  <p className="font-serif text-xl font-bold text-brand-graphite">Synthesizing neurological insights...</p>
-                  <p className="text-stone-400 text-sm font-sans">Connecting sensory nodes to cognitive patterns</p>
+                  <p className="font-serif text-xl font-bold text-brand-graphite">{ui.synthesizingInsights}</p>
+                  <p className="text-stone-400 text-sm font-sans">{ui.connectingNodes}</p>
                 </div>
               </div>
             ) : geminiRecs ? (
-              <div className="bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans 
-                prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-brand-ink dark:prose-headings:text-brand-clay
-                prose-p:leading-relaxed prose-strong:text-brand-ink dark:prose-strong:text-brand-clay prose-strong:font-bold
-                prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
-                transition-all duration-700">
-                <ReactMarkdown>{geminiRecs}</ReactMarkdown>
+              <div className="relative transition-all duration-700">
+                <div className={`bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans 
+                  prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-brand-ink dark:prose-headings:text-brand-clay
+                  prose-p:leading-relaxed prose-strong:text-brand-ink dark:prose-strong:text-brand-clay prose-strong:font-bold
+                  prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
+                  ${isAnalyzing ? 'animate-pulse-subtle' : ''}`}>
+                  <ReactMarkdown>{geminiRecs}</ReactMarkdown>
+                  
+                  {isAnalyzing && (
+                    <div className="mt-8 flex items-center gap-3 text-brand-ink animate-pulse">
+                      <Zap className="w-4 h-4 fill-current" />
+                      <span className="text-[10px] items-center uppercase font-bold tracking-widest">{ui.predictedTime?.split(' ')[0] || 'AI'} is typing...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="bg-brand-paper/50 backdrop-blur-md p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
@@ -271,9 +286,9 @@ export const Results: React.FC<ResultsProps> = ({
                   </div>
                 </div>
                 <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">Unlock Your Full Narrative</h4>
+                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">{ui.unlockNarrativeTitle}</h4>
                   <p className="text-stone-500 text-lg leading-relaxed font-sans">
-                    Complete your journey of self-discovery. Sign in to unlock a comprehensive, personalized analysis and synchronize your cognitive profile across devices.
+                    {ui.unlockNarrativeDesc}
                   </p>
                   <div className="pt-4 flex justify-center">
                     <GoogleAuthButton />
@@ -289,11 +304,11 @@ export const Results: React.FC<ResultsProps> = ({
                 <div className="w-12 h-12 rounded-full bg-brand-paper-accent border border-stone-line flex items-center justify-center mb-4 shadow-sm">
                   <Zap className="w-5 h-5 text-brand-clay" />
                 </div>
-                <h3 className="text-2xl font-serif font-bold mb-2 text-brand-graphite">Sensory Signature Pending</h3>
-                <p className="text-sm text-stone-400 font-sans">Full neurological mapping is available for authenticated profiles.</p>
+                <h3 className="text-2xl font-serif font-bold mb-2 text-brand-graphite">{ui.sensorySignaturePending}</h3>
+                <p className="text-sm text-stone-400 font-sans">{ui.authenticatedProfilesOnly}</p>
               </div>
               <div className="opacity-10 grayscale select-none pointer-events-none">
-                <h3 className="text-2xl font-serif font-bold mb-8">Detailed Sensory Mapping</h3>
+                <h3 className="text-2xl font-serif font-bold mb-8">{ui.detailedSensoryMapping}</h3>
                 <div className="flex flex-col gap-4 max-w-xs mx-auto">
                   {[1, 2, 3, 4].map(i => <div key={i} className="h-2 bg-stone-200 rounded-full w-full"></div>)}
                 </div>
@@ -305,7 +320,7 @@ export const Results: React.FC<ResultsProps> = ({
                 <div className="flex flex-col items-center">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-stone-bg text-stone-400 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] mb-10">
                     <RadarIcon className="w-3 h-3" />
-                    Sensory Signature Map
+                    {ui.sensorySignatureMap}
                   </div>
                   <div className="w-full aspect-square max-w-[450px] min-h-[350px] relative">
                     <div className="absolute inset-0 bg-brand-paper rounded-full blur-3xl opacity-30"></div>
@@ -318,7 +333,7 @@ export const Results: React.FC<ResultsProps> = ({
                         />
                         <PolarRadiusAxis angle={30} domain={[0, 5]} stroke="transparent" tick={false} />
                         <Radar
-                          name="Intensity"
+                          name={ui.intensity}
                           dataKey="A"
                           stroke="#5E4B8B"
                           strokeWidth={3}
@@ -449,7 +464,7 @@ export const Results: React.FC<ResultsProps> = ({
             className="w-full py-8 text-[11px] uppercase tracking-[0.25em] font-bold text-stone-400 hover:text-brand-ink transition-all flex items-center justify-center gap-4 group"
           >
             <div className="w-8 h-px bg-stone-line group-hover:bg-brand-ink/20 group-hover:w-16 transition-all"></div>
-            {showActions ? 'Archival Options' : 'Management & Archival'}
+            {showActions ? ui.archivalOptions : ui.managementArchival}
             <div className="w-8 h-px bg-stone-line group-hover:bg-brand-ink/20 group-hover:w-16 transition-all"></div>
           </button>
 

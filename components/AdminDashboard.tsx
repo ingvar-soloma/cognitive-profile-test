@@ -53,9 +53,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
             <Users className="w-6 h-6 text-brand-paper" />
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold tracking-tight">System Records</h2>
+            <h2 className="text-2xl font-serif font-bold tracking-tight">{ui.systemRecords}</h2>
             <p className="text-white/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-0.5">
-               {results.length} total entries analyzed
+               {ui.totalEntriesAnalyzed.replace('{count}', String(results.length))}
             </p>
           </div>
         </div>
@@ -63,7 +63,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white transition-colors" />
           <input
             type="text"
-            placeholder="Search by ID, name or email..."
+            placeholder={ui.searchAdminPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-12 pr-5 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-sans"
@@ -75,10 +75,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-stone-bg/50 text-stone-400 text-[10px] uppercase tracking-[0.2em] font-bold">
-              <th className="px-8 py-5 border-b border-stone-line/50">User Profile</th>
-              <th className="px-8 py-5 border-b border-stone-line/50">Test Specification</th>
-              <th className="px-8 py-5 border-b border-stone-line/50">Timestamp</th>
-              <th className="px-8 py-5 border-b border-stone-line/50 text-right">Actions</th>
+              <th className="px-8 py-5 border-b border-stone-line/50">{ui.userProfile}</th>
+              <th className="px-8 py-5 border-b border-stone-line/50">{ui.testSpecification}</th>
+              <th className="px-8 py-5 border-b border-stone-line/50">{ui.timestamp}</th>
+              <th className="px-8 py-5 border-b border-stone-line/50 text-right">{ui.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-line/30">
@@ -112,10 +112,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                 <td className="px-8 py-6">
                   <div className="inline-flex flex-col">
                     <span className="text-xs font-bold text-brand-graphite mb-1">
-                      {res.test_type === 'full_aphantasia_profile' ? 'Full Cognitive Profile' : 'Express Diagnostics'}
+                      {res.test_type === 'full_aphantasia_profile' ? ui.fullCognitiveProfile : ui.expressDiagnostics}
                     </span>
                     <span className="text-[9px] uppercase tracking-widest text-stone-400 font-bold bg-stone-100 rounded-full px-2 py-0.5 w-fit">
-                      {String(res.answers ? Object.values(res.answers).reduce((acc: number, curr: any) => acc + Object.keys(curr || {}).length, 0) : 0)} answers provided
+                      {String(res.answers ? Object.values(res.answers).reduce((acc: number, curr: any) => acc + Object.keys(curr || {}).length, 0) : 0)} {ui.answersProvided}
                     </span>
                   </div>
                 </td>
@@ -134,7 +134,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                     onClick={() => onViewResult(res)}
                     className="inline-flex items-center gap-2 text-brand-ink font-bold text-[10px] uppercase tracking-[0.2em] hover:text-brand-graphite transition-all group/btn"
                   >
-                    Details
+                    {ui.details}
                     <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center group-hover/btn:bg-brand-ink group-hover/btn:text-white transition-all">
                       <ChevronRight className="w-4 h-4 translate-x-0 group-hover/btn:translate-x-0.5 transition-transform" />
                     </div>
@@ -147,7 +147,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                 <td colSpan={4} className="px-8 py-20 text-center">
                    <div className="flex flex-col items-center gap-3">
                       <Search className="w-12 h-12 text-stone-200" />
-                      <p className="text-stone-400 font-serif italic text-lg">No records found matching your criteria.</p>
+                      <p className="text-stone-400 font-serif italic text-lg">{ui.noRecordsFound}</p>
                    </div>
                 </td>
               </tr>

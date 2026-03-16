@@ -3,6 +3,7 @@ import { History, FileText, ChevronRight, BarChart2, Search, Calendar, User, Use
 import { Profile, UIStrings } from '@/types';
 import { AVAILABLE_SURVEYS } from '@/constants';
 import { ProfileService } from '@/services/ProfileService';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 interface DashboardResultsProps {
     profiles: Profile[];
@@ -19,6 +20,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
     const [search, setSearch] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const lastFetchedQuery = useRef<string | null>(null);
+    useDocumentTitle(isAdmin ? ui.systemDatabase : ui.navResults);
 
     // Local debounce for search to avoid too many requests
     useEffect(() => {
@@ -139,10 +141,10 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                     </div>
                     <div>
                         <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite tracking-tight leading-tight mb-2">
-                            {isAdmin ? 'System Database' : ui.navResults}
+                            {isAdmin ? ui.systemDatabase : ui.navResults}
                         </h1>
                         <p className="text-stone-500 font-sans">
-                            {isAdmin ? `Tracking ${groupedAdminResults.length} active users` : ui.resultsHistoryDesc}
+                            {isAdmin ? ui.activeUsersCount.replace('{count}', String(groupedAdminResults.length)) : ui.resultsHistoryDesc}
                         </p>
                     </div>
                 </div>
@@ -152,7 +154,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                         <input
                             type="text"
-                            placeholder="Search users..."
+                            placeholder={ui.searchUsersPlaceholder}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="pl-10 pr-4 py-2 w-full bg-brand-paper border border-stone-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
@@ -189,7 +191,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                                     </div>
                                 </div>
                                 <span className="px-3 py-1 bg-brand-paper rounded-full text-[10px] uppercase font-bold text-stone-400 tracking-wider shadow-sm ring-1 ring-stone-line/50">
-                                    {userGroup.tests.length} tests found
+                                    {userGroup.tests.length} {ui.testsFound}
                                 </span>
                             </div>
                             
@@ -207,7 +209,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                                             <div>
                                                 <div className="text-sm font-bold text-brand-graphite">{test.subtitle}</div>
                                                 <div className="text-[10px] text-stone-400 uppercase font-bold tracking-widest mt-0.5">
-                                                    {test.answerCount} answers • {new Date(test.date).toLocaleString(language === 'uk' ? 'uk-UA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })}
+                                                    {test.answerCount} {ui.answersLabel} • {new Date(test.date).toLocaleString(language === 'uk' ? 'uk-UA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })}
                                                 </div>
                                             </div>
                                         </div>
@@ -218,7 +220,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                         </div>
                     ))}
                     {groupedAdminResults.length === 0 && (
-                        <div className="text-center py-12 text-stone-400 italic">No users found matching your search.</div>
+                        <div className="text-center py-12 text-stone-400 italic">{ui.noUsersFound}</div>
                     )}
                 </div>
             ) : (
@@ -277,7 +279,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
             )}
 
             <div className="mt-16 pt-8 border-t border-stone-line flex justify-between items-center text-[10px] uppercase font-bold tracking-[0.2em] text-stone-300">
-                <span>NeuroProfile Security & Privacy</span>
+                <span>{ui.securityPrivacy}</span>
                 <a href="/privacy" className="text-brand-ink hover:underline">{ui.privacyPolicy}</a>
             </div>
         </div>
