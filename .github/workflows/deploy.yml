@@ -18,8 +18,15 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            # Use token for git authentication to avoid SSH key issues in CI
-            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            # Ensure github.com is in known_hosts to prevent verification errors
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
+            
+            # Start ssh-agent and add the deploy key to ensure git can use it
+            eval $(ssh-agent -s)
+            ssh-add ~/.ssh/id_rsa 2>/dev/null || ssh-add ~/.ssh/id_ed25519 2>/dev/null || echo "Using default keys"
+            
+            git remote set-url origin git@github.com:${{ github.repository }}.git
             git fetch origin
             git pull origin main
             make prod-build
