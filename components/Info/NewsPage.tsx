@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, Newspaper, Clock, Tag, Mail } from 'lucide-react
 import { UIStrings, Language } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { NewsletterSubscribe } from './NewsletterSubscribe';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface NewsPageProps {
     ui: UIStrings;
@@ -149,6 +149,34 @@ const ARTICLES: Article[] = [
             `Важный нюанс: шкала инвертирована для отображения. Поскольку афантазия — это "1" (минимум), но центр диаграммы обычно ассоциируется с "ничем", мы отображаем 1 ближе к краю, а 5 — к центру. Люди с афантазией видят широкий полигон, а люди с гиперфантазией — ярко заполненный центр.`,
         ],
     },
+    {
+        id: 'roadmap-2026',
+        date: '2026-03-01',
+        tag: 'Roadmap',
+        tagColor: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800/30',
+        readMin: 5,
+        titleUk: `План розвитку NeuroProfile на 2026 рік`,
+        titleEn: `NeuroProfile Roadmap for 2026`,
+        titleRu: `План развития NeuroProfile на 2026 год`,
+        excerptUk: `Наші плани на майбутнє: від нових когнітивних тестів до глибокої персоналізації рекомендацій.`,
+        excerptEn: `Our plans for the future: from new cognitive tests to deep recommendation personalization.`,
+        excerptRu: `Наши планы на будущее: от новых когнитивных тестов до глубокой персонализации рекомендаций.`,
+        bodyUk: [
+            `Цього року ми зосередимось на розширенні спектру досліджень. Окрім афантазії, ми плануємо додати тести на SDAM (Severely Deficient Autobiographical Memory) та прозопагнозію (сліпоту на обличчя), оскільки ці стани часто корелюють між собою.`,
+            `Також ми активно працюємо над розділом "Рекомендації". Це не просто тексти, а інтерактивні вправи, розроблені спільно з психологами та нейробіологами, які допоможуть людям з різними типами уяви краще адаптуватись у побуті та роботі.`,
+            `Одним із ключових викликів є покращення точності AI-аналізу. Ми тестуємо нові версії Gemini, щоб надати користувачам ще більш релевантні інсайти на основі їхнього унікального сенсорного підпису.`,
+        ],
+        bodyEn: [
+            `This year we will focus on expanding the range of research. In addition to aphantasia, we plan to add tests for SDAM (Severely Deficient Autobiographical Memory) and prosopagnosia (face blindness), as these conditions often correlate.`,
+            `We are also actively working on the "Recommendations" section. These are not just texts, but interactive exercises developed jointly with psychologists and neuroscientists to help people with different types of imagination adapt better in everyday life and work.`,
+            `A key challenge is improving AI analysis accuracy. We are testing new versions of Gemini to provide users with even more relevant insights based on their unique sensory signature.`,
+        ],
+        bodyRu: [
+            `В этом году мы сосредоточимся на расширении спектра исследований. Помимо афантазии, мы планируем добавить тесты на SDAM (Severely Deficient Autobiographical Memory) и прозопагнозию (лицевую слепоту), так как эти состояния часто коррелируют между собой.`,
+            `Также мы активно работаем над разделом «Рекомендации». Это не просто тексты, а интерактивные упражнения, разработанные совместно с психологами и нейробиологами, которые помогут людям с разными типами воображения лучше адаптироваться в быту и работе.`,
+            `Одним из ключевых вызовов является улучшение точности AI-анализа. Мы тестируем новые версии Gemini, чтобы предоставить пользователям еще более релевантные инсайты на основе их уникальной сенсорной подписи.`,
+        ],
+    },
 ];
 /* eslint-enable max-len */
 
@@ -243,7 +271,18 @@ export const NewsPage: React.FC<NewsPageProps> = ({ ui, language, userEmail }) =
     const articleTitle = activeArticle
         ? (language === 'uk' ? activeArticle.titleUk : language === 'ru' ? activeArticle.titleRu : activeArticle.titleEn)
         : undefined;
-    useDocumentTitle(articleTitle ?? ui.navNews);
+    
+    useSeoMetadata({
+        title: articleTitle ? `${articleTitle} | News` : `${ui.navNews} — Latest Updates & Research`,
+        description: activeArticle 
+            ? (language === 'uk' ? activeArticle.excerptUk : language === 'ru' ? activeArticle.excerptRu : activeArticle.excerptEn)
+            : (language === 'uk' 
+                ? 'Новини та оновлення проєкту NeuroProfile. Дізнайтесь про нові функції AI-аналізу та дослідження афантазії.' 
+                : language === 'ru' 
+                    ? 'Новости и обновления проекта NeuroProfile. Узнайте о новых функциях AI-анализа и исследованиях афантазии.' 
+                    : 'News and updates from the NeuroProfile project. Learn about new AI analysis features and aphantasia research.'),
+        canonical: activeArticle ? `/news?id=${activeArticle.id}` : '/news'
+    });
 
     if (activeArticle) {
         return (

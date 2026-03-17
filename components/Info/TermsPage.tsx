@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, FileText, Bot, Coins, RefreshCw } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface TermsPageProps {
     ui: UIStrings;
@@ -10,7 +10,11 @@ interface TermsPageProps {
 
 export const TermsPage: React.FC<TermsPageProps> = ({ ui }) => {
     const navigate = useNavigate();
-    useDocumentTitle(ui.termsTitle);
+    useSeoMetadata({
+        title: `${ui.termsTitle} — NeuroProfile Assessment`,
+        description: ui.termsSubtitle,
+        canonical: '/terms'
+    });
 
     const sections = [
         {
@@ -82,6 +86,19 @@ export const TermsPage: React.FC<TermsPageProps> = ({ ui }) => {
                         </div>
                     </section>
                 ))}
+            </div>
+
+            <div className="mb-14 p-8 bg-brand-paper-accent border border-stone-line rounded-[2rem] text-sm text-stone-500 leading-relaxed font-sans space-y-4">
+                <h2 className="text-base font-serif font-bold text-brand-graphite">Additional Information</h2>
+                <p>
+                    By using this service, you acknowledge that the Cognitive Profile Assessment is a research-oriented tool. The data provided is for the purpose of self-exploration and understanding neurodiversity. We are committed to transparency and will provide updates on how AI models interpret these results.
+                </p>
+                <p>
+                    Intellectual Property: All software, design, and analysis methodologies are the property of the NeuroProfile Project. User-submitted answers remain the property of the user, but we are granted a license to process them for generating results and aggregate research.
+                </p>
+                <p>
+                    Data Retention: Users who authorize through Google have their data stored indefinitely to allow historical comparison. You can request full data deletion at any time by contacting us as detailed in the Privacy Policy.
+                </p>
             </div>
 
             <footer className="border-t border-stone-line pt-8 text-center">

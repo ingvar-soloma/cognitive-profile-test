@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, Brain, Eye, EyeOff, Sparkles, ChevronRight, Microscope, Users } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface AboutPageProps {
     ui: UIStrings;
@@ -15,7 +15,11 @@ const FloatingOrb: React.FC<{ className?: string }> = ({ className }) => (
 
 export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
     const navigate = useNavigate();
-    useDocumentTitle(ui.navAbout);
+    useSeoMetadata({
+        title: ui.aboutTitle,
+        description: ui.aboutSubtitle,
+        canonical: '/about'
+    });
 
     const facts = [
         {

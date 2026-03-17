@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, ChevronDown, HelpCircle } from 'lucide-react';
 import { UIStrings, Language } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface FaqPageProps {
     ui: UIStrings;
@@ -149,7 +149,11 @@ const FaqAccordion: React.FC<{ item: FaqItem; index: number }> = ({ item, index 
 
 export const FaqPage: React.FC<FaqPageProps> = ({ ui, language }) => {
     const navigate = useNavigate();
-    useDocumentTitle(ui.navFaq);
+    useSeoMetadata({
+        title: `${ui.faqTitle} — Cognitive Research`,
+        description: ui.faqSubtitle,
+        canonical: '/faq'
+    });
     const items = FAQ_DATA[language] ?? FAQ_DATA['en'];
 
     return (

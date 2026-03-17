@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Brain, Sparkles, ChevronRight, Eye, EyeOff, BarChart2, ArrowRight, Shield, Zap, Users } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface LandingPageProps {
     ui: UIStrings;
@@ -16,7 +16,12 @@ const FloatingOrb: React.FC<{ className?: string }> = ({ className }) => (
 export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) => {
     const navigate = useNavigate();
     const heroRef = useRef<HTMLDivElement>(null);
-    useDocumentTitle(ui.heroTitle);
+
+    useSeoMetadata({
+        title: ui.title, // Use the shorter main title
+        description: ui.description,
+        canonical: '/'
+    });
 
     // Parallax subtle movement
     useEffect(() => {
@@ -172,6 +177,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                 <p className="text-xs text-stone-500 leading-relaxed font-sans">{f.desc}</p>
                             </div>
                         ))}
+                    </div>
+
+                    <div className="mt-16 text-left bg-white/5 dark:bg-black/5 rounded-[2.5rem] p-8 border border-stone-line/50">
+                        <div className="grid md:grid-cols-2 gap-12">
+                           <div className="space-y-4">
+                                <h3 className="text-xl font-serif font-bold text-brand-graphite">{ui.aboutWhatIsAphantasia}</h3>
+                                <p className="text-sm text-stone-500 leading-relaxed">
+                                    {ui.aboutWhatIsAphantasiaDesc}
+                                    <br /><br />
+                                    {ui.aboutHowCommonDesc}
+                                </p>
+                           </div>
+                           <div className="space-y-4">
+                                <h3 className="text-xl font-serif font-bold text-brand-graphite">{ui.aboutSpectrum}</h3>
+                                <p className="text-sm text-stone-500 leading-relaxed">
+                                    {ui.aboutSpectrumDesc}
+                                    <br /><br />
+                                    {ui.aboutWhoDiscoveredDesc}
+                                </p>
+                           </div>
+                        </div>
                     </div>
                 </div>
             </section>

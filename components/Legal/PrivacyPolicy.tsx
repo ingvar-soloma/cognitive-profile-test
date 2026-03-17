@@ -2,7 +2,7 @@ import React from 'react';
 import { Shield, Database, Trash2, Mail, ArrowLeft } from 'lucide-react';
 import { UIStrings, Language } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface PrivacyPolicyProps {
     ui: UIStrings;
@@ -11,7 +11,11 @@ interface PrivacyPolicyProps {
 
 export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) => {
     const navigate = useNavigate();
-    useDocumentTitle(ui.privacyPolicy);
+    useSeoMetadata({
+        title: `${ui.privacyPolicy} — Data Protection`,
+        description: ui.deleteDataDesc,
+        canonical: '/privacy'
+    });
 
     const emailBody = encodeURIComponent(ui.emailTemplateBody);
     const emailSubject = encodeURIComponent(ui.emailTemplateTitle);

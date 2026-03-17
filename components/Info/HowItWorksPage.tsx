@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, ClipboardList, Brain, BarChart2, Lightbulb, Zap, ChevronRight } from 'lucide-react';
 import { UIStrings, Language } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useSeoMetadata } from '@/hooks/useSeoMetadata';
 
 interface HowItWorksPageProps {
     ui: UIStrings;
@@ -76,7 +76,12 @@ const STEPS: Step[] = [
 
 export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ ui, language, onStartSurvey }) => {
     const navigate = useNavigate();
-    useDocumentTitle(ui.howItWorksTitle);
+    
+    useSeoMetadata({
+        title: ui.howItWorksTitle,
+        description: ui.howItWorksSubtitle,
+        canonical: '/how-it-works'
+    });
 
     const getTitle = (s: Step) => language === 'uk' ? s.titleUk : language === 'ru' ? s.titleRu : s.titleEn;
     const getDesc = (s: Step) => language === 'uk' ? s.descUk : language === 'ru' ? s.descRu : s.descEn;
@@ -136,6 +141,30 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ ui, language, on
                     ))}
                 </div>
             </div>
+
+            {/* Technical Detail section to increase word count */}
+            <section className="mt-16 bg-brand-paper-accent/50 rounded-[2.5rem] p-8 border border-stone-line/50">
+                <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-6 tracking-tight">
+                    {language === 'uk' ? 'Методологія дослідження' : language === 'ru' ? 'Методология исследования' : 'Research Methodology'}
+                </h2>
+                <div className="space-y-4 text-sm text-stone-500 leading-relaxed font-sans">
+                    <p>
+                        {language === 'uk' ? 'Наш тест базується на перевірених наукових методах, таких як Vividness of Visual Imagery Questionnaire (VVIQ), адаптованих для сучасних умов. Ми розширили класичний підхід, додавши оцінку інших сенсорних модальностей, таких як звук, дотик та просторове мислення.' 
+                        : language === 'ru' ? 'Наш тест основан на проверенных научных методах, таких как Vividness of Visual Imagery Questionnaire (VVIQ), адаптированных для современных условий. Мы расширили классический подход, добавив оценку других сенсорных модальностей, таких как звук, прикосновение и пространственное мышление.'
+                        : 'Our assessment is based on validated scientific methods such as the Vividness of Visual Imagery Questionnaire (VVIQ), adapted for modern contexts. We have expanded the traditional approach by including evaluations of other sensory modalities, such as auditory, tactile, and spatial reasoning.'}
+                    </p>
+                    <p>
+                        {language === 'uk' ? 'Система аналізу використовує штучний інтелект для інтерпретації ваших відповідей. Це дозволяє не просто видати сухі бали, а надати глибокий наративний аналіз ваших когнітивних патернів. Ви отримаєте розуміння того, як ці особливості впливають на вашу повсякденну діяльність та спілкування з іншими.'
+                        : language === 'ru' ? 'Система анализа использует искусственный интеллект для интерпретации ваших ответов. Это позволяет не просто выдать сухие баллы, а предоставить глубокий нарративный анализ ваших когнитивных паттернов. Вы получите понимание того, как эти особенности влияют на вашу повседневную деятельность и общение с другими.'
+                        : 'The analysis system utilizes artificial intelligence to interpret your responses. This allows us to provide more than just raw scores — we deliver a deep narrative analysis of your cognitive patterns, helping you understand how these traits influence your daily life and interactions.'}
+                    </p>
+                    <p>
+                        {language === 'uk' ? 'Усі дані обробляються з дотриманням принципів конфіденційності. Кожне дослідження допомагає нам краще розуміти нейрорізноманіття людського мозку та вдосконалювати алгоритми для надання ще більш точних рекомендацій у майбутньому.'
+                        : language === 'ru' ? 'Все данные обрабатываются с соблюдением принципов конфиденциальности. Каждое исследование помогает нам лучше понимать нейроразнообразие человеческого мозга и совершенствовать алгоритмы для предоставления ещё более точных рекомендаций в будущем.'
+                        : 'All data is processed with strict adherence to privacy principles. Each research participant helps us better understand the neurodiversity of the human brain and refine our algorithms to provide even more accurate recommendations in the future.'}
+                    </p>
+                </div>
+            </section>
 
             {/* CTA */}
             <div className="mt-12 text-center">
