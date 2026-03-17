@@ -17,20 +17,14 @@ deploy:
     - ssh $SSH_USER@$SSH_HOST "
         set -e;
         cd $DEPLOY_PATH;
-        # Ensure hosts are known
-        mkdir -p ~/.ssh;
-        ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null;
-        ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null;
+        echo 'Current user: \$(whoami)';
         
-        # Identity setup
-        eval \$(ssh-agent -s);
-        ssh-add ~/.ssh/id_rsa 2>/dev/null || ssh-add ~/.ssh/id_ed25519 2>/dev/null || echo 'Using default keys';
+        # Use sudo for operations to prevent permission denied error
+        sudo git fetch origin;
+        sudo git pull origin main;
 
-        git remote set-url origin git@gitlab.com:$CI_PROJECT_PATH.git;
-        git fetch origin;
-        git pull origin main;
-        make prod-build;
-        make prod-up;
+        sudo make prod-build;
+        sudo make prod-up;
       "
   only:
     - main

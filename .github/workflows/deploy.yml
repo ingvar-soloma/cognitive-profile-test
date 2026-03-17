@@ -17,17 +17,15 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+          script: |
+            set -e
             cd ${{ secrets.DEPLOY_PATH }}
-            # Ensure github.com is in known_hosts to prevent verification errors
-            mkdir -p ~/.ssh
-            ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
+            echo "Current user: $(whoami)"
             
-            # Start ssh-agent and add the deploy key to ensure git can use it
-            eval $(ssh-agent -s)
-            ssh-add ~/.ssh/id_rsa 2>/dev/null || ssh-add ~/.ssh/id_ed25519 2>/dev/null || echo "Using default keys"
+            # Use sudo if necessary to fix permissions or pull updates
+            sudo git fetch origin
+            sudo git pull origin main
             
-            git remote set-url origin git@github.com:${{ github.repository }}.git
-            git fetch origin
-            git pull origin main
-            make prod-build
-            make prod-up
+            # Build and up using sudo
+            sudo make prod-build
+            sudo make prod-up
