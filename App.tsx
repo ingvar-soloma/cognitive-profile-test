@@ -62,6 +62,32 @@ const ProtectedRoute: React.FC<{ user: User | null; children: React.ReactNode }>
 const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Unified Source Tracker for lead attribution (from ?s=f, ?s=t, etc.)
+  useEffect(() => {
+    const s = searchParams.get('s');
+    if (s) {
+      const sourceMap: Record<string, string> = {
+        'f': 'facebook',
+        't': 'telegram',
+        'i': 'instagram',
+        'y': 'youtube',
+        'l': 'linkedin',
+        'x': 'twitter',
+        'g': 'google'
+      };
+      
+      const fullSource = sourceMap[s] || s;
+      localStorage.setItem('lead_source', fullSource);
+      
+      // Clean URL after capturing source to avoid scaring users
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('s');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const [appState, setAppState] = useState<AppState>(() => {
     const path = window.location.pathname;
     if (path === '/results') return AppState.DASHBOARD_RESULTS;

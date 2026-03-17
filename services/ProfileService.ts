@@ -61,7 +61,8 @@ export class ProfileService {
           test_type: testType,
           answers: profile.answers[testType] || {},
           scores: scores,
-          lang: lang
+          lang: lang,
+          source: localStorage.getItem('lead_source') || undefined
         }),
       });
 
