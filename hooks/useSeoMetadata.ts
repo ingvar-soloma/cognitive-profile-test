@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 const SITE_NAME = import.meta.env.VITE_SITE_NAME || 'NeuroProfile';
-const BASE_URL = import.meta.env.VITE_BASE_URL || 'https://neuroprofile.org';
+const BASE_URL = import.meta.env.VITE_BASE_URL || 'https://cognitiveprofile.ingvarsoloma.dev';
 
 interface SeoProps {
   title?: string;
@@ -25,7 +25,7 @@ export function useSeoMetadata({ title, description, canonical }: SeoProps) {
     // 2. Meta Description
     let metaDescription = document.querySelector('meta[name="description"]');
     let prevDescription = '';
-    
+
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
       metaDescription.setAttribute('name', 'description');
@@ -60,7 +60,7 @@ export function useSeoMetadata({ title, description, canonical }: SeoProps) {
       } else {
         metaDescription?.remove();
       }
-      
+
       if (prevCanonical) {
         linkCanonical?.setAttribute('href', prevCanonical);
       } else {
