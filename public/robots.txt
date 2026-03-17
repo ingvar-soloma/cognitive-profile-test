@@ -7,4 +7,4 @@ Disallow: /*?utm_
 Disallow: /*?ref=
 
 # Sitemaps
-Sitemap: https://neuroprofile.org/sitemap.xml
+Sitemap: https://cognitiveprofile.ingvarsoloma.dev/sitemap.xml
