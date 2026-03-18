@@ -1157,6 +1157,7 @@ const ResultsWrapper: React.FC<any> = ({
   }
 
   if (!activeProfile && !loading) {
+    console.log(`[ResultsWrapper] No active profile found and loading finished. Redirecting to home...`);
     return <Navigate to="/" replace />;
   }
 
