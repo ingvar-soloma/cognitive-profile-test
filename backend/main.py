@@ -336,23 +336,31 @@ async def update_profile_settings(data: ProfileUpdate, conn: asyncpg.Connection 
 
 @app.get("/api/public-results/{user_id}")
 async def get_public_result_data(user_id: str, conn: asyncpg.Connection = Depends(get_db)):
-    """Explicit JSON endpoint for public results to avoid Accept header ambiguity."""
-    query = "SELECT * FROM public_profiles WHERE user_id = $1"
-    row = await conn.fetchrow(query, user_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Profile not found")
+    """Explicit JSON endpoint for public results using file-based storage confirmed by DB."""
+    # 1. Check user public status in DB
+    user = await conn.fetchrow("SELECT id, is_public, public_nickname FROM aphantasia_users WHERE id = $1", user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    if not row['is_public']:
+    if not user['is_public']:
         raise HTTPException(status_code=403, detail="Profile is private")
+    
+    # 2. Read result file
+    file_path = get_result_file_path(user_id)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Result file not found")
+
+    async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
+        data = json.loads(await f.read())
         
     return {
-        "user_id": row['user_id'],
-        "public_nickname": row['public_nickname'],
-        "test_type": row['test_type'],
-        "scores": json.loads(row['scores']) if row['scores'] else {},
-        "answers": json.loads(row['answers']) if row['answers'] else {},
-        "gemini_recommendations": json.loads(row['gemini_recommendations']) if row['gemini_recommendations'] else {},
-        "badges": json.loads(row['badges']) if row['badges'] else []
+        "user_id": user_id,
+        "public_nickname": user['public_nickname'],
+        "test_type": data.get("test_type", "full_aphantasia_profile"),
+        "scores": data.get("scores", {}),
+        "answers": data.get("answers", {}),
+        "gemini_recommendations": data.get("gemini_recommendations", {}),
+        "badges": await get_user_badges(user_id, conn)
     }
 
 @app.get("/results/{user_id}")
