@@ -1,15 +1,13 @@
 import os
 import logging
-import psycopg2
-from psycopg2.extras import RealDictCursor
+import asyncio
+import asyncpg
+from typing import AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
-def get_db():
+async def get_db_url() -> str:
     database_url = os.getenv("DATABASE_URL")
-    
-    # If DATABASE_URL is not set directly, try constructing it 
-    # from the individual variables the user provided
     if not database_url:
         db_user = os.getenv("DB_USER", "user")
         db_password = os.getenv("DB_PASSWORD", "password")
@@ -17,27 +15,23 @@ def get_db():
         db_host = os.getenv("DB_HOST", "host.docker.internal")
         db_port = os.getenv("DB_PORT", os.getenv("LOCAL_DB_PORT", "5432"))
         database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-        
-    max_retries = 5
-    for i in range(max_retries):
-        try:
-            conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-            return conn
-        except Exception as e:
-            if i == max_retries - 1:
-                logger.error(f"Could not connect to database after {max_retries} attempts: {e}")
-                raise e
-            logger.warning(f"Database connection attempt {i+1} failed, retrying in 2s...")
-            import time
-            time.sleep(2)
+    return database_url
 
-def init_db():
+async def get_db() -> AsyncGenerator[asyncpg.Connection, None]:
+    database_url = await get_db_url()
+    conn = await asyncpg.connect(database_url)
     try:
-        conn = get_db()
-        cursor = conn.cursor()
+        yield conn
+    finally:
+        await conn.close()
+
+async def init_db():
+    try:
+        database_url = await get_db_url()
+        conn = await asyncpg.connect(database_url)
         
-        # We use a prefixed table name to avoid conflicts with your main app's users table
-        cursor.execute('''
+        # Users Table
+        await conn.execute('''
             CREATE TABLE IF NOT EXISTS aphantasia_users (
                 id VARCHAR(255) PRIMARY KEY,
                 email VARCHAR(255),
@@ -45,18 +39,24 @@ def init_db():
                 last_name VARCHAR(255),
                 photo_url TEXT,
                 is_guest BOOLEAN DEFAULT FALSE,
+                is_public BOOLEAN DEFAULT FALSE,
+                public_nickname VARCHAR(255),
+                referral_count INTEGER DEFAULT 0,
+                referred_by VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 last_login TIMESTAMP
             )
         ''')
-        # In case the table was created just before we added is_guest:
-        try:
-            cursor.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE")
-        except Exception:
-            pass
+        
+        # Migrations
+        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE")
+        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE")
+        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS public_nickname VARCHAR(255)")
+        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referral_count INTEGER DEFAULT 0")
+        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255)")
 
         # Badges Table
-        cursor.execute('''
+        await conn.execute('''
             CREATE TABLE IF NOT EXISTS badges (
                 id SERIAL PRIMARY KEY,
                 code VARCHAR(255) UNIQUE NOT NULL,
@@ -69,8 +69,8 @@ def init_db():
             )
         ''')
 
-        # User Badges Table (Many-to-Many)
-        cursor.execute('''
+        # User Badges Table
+        await conn.execute('''
             CREATE TABLE IF NOT EXISTS user_badges (
                 user_id VARCHAR(255) REFERENCES aphantasia_users(id) ON DELETE CASCADE,
                 badge_id INTEGER REFERENCES badges(id) ON DELETE CASCADE,
@@ -79,81 +79,61 @@ def init_db():
             )
         ''')
 
-        conn.commit()
-        conn.close()
-        logger.info("PostgreSQL Database initialized correctly")
-        
-        # Run seeder
-        seed_badges()
+        # Feature Flags Table
+        await conn.execute('''
+            CREATE TABLE IF NOT EXISTS feature_flags (
+                code VARCHAR(255) PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                is_enabled BOOLEAN DEFAULT FALSE,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        logger.info("Async PostgreSQL Database initialized correctly")
+        await seed_badges(conn)
+        await seed_feature_flags(conn)
+        await conn.close()
     except Exception as e:
         logger.error(f"Failed to initialize PostgreSQL database: {e}")
 
-def seed_badges():
+async def seed_badges(conn: asyncpg.Connection):
     badges = [
-        {
-            "code": "founding_member",
-            "name": "Founding Member",
-            "icon": "✨",
-            "description": "For being one of the first 100 beta testers.",
-            "is_active": True,
-            "is_secret": False
-        },
-        {
-            "code": "3_sigma_outlier",
-            "name": "3-Sigma Outlier",
-            "icon": "📊",
-            "description": "For exceptional cognitive architecture significantly deviating from the mean.",
-            "is_active": True,
-            "is_secret": False
-        },
-        {
-            "code": "ux_pioneer",
-            "name": "UX Pioneer",
-            "icon": "🎨",
-            "description": "For helping fix critical mobile UI issues.",
-            "is_active": True,
-            "is_secret": False
-        },
-        {
-            "code": "early_adopter",
-            "name": "Early Adopter",
-            "icon": "🚀",
-            "description": "Joined during the initial launch phase of the project.",
-            "is_active": True,
-            "is_secret": False
-        },
-        {
-            "code": "bug_hunter",
-            "name": "Bug Hunter",
-            "icon": "🐛",
-            "description": "For reporting critical bugs that were fixed.",
-            "is_active": True,
-            "is_secret": False
-        },
-        {
-            "code": "neurodiversity_advocate",
-            "name": "Neurodiversity Advocate",
-            "icon": "🧠",
-            "description": "For contributing to the understanding of cognitive diversity.",
-            "is_active": True,
-            "is_secret": False
-        }
+        ("founding_member", "Founding Member", "✨", "Recognized as an early contributor who shaped the project's foundation during the initial beta phase.", True, False),
+        ("3_sigma_outlier", "3-Sigma Outlier", "📊", "For exceptional cognitive architecture significantly deviating from the mean.", True, False),
+        ("ux_pioneer", "UX Pioneer", "🎨", "For helping fix critical mobile UI issues.", True, False),
+        ("early_adopter", "Early Adopter", "🚀", "Joined during the initial launch phase of the project.", True, False),
+        ("bug_hunter", "Bug Hunter", "🐛", "For reporting critical bugs that were fixed.", True, False),
+        ("neurodiversity_advocate", "Neurodiversity Advocate", "🧠", "For contributing to the understanding of cognitive diversity.", True, False),
+        ("node_expander", "Node Expander", "📍", "Successfully referred 3 new participants to the cognitive assessment.", True, False)
     ]
     
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        for b in badges:
-            cursor.execute('''
-                INSERT INTO badges (code, name, icon, description, is_active, is_secret)
-                VALUES (%s, %s, %s, %s, %s, %s)
-                ON CONFLICT (code) DO UPDATE SET
-                    name = EXCLUDED.name,
-                    icon = EXCLUDED.icon,
-                    description = EXCLUDED.description
-            ''', (b["code"], b["name"], b["icon"], b["description"], b["is_active"], b["is_secret"]))
-        conn.commit()
-        conn.close()
+        await conn.executemany('''
+            INSERT INTO badges (code, name, icon, description, is_active, is_secret)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (code) DO UPDATE SET
+                name = EXCLUDED.name,
+                icon = EXCLUDED.icon,
+                description = EXCLUDED.description
+        ''', badges)
         logger.info("Badges seeded successfully")
     except Exception as e:
         logger.error(f"Failed to seed badges: {e}")
+
+async def seed_feature_flags(conn: asyncpg.Connection):
+    flags = [
+        ("share", "Social Sharing", "Enable/Disable profile sharing and referral links.", True),
+        ("multi_survey", "Multi-Survey Management", "Allow users to take multiple tests and manage them in dashboard.", False),
+        ("ai_streaming", "AI Analysis Streaming", "Enable real-time streaming of Gemini analysis results.", True)
+    ]
+    
+    try:
+        await conn.executemany('''
+            INSERT INTO feature_flags (code, name, description, is_enabled)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (code) DO NOTHING
+        ''', flags)
+        logger.info("Feature flags seeded successfully")
+    except Exception as e:
+        logger.error(f"Failed to seed feature flags: {e}")

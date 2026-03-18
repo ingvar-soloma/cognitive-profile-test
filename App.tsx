@@ -56,7 +56,10 @@ interface User {
 const ProtectedRoute: React.FC<{ user: User | null; children: React.ReactNode }> = ({ user, children }) => {
   const location = useLocation();
   if (!user) {
-    return <Navigate to={`/?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    const search = location.search;
+    const redirectParam = `redirect=${encodeURIComponent(location.pathname)}`;
+    const target = `/${search}${search ? (search.includes('?') ? '&' : '?') : '?'}${redirectParam}`;
+    return <Navigate to={target} replace />;
   }
   return <>{children}</>;
 };
@@ -78,27 +81,30 @@ const App: React.FC = () => {
     setNeedRefresh(false);
   };
 
-  // Unified Source Tracker for lead attribution (from ?s=f, ?s=t, etc.)
+  // Unified Source Tracker for lead attribution (from ?s=f, ?s=t, etc.) and referrals (?ref=user_id)
   useEffect(() => {
     const s = searchParams.get('s');
-    if (s) {
-      const sourceMap: Record<string, string> = {
-        'f': 'facebook',
-        't': 'telegram',
-        'i': 'instagram',
-        'y': 'youtube',
-        'l': 'linkedin',
-        'x': 'twitter',
-        'g': 'google',
-        'r': 'reddit',
-      };
-      
-      const fullSource = sourceMap[s] || s;
-      localStorage.setItem('lead_source', fullSource);
-      
-      // Clean URL after capturing source to avoid scaring users
+    const ref = searchParams.get('ref');
+    
+    if (s || ref) {
       const newParams = new URLSearchParams(searchParams);
-      newParams.delete('s');
+      
+      if (s) {
+        const sourceMap: Record<string, string> = {
+          'f': 'facebook', 't': 'telegram', 'i': 'instagram', 'y': 'youtube',
+          'l': 'linkedin', 'x': 'twitter', 'g': 'google', 'r': 'reddit',
+        };
+        const fullSource = sourceMap[s] || s;
+        localStorage.setItem('lead_source', fullSource);
+        newParams.delete('s');
+      }
+      
+      if (ref) {
+        localStorage.setItem('referred_by', ref);
+        newParams.delete('ref');
+      }
+      
+      // Clean URL after capturing to avoid scaring users
       setSearchParams(newParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -170,6 +176,11 @@ const App: React.FC = () => {
   const [loginModalConfig, setLoginModalConfig] = useState<{ title?: string, description?: string }>({});
   const [adminResults, setAdminResults] = useState<any[]>([]);
   const [showFinishConfirmation, setShowFinishConfirmation] = useState<boolean>(false);
+  const [tone, setTone] = useState<string>(() => {
+    const saved = localStorage.getItem('neuroprofile_tone');
+    if (saved) return saved;
+    return 'professional';
+  });
 
   // Sync activeSurveyId from URL if in survey mode
   useEffect(() => {
@@ -430,9 +441,9 @@ const App: React.FC = () => {
   useEffect(() => {
     // Save state whenever it changes
     if (activeProfileId && Object.keys(answers).length > 0) {
-      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers);
+      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone);
     }
-  }, [answers, activeProfileId, activeSurveyId]);
+  }, [answers, activeProfileId, activeSurveyId, tone]);
 
   useEffect(() => {
     // Warn on exit if in survey
@@ -553,7 +564,7 @@ const App: React.FC = () => {
 
       // Update profile immediately
       if (activeProfileId) {
-        ProfileService.updateProfile(activeProfileId, activeSurveyId, newAnswers);
+        ProfileService.updateProfile(activeProfileId, activeSurveyId, newAnswers, undefined, tone);
         setProfiles(ProfileService.getProfiles());
       }
 
@@ -578,6 +589,10 @@ const App: React.FC = () => {
 
   const handleSelectProfile = (id: string) => {
     setActiveProfileId(id);
+    const profile = profiles.find(p => p.id === id);
+    if (profile?.tone) {
+      setTone(profile.tone);
+    }
   };
 
   const handleRenameProfile = (id: string, newName: string) => {
@@ -633,7 +648,7 @@ const App: React.FC = () => {
   const finalizeFinish = () => {
     setShowFinishConfirmation(false);
     if (activeProfileId) {
-      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers);
+      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone);
       setProfiles(ProfileService.getProfiles());
       navigate(`/results/${activeProfileId}`);
     } else {
@@ -847,20 +862,18 @@ const App: React.FC = () => {
           } />
 
           <Route path="/results/:profileId" element={
-            <ProtectedRoute user={user}>
-              <ResultsWrapper
-                profiles={profiles}
-                onReset={(id) => handleRetake(id)}
-                onGoHome={() => navigate('/')}
-                ui={ui}
-                lang={language}
-                user={user}
-                activeSurveyId={activeSurveyId}
-                setActiveProfileId={setActiveProfileId}
-                backendRecommendations={backendRecommendations}
-                adminResults={adminResults}
-              />
-            </ProtectedRoute>
+            <ResultsWrapper
+              profiles={profiles}
+              onReset={(id) => handleRetake(id)}
+              onGoHome={() => navigate('/')}
+              ui={ui}
+              lang={language}
+              user={user}
+              activeSurveyId={activeSurveyId}
+              setActiveProfileId={setActiveProfileId}
+              backendRecommendations={backendRecommendations}
+              adminResults={adminResults}
+            />
           } />
 
           <Route path="/history" element={<Navigate to="/results" replace />} />
@@ -948,6 +961,11 @@ const App: React.FC = () => {
         ui={ui}
         language={language}
         onLanguageChange={setLanguage}
+        tone={tone}
+        onToneChange={(t) => {
+          setTone(t);
+          localStorage.setItem('neuroprofile_tone', t);
+        }}
       />
       {importingAnswers && (
         <ImportManager
@@ -1068,6 +1086,40 @@ const ResultsWrapper: React.FC<any> = ({
     }
   }, [profile, setActiveProfileId]);
 
+  const [publicProfile, setPublicProfile] = useState<any>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!profile && profileId && profileId !== 'admin' && !loading && !publicProfile && !errorStatus) {
+      setLoading(true);
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/results/${profileId}`)
+        .then(async res => {
+          if (res.ok) return res.json();
+          setErrorStatus(res.status);
+          return null;
+        })
+        .then(data => {
+          if (data) {
+            setPublicProfile({
+              id: data.user_id,
+              isPublicView: true,
+              public_nickname: data.public_nickname,
+              name: data.public_nickname || 'Anonymous',
+              answers: { [data.test_type]: data.answers || {} },
+              surveyId: data.test_type,
+              scores: data.scores,
+              recommendations: data.gemini_recommendations,
+              badges: data.badges
+            });
+          }
+        })
+        .catch(() => setErrorStatus(500))
+        .finally(() => setLoading(false));
+    }
+  }, [profileId, profile, loading, publicProfile, errorStatus]);
+
+  const activeProfile = useMemo(() => profile || publicProfile, [profile, publicProfile]);
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -1086,26 +1138,28 @@ const ResultsWrapper: React.FC<any> = ({
     );
   }
 
-  if (!profile) {
+  if (!activeProfile && !loading) {
     return <Navigate to="/" replace />;
   }
 
   return (
     <Results
-      key={`${profile.id}_${userIdFromQuery || ''}_${surveyIdFromQuery || ''}`}
-      answers={profile.answers}
-      onReset={() => onReset(profile.id)}
+      key={`${activeProfile.id}_${userIdFromQuery || ''}_${surveyIdFromQuery || ''}`}
+      answers={activeProfile.answers}
+      onReset={() => onReset(activeProfile.id)}
       onGoHome={() => navigate('/')}
       ui={ui}
       lang={lang}
-      filenamePrefix={userIdFromQuery ? `${profile.name || 'user'}_${userIdFromQuery}` : `${profile.name || 'anonymous'}_results`}
+      filenamePrefix={userIdFromQuery ? `${activeProfile.name || 'user'}_${userIdFromQuery}` : `${activeProfile.name || 'anonymous'}_results`}
       user={user}
-      targetUser={profile.targetUser}
-      surveyId={surveyIdFromQuery || profile.surveyId || activeSurveyId}
-      initialRecommendations={profile.recommendations || (userIdFromQuery ? {} : backendRecommendations)}
-      badges={profile.badges}
+      targetUser={activeProfile.targetUser}
+      surveyId={surveyIdFromQuery || activeProfile.surveyId || activeSurveyId}
+      initialRecommendations={activeProfile.recommendations || (userIdFromQuery ? {} : backendRecommendations)}
+      badges={activeProfile.badges}
+      isPublicView={activeProfile.isPublicView}
+      publicNickname={activeProfile.public_nickname}
     />
   );
-};
+}
 
 export default App;

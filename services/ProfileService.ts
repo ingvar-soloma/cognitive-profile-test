@@ -62,7 +62,9 @@ export class ProfileService {
           answers: profile.answers[testType] || {},
           scores: scores,
           lang: lang,
-          source: localStorage.getItem('lead_source') || undefined
+          tone: profile.tone || 'professional',
+          source: localStorage.getItem('lead_source') || undefined,
+          referred_by: localStorage.getItem('referred_by') || undefined
         }),
       });
 
@@ -98,7 +100,8 @@ export class ProfileService {
           test_type: testType,
           answers: profile.answers[testType] || {},
           scores: scores,
-          lang: lang
+          lang: lang,
+          tone: profile.tone || 'professional'
         }),
       });
 
@@ -308,6 +311,38 @@ export class ProfileService {
     }
   }
 
+  // --- Feature Flags ---
+
+  static async fetchFeatureFlags(): Promise<any[]> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/feature-flags`);
+      if (response.ok) return await response.json();
+      return [];
+    } catch (e) {
+      console.error('Failed to fetch feature flags', e);
+      return [];
+    }
+  }
+
+  static async updateFeatureFlag(code: string, isEnabled: boolean) {
+    const authDataString = localStorage.getItem('auth_token');
+    if (!authDataString) return null;
+    const authData = JSON.parse(authDataString);
+    const user = authData.user || authData;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/feature-flags/${code}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.id, hash: user.hash, is_enabled: isEnabled }),
+      });
+      return await response.json();
+    } catch (e) {
+      console.error('Failed to toggle feature flag', e);
+      return null;
+    }
+  }
+
   static calculateCategoryScore(answers: Record<string, Answer>, criteria: string): number {
     const allCategories = SURVEY_DATA;
     const allQuestions = allCategories.flatMap(c => c.questions);
@@ -424,7 +459,7 @@ export class ProfileService {
     return newProfile;
   }
 
-  static updateProfile(profileId: string, surveyId: string, answers: Record<string, Answer>, type?: ProfileType): void {
+  static updateProfile(profileId: string, surveyId: string, answers: Record<string, Answer>, type?: ProfileType, tone?: string): void {
     const profiles = this.getProfiles();
     const index = profiles.findIndex(p => p.id === profileId);
     if (index !== -1) {
@@ -432,6 +467,7 @@ export class ProfileService {
       profiles[index].answers[surveyId] = answers;
       profiles[index].lastUpdated = new Date().toISOString();
       if (type) profiles[index].type = type;
+      if (tone) profiles[index].tone = tone;
       this.saveProfiles(profiles);
     }
   }

@@ -330,6 +330,14 @@ export interface UIStrings {
   demoCtaTitle: string;
   demoCtaDesc: string;
   demoCtaButton: string;
+  chooseTone: string;
+  toneProfessional: string;
+  toneFriendly: string;
+  toneHelp: string;
+  shareProfile: string;
+  shareDescription: string;
+  shareReddit: string;
+  shareLinkedIn: string;
 }
 
 export enum ProfileType {
@@ -347,6 +355,7 @@ export interface Profile {
   lastUpdated: string;
   surveyId: string;
   badges?: Badge[];
+  tone?: string;
 }
 
 export interface Badge {
@@ -358,4 +367,10 @@ export interface Badge {
   is_active: boolean;
   is_secret: boolean;
   assigned_at?: string;
+}
+export interface FeatureFlag {
+  code: string;
+  name: string;
+  description?: string;
+  is_enabled: boolean;
 }

@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Answer, UIStrings, Language, QuestionType, SurveyDefinition, Badge } from '@/types';
 import { SURVEY_DATA, AVAILABLE_SURVEYS } from '@/constants';
-import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight, User } from 'lucide-react';
+import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight, User, Settings } from 'lucide-react';
 import { ProfileService } from '@/services/ProfileService';
 // @ts-ignore
 import { encode } from '@toon-format/toon';
 import ReactMarkdown from 'react-markdown';
 import { GoogleAuthButton } from '@/components/Header';
+import { AppShare } from '@/components/AppShare';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
+import { ShareSettingsModal } from './ShareSettingsModal';
 
 interface ResultsProps {
   answers: Record<string, Answer>;
@@ -23,6 +26,8 @@ interface ResultsProps {
   survey?: SurveyDefinition | null;
   initialRecommendations?: Record<string, string>;
   badges?: Badge[];
+  isPublicView?: boolean;
+  publicNickname?: string;
 }
 
 const RadarIcon = ({ className }: { className?: string }) => (
@@ -66,13 +71,60 @@ export const BadgeIcon = ({ badge, size = "md" }: { badge: Badge, size?: "sm" | 
 };
 
 export const Results: React.FC<ResultsProps> = ({
-  answers, onReset, onGoHome, ui, lang, filenamePrefix, user, targetUser, surveyId, survey, initialRecommendations = {}, badges = []
+  answers, onReset, onGoHome, ui, lang, filenamePrefix, user, targetUser, surveyId, survey, initialRecommendations = {}, badges = [],
+  isPublicView, publicNickname
 }) => {
   const navigate = useNavigate();
+  const { isEnabled } = useFeatureFlags();
   const [geminiRecs, setGeminiRecs] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+  const [nickname, setNickname] = useState('');
+  const [useRealName, setUseRealName] = useState(false);
+
+  // Load initial settings if we have a user
+  useEffect(() => {
+    if (user && !isPublicView) {
+      const authDataString = localStorage.getItem('auth_token');
+      if (!authDataString) return;
+      const authData = JSON.parse(authDataString);
+      
+      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/me/result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(authData.user || authData)
+      }).then(res => res.json()).then(data => {
+        if (data) {
+          setIsPublic(data.is_public || false);
+          setNickname(data.public_nickname || '');
+          const realName = `${user.first_name} ${user.last_name || ''}`.trim();
+          setUseRealName(!!data.public_nickname && data.public_nickname === realName);
+        }
+      });
+    }
+  }, [user, isPublicView]);
+
+  const handleUpdatePrivacy = async () => {
+    const finalNickname = useRealName ? `${user.first_name} ${user.last_name || ''}`.trim() : (nickname || null);
+    const authDataString = localStorage.getItem('auth_token');
+    if (!authDataString) return;
+    
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/me/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auth_data: JSON.parse(authDataString).user || JSON.parse(authDataString),
+          is_public: isPublic,
+          public_nickname: finalNickname
+        })
+      });
+      setShowShareModal(false);
+    } catch (e) { console.error(e); }
+  };
 
   const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
   const surveyAnswers = useMemo(() => {
@@ -267,19 +319,23 @@ export const Results: React.FC<ResultsProps> = ({
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-clay/10 rounded-full blur-3xl -ml-32 -mb-32"></div>
 
           <div className="relative z-10">
-            {(targetUser || user) && (
+            {(targetUser || user || isPublicView) && (
               <div className="flex flex-col items-center mb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  {(targetUser?.photo_url || user?.photo_url) ? (
-                    <img src={targetUser?.photo_url || user?.photo_url} className="w-16 h-16 rounded-full border-2 border-white/20 shadow-inner" alt="" />
+                <div className="flex items-center gap-4 mb-4 text-left">
+                  {(targetUser?.photo_url || (!isPublicView && user?.photo_url)) ? (
+                    <img src={targetUser?.photo_url || user.photo_url} className="w-16 h-16 rounded-full border-2 border-white/20 shadow-inner" alt="" />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white border-2 border-white/20">
                       <User className="w-8 h-8" />
                     </div>
                   )}
                   <div className="text-left">
-                    <h1 className="text-2xl font-bold tracking-tight">{(targetUser?.first_name || user?.first_name)} {(targetUser?.last_name || user?.last_name || '')}</h1>
-                    {(targetUser?.username || user?.username) && <p className="text-white/60 text-xs font-mono">@{targetUser?.username || user?.username}</p>}
+                    <h1 className="text-2xl font-bold tracking-tight">
+                      {isPublicView ? (publicNickname || 'Anonymous') : (targetUser?.first_name || user?.first_name) + ' ' + (targetUser?.last_name || user?.last_name || '')}
+                    </h1>
+                    {(!isPublicView && (targetUser?.username || user?.username)) && (
+                      <p className="text-white/60 text-xs font-mono">@{targetUser?.username || user?.username}</p>
+                    )}
                   </div>
                 </div>
                 
@@ -398,6 +454,19 @@ export const Results: React.FC<ResultsProps> = ({
               </div>
             )}
           </div>
+          
+          {/* Share Section - Feature Flagged */}
+          {isEnabled('share') && (
+            <AppShare 
+              ui={ui}
+              lang={lang}
+              user={user}
+              isPublicView={isPublicView}
+              publicNickname={publicNickname}
+              currentSurvey={currentSurvey}
+              onShowSettings={() => setShowShareModal(true)}
+            />
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-24 pt-16 border-t border-stone-line">
             <div className="flex flex-col items-center">
@@ -570,6 +639,21 @@ export const Results: React.FC<ResultsProps> = ({
           )}
         </div>
       </div>
+      
+      {/* Share Settings Modal */}
+      <ShareSettingsModal 
+        show={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        ui={ui}
+        isPublic={isPublic}
+        setIsPublic={setIsPublic}
+        useRealName={useRealName}
+        setUseRealName={setUseRealName}
+        nickname={nickname}
+        setNickname={setNickname}
+        userId={user?.id}
+        onSave={handleUpdatePrivacy}
+      />
     </div>
   );
 };

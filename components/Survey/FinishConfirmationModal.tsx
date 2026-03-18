@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrainCircuit, X, Languages, CheckCircle } from 'lucide-react';
+import { BrainCircuit, X, Languages, CheckCircle, Shield, Heart } from 'lucide-react';
 import { Language } from '@/types';
 
 interface FinishConfirmationModalProps {
@@ -9,6 +9,8 @@ interface FinishConfirmationModalProps {
     ui: any;
     language: Language;
     onLanguageChange: (lang: Language) => void;
+    tone: string;
+    onToneChange: (tone: string) => void;
 }
 
 export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = ({
@@ -17,7 +19,9 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
     onConfirm,
     ui,
     language,
-    onLanguageChange
+    onLanguageChange,
+    tone,
+    onToneChange
 }) => {
     if (!isOpen) return null;
 
@@ -79,6 +83,39 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                                 </button>
                             ))}
                         </div>
+                    </div>
+
+                    <div className="w-full space-y-3 mb-10 border-t border-stone-line pt-6">
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-stone-400 mb-2">
+                            {ui.chooseTone}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => onToneChange('professional')}
+                                className={`px-4 py-3 rounded-xl text-[11px] font-bold transition-all border flex flex-col items-center gap-1 ${
+                                    tone === 'professional'
+                                        ? 'bg-brand-ink text-white border-brand-ink shadow-soft'
+                                        : 'bg-stone-bg text-brand-graphite border-stone-line hover:bg-stone-100'
+                                }`}
+                            >
+                                <Shield className="w-4 h-4 mb-1" />
+                                {ui.toneProfessional}
+                            </button>
+                            <button
+                                onClick={() => onToneChange('friendly')}
+                                className={`px-4 py-3 rounded-xl text-[11px] font-bold transition-all border flex flex-col items-center gap-1 ${
+                                    tone === 'friendly'
+                                        ? 'bg-brand-ink text-white border-brand-ink shadow-soft'
+                                        : 'bg-stone-bg text-brand-graphite border-stone-line hover:bg-stone-100'
+                                }`}
+                            >
+                                <Heart className="w-4 h-4 mb-1" />
+                                {ui.toneFriendly}
+                            </button>
+                        </div>
+                        <p className="text-[10px] text-stone-400 font-sans italic mt-2 leading-relaxed">
+                            {ui.toneHelp}
+                        </p>
                     </div>
 
                     <div className="w-full flex flex-col gap-3">

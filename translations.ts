@@ -39,7 +39,7 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     profileHypophantasia: "У вас середній рівень уяви. Образи можуть бути нечіткими або тьмяними (Гіпофантазія).",
     profileHyperphantasia: "Ваш профіль вказує на Гіперфантазію. Ваша уява надзвичайно яскрава та деталізована.",
     profilePhantasia: "Ви маєте типовий рівень візуальної уяви (Фантазія). Ви можете візуалізувати, але розумієте різницю з реальністю.",
-    manageProfiles: "Керування профілями",
+    manageProfiles: "Адмін панель",
     profileName: "Ваше ім'я",
     createProfile: "Створити профіль",
     deleteProfile: "Видалити",
@@ -239,7 +239,15 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     languageSyncNote: "(також змінить мову інтерфейсу)",
     demoCtaTitle: "Бажаєте точніший аналіз?",
     demoCtaDesc: "Це був лише експрес-тест. Пройдіть повне дослідження, щоб отримати детальну карту вашого когнітивного профілю та глибші AI-інсайти.",
-    demoCtaButton: "Пройти повний тест"
+    demoCtaButton: "Пройти повний тест",
+    chooseTone: "Оберіть стиль розповіді AI",
+    toneProfessional: "Професійний / Клінічний",
+    toneFriendly: "Дружній / Персональний",
+    toneHelp: "Професійний тон фокусується на термінології та науковому підході. Дружній — на практичних порадах та легшому сприйнятті.",
+    shareProfile: "Поділитися профілем",
+    shareDescription: "Допоможіть іншим відкрити свою когнітивну архітектуру, поділившись своїм результатом.",
+    shareReddit: "Поділитися на Reddit",
+    shareLinkedIn: "Поділитися на LinkedIn"
   },
   en: {
     title: "Cognitive Profile Assessment",
@@ -279,7 +287,7 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     profileHypophantasia: "You have an average level of imagination. Images may be vague or dim (Hypophantasia).",
     profileHyperphantasia: "Your profile suggests Hyperphantasia. Your imagination is extremely vivid and detailed.",
     profilePhantasia: "You have a typical level of visual imagination (Phantasia). You can visualize but understand the difference from reality.",
-    manageProfiles: "Manage Profiles",
+    manageProfiles: "Admin dashboard",
     profileName: "Your Name",
     createProfile: "Create Profile",
     deleteProfile: "Delete",
@@ -479,7 +487,15 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     languageSyncNote: "(will also change the interface language)",
     demoCtaTitle: "Want a more accurate analysis?",
     demoCtaDesc: "This was just an express test. Take the full assessment to get a detailed map of your cognitive profile and deeper AI insights.",
-    demoCtaButton: "Take Full Test"
+    demoCtaButton: "Take Full Test",
+    chooseTone: "Choose AI report tone",
+    toneProfessional: "Professional / Clinical",
+    toneFriendly: "Friendly / Personal",
+    toneHelp: "Professional tone focuses on terminology and scientific approach. Friendly tone focuses on practical advice and easy understanding.",
+    shareProfile: "Share Profile",
+    shareDescription: "Help others discover their cognitive architecture by sharing your journey.",
+    shareReddit: "Share on Reddit",
+    shareLinkedIn: "Share on LinkedIn"
   },
   ru: {
     title: "Оценка Когнитивного Профиля",
@@ -519,7 +535,7 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     profileHypophantasia: "У вас средний уровень воображения. Образы могут быть нечеткими или тусклыми (Гипофантазия).",
     profileHyperphantasia: "Ваш профиль указывает на Гиперфантазию. Ваше воображение чрезвычайно яркое и детализированное.",
     profilePhantasia: "У вас типичный уровень визуального воображения (Фантазия). Вы можете визуализировать, но понимаете разницу с реальностью.",
-    manageProfiles: "Управление профилями",
+    manageProfiles: "Админ панель",
     profileName: "Ваше имя",
     createProfile: "Создать профиль",
     deleteProfile: "Удалить",
@@ -719,7 +735,15 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     languageSyncNote: "(также изменит язык интерфейса)",
     demoCtaTitle: "Хотите более точный анализ?",
     demoCtaDesc: "Это был лишь экспрес-тест. Пройдите полное исследование, чтобы получить детальную карту вашего когнитивного профиля и более глубокие AI-инсайты.",
-    demoCtaButton: "Пройти полный тест"
+    demoCtaButton: "Пройти полный тест",
+    chooseTone: "Выберите стиль рассказа AI",
+    toneProfessional: "Профессиональный / Клинический",
+    toneFriendly: "Дружелюбный / Персональный",
+    toneHelp: "Профессиональный тон фокусируется на терминологии и научном подходе. Дружелюбный — на практических советах и легком восприятии.",
+    shareProfile: "Поделиться профилем",
+    shareDescription: "Помогите другим открыть свою когнитивную архитектуру, поделившись своим результатом.",
+    shareReddit: "Поделиться на Reddit",
+    shareLinkedIn: "Поделиться на LinkedIn"
   }
 
 };

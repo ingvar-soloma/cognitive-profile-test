@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ProfileService } from '@/services/ProfileService';
 import { UIStrings, Language } from '@/types';
-import { Users, Search, Calendar, ChevronRight, User, Award, Table } from 'lucide-react';
+import { Users, Search, Calendar, ChevronRight, User, Award, Table, Settings } from 'lucide-react';
 import { BadgeManager } from './Admin/BadgeManager';
+import { FeatureFlagManager } from './Admin/FeatureFlagManager';
 import { BadgeIcon } from './Results/Results';
 
 interface AdminDashboardProps {
@@ -17,7 +18,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'records' | 'badges'>('records');
+  const [activeTab, setActiveTab] = useState<'records' | 'badges' | 'features'>('records');
   const lastFetchedQuery = useRef<string | null>(null);
 
   // Local debounce for search to avoid too many requests
@@ -66,12 +67,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
           <Award className="w-4 h-4" />
           Manage Badges
         </button>
+        <button 
+          onClick={() => setActiveTab('features')}
+          className={`px-8 py-2.5 rounded-xl flex items-center gap-3 text-[10px] uppercase font-bold tracking-widest transition-all ${activeTab === 'features' ? 'bg-brand-ink text-white shadow-soft' : 'text-stone-400 hover:text-brand-ink'}`}
+        >
+          <Settings className="w-4 h-4" />
+          Features
+        </button>
       </div>
 
       {activeTab === 'badges' ? (
         <div className="card-editorial p-0 border-stone-line/50">
            <BadgeManager ui={ui} lang={lang} />
         </div>
+      ) : activeTab === 'features' ? (
+        <FeatureFlagManager ui={ui} />
       ) : (
         <div className="card-editorial p-0 overflow-hidden border-stone-line/50">
       <div className="bg-brand-ink p-6 md:p-8 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-editorial">
