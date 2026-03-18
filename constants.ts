@@ -34,9 +34,9 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   {
     id: 'full_aphantasia_profile',
     title: {
-      uk: 'Повний Профіль Афантазії',
-      en: 'Full Aphantasia Profile',
-      ru: 'Полный Профиль Афантазии'
+      uk: 'Повний Когнітивний Профіль',
+      en: 'Full Cognitive Profile',
+      ru: 'Полный Когнитивный Профиль'
     },
     description: {
       uk: 'Детальний аналіз сенсорної уяви, процесів мислення та стратегій пам\'яті.',

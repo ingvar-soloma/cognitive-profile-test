@@ -311,6 +311,12 @@ export const Results: React.FC<ResultsProps> = ({
     return currentSurvey?.title[lang] || ui.resultsTitle;
   };
 
+  const profileTypeLabel = useMemo(() => {
+    const visualScoreValue = radarData.find(d => d.key === 'Visual')?.A || (radarData.length > 0 ? radarData[0].A : 0);
+    const type = ProfileService.getProfileType(visualScoreValue);
+    return ProfileService.getProfileTypeLabel(type, lang);
+  }, [radarData, lang]);
+
   return (
     <div className="animate-fade-in text-left">
       <div className="bg-brand-paper-accent/40 backdrop-blur-xl rounded-[2.5rem] border border-stone-line shadow-soft overflow-hidden mb-12">
@@ -464,6 +470,7 @@ export const Results: React.FC<ResultsProps> = ({
               isPublicView={isPublicView}
               publicNickname={publicNickname}
               currentSurvey={currentSurvey}
+              profileTypeLabel={profileTypeLabel}
               onShowSettings={() => setShowShareModal(true)}
             />
           )}

@@ -1086,7 +1086,8 @@ const ResultsWrapper: React.FC<any> = ({
     // Only fetch public profile if we don't have a local profile AND it's not an admin view
     if (!profile && profileId && profileId !== 'admin' && !publicProfile && !errorStatus) {
       setLoading(true);
-      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/results/${profileId}`)
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      fetch(`${apiUrl}/results/${profileId}`)
         .then(async res => {
           if (res.ok) return res.json();
           setErrorStatus(res.status);
