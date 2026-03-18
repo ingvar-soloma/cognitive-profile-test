@@ -1010,13 +1010,14 @@ const ResultsWrapper: React.FC<any> = ({
   const [adminProfile, setAdminProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (profileId !== 'admin') {
-      // Small timeout to allow profiles to be loaded/synced if needed
-      // or just check if it's already there
-      setLoading(false);
+  const profile = useMemo(() => {
+    if (profileId === 'admin') return adminProfile;
+    if (profileId) {
+      return profiles.find((p: any) => p.id === profileId);
     }
-  }, [profileId]);
+    const activeId = localStorage.getItem('neuroprofile_active_profile_id');
+    return profiles.find((p: any) => p.id === activeId);
+  }, [profileId, profiles, adminProfile]);
 
   useEffect(() => {
     if (userIdFromQuery && profileId === 'admin') {
@@ -1069,28 +1070,21 @@ const ResultsWrapper: React.FC<any> = ({
         })
         .finally(() => setLoading(false));
     }
-  }, [userIdFromQuery, profileId, user, adminResults, surveyIdFromQuery]);
-
-  const profile = useMemo(() => {
-    if (profileId === 'admin') return adminProfile;
-    if (profileId) {
-      return profiles.find((p: any) => p.id === profileId);
-    }
-    const activeId = localStorage.getItem('neuroprofile_active_profile_id');
-    return profiles.find((p: any) => p.id === activeId);
-  }, [profileId, profiles, adminProfile]);
+  }, [userIdFromQuery, profileId, user?.id, user?.hash, adminResults, surveyIdFromQuery]);
 
   useEffect(() => {
-    if (profile && profile.id !== 'admin' && profile.id !== localStorage.getItem('neuroprofile_active_profile_id')) {
-      setActiveProfileId(profile.id);
+    // If it's a local profile, we can stop loading immediately
+    if (profile && profileId !== 'admin') {
+      setLoading(false);
     }
-  }, [profile, setActiveProfileId]);
+  }, [profile, profileId]);
 
   const [publicProfile, setPublicProfile] = useState<any>(null);
   const [errorStatus, setErrorStatus] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!profile && profileId && profileId !== 'admin' && !loading && !publicProfile && !errorStatus) {
+    // Only fetch public profile if we don't have a local profile AND it's not an admin view
+    if (!profile && profileId && profileId !== 'admin' && !publicProfile && !errorStatus) {
       setLoading(true);
       fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/results/${profileId}`)
         .then(async res => {
@@ -1116,7 +1110,7 @@ const ResultsWrapper: React.FC<any> = ({
         .catch(() => setErrorStatus(500))
         .finally(() => setLoading(false));
     }
-  }, [profileId, profile, loading, publicProfile, errorStatus]);
+  }, [profileId, profile, publicProfile, errorStatus]);
 
   const activeProfile = useMemo(() => profile || publicProfile, [profile, publicProfile]);
 
@@ -1135,6 +1129,16 @@ const ResultsWrapper: React.FC<any> = ({
          <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-2">{ui.noRecordsFound}</h2>
          <button onClick={() => navigate('/')} className="btn-primary px-8 mt-4">{ui.goHome}</button>
        </div>
+    );
+  }
+
+  if (errorStatus === 403) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
+        <ShieldAlert className="w-12 h-12 text-brand-clay mb-4" />
+        <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-2">This profile is private.</h2>
+        <button onClick={() => navigate('/')} className="btn-primary px-8 mt-4">{ui.goHome}</button>
+      </div>
     );
   }
 
