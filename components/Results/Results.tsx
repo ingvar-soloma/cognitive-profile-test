@@ -212,9 +212,24 @@ export const Results: React.FC<ResultsProps> = ({
         const scores: Record<string, number> = {};
 
         if (currentSurvey) {
-          currentSurvey.categories.forEach(cat => {
-            scores[cat.id] = ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en);
+          // Logic should match radarData useMemo:
+          // If the first category has subcategories, use them to provide a detailed radar chart
+          const firstCat = currentSurvey.categories[0];
+          const subCats = new Set<string>();
+          firstCat.questions.forEach(q => {
+            if (q.subCategory) subCats.add(q.subCategory.en);
           });
+
+          if (subCats.size > 0 && currentSurvey.categories.length === 1) {
+             subCats.forEach(sc => {
+               scores[sc] = ProfileService.calculateCategoryScore(surveyAnswers, sc);
+             });
+          } else {
+            // Otherwise use categories - use English title for good labels in OG image
+            currentSurvey.categories.forEach(cat => {
+              scores[cat.title.en] = ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en);
+            });
+          }
         }
 
         try {
@@ -706,6 +721,26 @@ export const Results: React.FC<ResultsProps> = ({
               )}
             </div>
           )}
+
+          {/* ── FOOTER DISCLAIMER ────────────────────── */}
+          <div className="mt-20 pt-10 border-t border-stone-line/30">
+            <div className="bg-stone-50/50 p-6 md:p-8 rounded-[2rem] border border-stone-line/50 flex flex-col md:flex-row items-center gap-6">
+              <div className="w-12 h-12 rounded-full bg-brand-clay/10 flex-shrink-0 flex items-center justify-center border border-brand-clay/20">
+                <ShieldAlert className="w-6 h-6 text-brand-clay" />
+              </div>
+              <div className="text-center md:text-left">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-graphite mb-1">
+                  {ui.disclaimerTitle}
+                </h4>
+                <p className="text-[11px] text-stone-500 leading-relaxed font-sans max-w-3xl">
+                  {ui.disclaimer}
+                </p>
+              </div>
+            </div>
+            <p className="mt-8 text-center text-[10px] text-stone-400 font-sans">
+              &copy; {new Date().getFullYear()} NeuroProfile. Experimental Cognitive Research Platform.
+            </p>
+          </div>
         </div>
       </div>
       

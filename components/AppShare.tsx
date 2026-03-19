@@ -75,7 +75,7 @@ export const AppShare: React.FC<AppShareProps> = ({
         )}
         
         <a 
-          href={`https://www.reddit.com/submit?url=${encodeURIComponent(shareUrl('r'))}&title=${encodeURIComponent(`I discovered my ${profileTypeLabel ? `${profileTypeLabel} (${currentSurvey?.title[lang] || ui.resultsTitle})` : (currentSurvey?.title[lang] || ui.resultsTitle)}. What's yours?`)}`}
+          href={`https://www.reddit.com/submit?url=${encodeURIComponent(shareUrl('r'))}&title=${encodeURIComponent(`I just discovered my ${profileTypeLabel || ''} Cognitive Architecture. What's yours?`)}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => onShareStart?.()}

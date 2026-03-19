@@ -1,17 +1,32 @@
-# Allow social crawlers to access shared results even with parameters
+# Allow social crawlers to access shared results for previews (unfurling)
 User-agent: LinkedInBot
-Allow: /results/
-
 User-agent: RedditBot
+User-agent: TelegramBot
+User-agent: Twitterbot
+User-agent: Xbot
+User-agent: facebookexternalhit
 Allow: /results/
+Allow: /
 
 User-agent: *
 Allow: /
+Allow: /about
+Allow: /landing
+Allow: /faq
+Allow: /terms
+Allow: /privacy-policy
+Allow: /blog
 
-# Prevent duplicate indexing of lead source links
+# Prevent indexing of user profiles by general search engines for privacy
+Disallow: /results/
+# Prevent indexing of survey logic/flow
+Disallow: /survey/
+# Prevent duplicate indexing of tracking links
 Disallow: /*?s=
 Disallow: /*?utm_
 Disallow: /*?ref=
+# Disallow auth-related parameters
+Disallow: /*?auth_data=
 
 # Sitemaps
 Sitemap: https://cognitiveprofile.ingvarsoloma.dev/sitemap.xml

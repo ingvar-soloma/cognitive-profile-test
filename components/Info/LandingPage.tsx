@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Brain, Sparkles, ChevronRight, Eye, EyeOff, BarChart2, ArrowRight, Shield, Zap, Users } from 'lucide-react';
+import { Brain, Sparkles, ChevronRight, Eye, EyeOff, BarChart2, ArrowRight, Shield, Zap, Users, ShieldAlert, Mail } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
@@ -202,31 +202,61 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                 </div>
             </section>
 
-            {/* ── FINAL CTA ────────────────────────────── */}
-            <section className="py-24 px-4">
-                <div className="max-w-2xl mx-auto text-center">
-                    <div className="relative bg-brand-ink dark:bg-brand-paper-accent border border-brand-ink/20 dark:border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-xl">
-                        <FloatingOrb className="w-64 h-64 bg-brand-clay -top-16 -right-16 opacity-30 dark:opacity-20" />
-                        <FloatingOrb className="w-48 h-48 bg-white/20 -bottom-12 -left-12 opacity-15 dark:opacity-10" />
-                        <div className="relative z-10">
-                            <Sparkles className="w-8 h-8 text-amber-300 mx-auto mb-4 animate-pulse" />
-                            <h2 className="text-3xl md:text-4xl font-serif font-bold text-white mb-4 tracking-tight">
-                                {ui.aboutCtaTitle}
-                            </h2>
-                            <p className="text-white/80 text-sm leading-relaxed mb-10 max-w-sm mx-auto font-sans">
-                                {ui.aboutCtaDesc}
+            {/* ── FOOTER / DISCLAIMER ────────────────────── */}
+            <footer className="py-20 px-8 bg-stone-50/50 dark:bg-black/20 border-t border-stone-line/30">
+                <div className="max-w-4xl mx-auto space-y-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-brand-clay/10 flex items-center justify-center border border-brand-clay/20">
+                                    <ShieldAlert className="w-4 h-4 text-brand-clay" />
+                                </div>
+                                <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                                    {ui.disclaimerTitle}
+                                </h4>
+                            </div>
+                            <p className="text-xs text-stone-500 leading-relaxed font-sans max-w-sm">
+                                {ui.disclaimer}
                             </p>
-                            <button
-                                onClick={() => navigate('/survey/express_demo')}
-                                className="inline-flex items-center gap-3 px-10 py-4 bg-white text-brand-ink rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-stone-200 dark:hover:bg-brand-paper transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-                            >
-                                {ui.start}
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
+                        </div>
+                        <div className="space-y-6">
+                             <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-brand-ink/10 flex items-center justify-center border border-brand-ink/20">
+                                    <Mail className="w-4 h-4 text-brand-ink dark:text-brand-clay" />
+                                </div>
+                                <h4 className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">
+                                    {ui.contactTitle}
+                                </h4>
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-xs text-stone-500 font-sans">
+                                    {ui.contactText}
+                                </p>
+                                <div className="flex gap-4 pt-2">
+                                    <button 
+                                        onClick={() => navigate('/terms')}
+                                        className="text-[10px] font-bold uppercase tracking-widest text-brand-ink hover:text-brand-clay transition-colors"
+                                    >
+                                        {ui.navTerms}
+                                    </button>
+                                    <button 
+                                        onClick={() => navigate('/privacy-policy')}
+                                        className="text-[10px] font-bold uppercase tracking-widest text-brand-ink hover:text-brand-clay transition-colors"
+                                    >
+                                        {ui.privacyPolicy}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    
+                    <div className="pt-12 border-t border-stone-line/20 text-center">
+                        <p className="text-[10px] text-stone-400 font-sans tracking-tight">
+                            &copy; {new Date().getFullYear()} NeuroProfile Research Project. Built for cognitive exploration.
+                        </p>
+                    </div>
                 </div>
-            </section>
+            </footer>
         </div>
     );
 };

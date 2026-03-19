@@ -461,35 +461,37 @@ async def get_public_result_page(request: Request, id_or_share_id: str, conn: as
             }
             test_name = test_names.get(test_type_raw, test_type_raw.replace("_", " ").title())
             
-            og_title = f"I discovered my {test_name}. What's yours?"
-            og_desc = f"I just mapped my sensory architecture via {test_name}. My nickname: {nickname}. Explore your own cognitive spectrum!"
+            display_name = nickname if nickname and nickname.lower() != "anonymous" else "Someone"
+            og_title = f"{display_name} just discovered their {test_name}"
+            og_desc = f"I just mapped my sensory and memory architecture via {test_name}. Explore your own cognitive spectrum!"
             
             # Dynamic Radar Chart Image via QuickChart
             all_scores = data.get("scores", {})
             test_scores = all_scores.get(test_type_raw, {}) if isinstance(all_scores.get(test_type_raw), dict) else all_scores
             
-            labels = list(test_scores.keys())
+            labels = [l.replace("_demo", "").replace("_", " ").strip().upper() for l in test_scores.keys()]
             values = list(test_scores.values())
             
             chart_config = {
                 "type": "radar",
                 "data": {
-                    "labels": [l.upper() for l in labels],
+                    "labels": labels,
                     "datasets": [{
                         "data": values,
                         "backgroundColor": "rgba(43, 30, 82, 0.4)",
                         "borderColor": "#2B1E52",
-                        "borderWidth": 2,
-                        "pointRadius": 0
+                        "borderWidth": 3,
+                        "pointRadius": 4,
+                        "pointBackgroundColor": "#2B1E52"
                     }]
                 },
                 "options": {
                     "legend": {"display": False},
                     "scale": {
                         "ticks": {"min": 0, "max": 5, "display": False},
-                        "angleLines": {"color": "rgba(0,0,0,0.1)"},
-                        "gridLines": {"color": "rgba(0,0,0,0.1)"},
-                        "pointLabels": {"fontSize": 12, "fontStyle": "bold"}
+                        "angleLines": {"color": "rgba(43, 30, 82, 0.1)"},
+                        "gridLines": {"color": "rgba(43, 30, 82, 0.1)"},
+                        "pointLabels": {"fontSize": 14, "fontStyle": "bold", "fontColor": "#2B1E52"}
                     }
                 }
             }
