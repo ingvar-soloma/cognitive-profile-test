@@ -103,6 +103,32 @@ export const AppShare: React.FC<AppShareProps> = ({
           </svg>
           {ui.shareLinkedIn}
         </a>
+
+        <a 
+          href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl('t'))}&text=${encodeURIComponent(`I just discovered my ${profileTypeLabel || ''} Cognitive Architecture. What's yours?`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onShareStart?.()}
+          className="flex items-center gap-3 px-6 py-3 bg-[#229ED9] text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:shadow-lg hover:scale-105 transition-all duration-300 shadow-md"
+        >
+          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.14-.24.24-.43.24l.197-2.77 5.06-4.57c.22-.19-.04-.29-.33-.1l-6.24 3.93-2.68-.84c-.58-.18-.59-.58.12-.85l10.51-4.05c.48-.17.91.12.78.78z"/>
+          </svg>
+          Telegram
+        </a>
+
+        <a 
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl('f'))}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => onShareStart?.()}
+          className="flex items-center gap-3 px-6 py-3 bg-[#1877F2] text-white rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:shadow-lg hover:scale-105 transition-all duration-300 shadow-md"
+        >
+          <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          Facebook
+        </a>
       </div>
     </div>
   );

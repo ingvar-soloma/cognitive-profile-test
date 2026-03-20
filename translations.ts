@@ -262,7 +262,13 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     visitorCtaButton: "Пройти експрес-тест",
     settingsNicknameLabel: "Публічне ім'я",
     settingsPrivacyLabel: "Доступність профілю",
-    settingsPrivacyDesc: "Якщо увімкнено, інші зможуть бачити ваші результати за посиланням."
+    settingsPrivacyDesc: "Якщо увімкнено, інші зможуть бачити ваші результати за посиланням.",
+    navBlog: "Блог",
+    share: "Поділитися",
+    shareResult: "Поділитися результатом",
+    shareNews: "Поділитися новиною",
+    copyLink: "Копіювати посилання",
+    linkCopied: "Посилання скопійовано!"
   },
   en: {
     title: "Cognitive Profile Assessment",
@@ -525,7 +531,13 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     visitorCtaButton: "Try Express Test",
     settingsNicknameLabel: "Public Nickname",
     settingsPrivacyLabel: "Profile Visibility",
-    settingsPrivacyDesc: "If enabled, others can view your results via the sharing link."
+    settingsPrivacyDesc: "If enabled, others can view your results via the sharing link.",
+    navBlog: "Blog",
+    share: "Share",
+    shareResult: "Share Result",
+    shareNews: "Share News",
+    copyLink: "Copy Link",
+    linkCopied: "Link copied!"
   },
   ru: {
     title: "Оценка Когнитивного Профиля",
@@ -788,7 +800,13 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     visitorCtaButton: "Пройти экспресс-тест",
     settingsNicknameLabel: "Публичное имя",
     settingsPrivacyLabel: "Доступность профиля",
-    settingsPrivacyDesc: "Если включено, другие смогут видеть ваши результаты по ссылке."
+    settingsPrivacyDesc: "Если включено, другие смогут видеть ваши результаты по ссылке.",
+    navBlog: "Блог",
+    share: "Поделиться",
+    shareResult: "Поделиться результатом",
+    shareNews: "Поделиться новостью",
+    copyLink: "Копировать ссылку",
+    linkCopied: "Ссылка скопирована!"
   }
 
 };

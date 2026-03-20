@@ -6,6 +6,8 @@ User-agent: Twitterbot
 User-agent: Xbot
 User-agent: facebookexternalhit
 Allow: /results/
+Allow: /news/
+Disallow: /blog/
 Allow: /
 
 User-agent: *
@@ -15,7 +17,8 @@ Allow: /landing
 Allow: /faq
 Allow: /terms
 Allow: /privacy-policy
-Allow: /blog
+Disallow: /blog
+Allow: /news
 
 # Prevent indexing of user profiles by general search engines for privacy
 Disallow: /results/

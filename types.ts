@@ -354,6 +354,12 @@ export interface UIStrings {
   settingsNicknameLabel: string;
   settingsPrivacyLabel: string;
   settingsPrivacyDesc: string;
+  navBlog: string;
+  share: string;
+  shareResult: string;
+  shareNews: string;
+  copyLink: string;
+  linkCopied: string;
 }
 
 export enum ProfileType {

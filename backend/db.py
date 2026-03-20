@@ -3,6 +3,7 @@ import logging
 import asyncio
 import asyncpg
 from typing import AsyncGenerator
+from seeders import seed_badges, seed_feature_flags, seed_news
 
 logger = logging.getLogger(__name__)
 
@@ -26,131 +27,117 @@ async def get_db() -> AsyncGenerator[asyncpg.Connection, None]:
         await conn.close()
 
 async def init_db():
-    try:
-        database_url = await get_db_url()
-        conn = await asyncpg.connect(database_url)
-        
-        # Users Table
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS aphantasia_users (
-                id VARCHAR(255) PRIMARY KEY,
-                email VARCHAR(255),
-                first_name VARCHAR(255),
-                last_name VARCHAR(255),
-                photo_url TEXT,
-                is_guest BOOLEAN DEFAULT FALSE,
-                is_public BOOLEAN DEFAULT FALSE,
-                public_nickname VARCHAR(255),
-                referral_count INTEGER DEFAULT 0,
-                referred_by VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login TIMESTAMP
-            )
-        ''')
-        
-        # Migrations
-        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE")
-        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE")
-        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS public_nickname VARCHAR(255)")
-        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS public_id UUID DEFAULT gen_random_uuid()")
-        await conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_public_id ON aphantasia_users(public_id)")
-        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referral_count INTEGER DEFAULT 0")
-        await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255)")
+    retries = 5
+    while retries > 0:
+        try:
+            database_url = await get_db_url()
+            conn = await asyncpg.connect(database_url)
+            
+            # Users Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS aphantasia_users (
+                    id VARCHAR(255) PRIMARY KEY,
+                    email VARCHAR(255),
+                    first_name VARCHAR(255),
+                    last_name VARCHAR(255),
+                    photo_url TEXT,
+                    is_guest BOOLEAN DEFAULT FALSE,
+                    is_public BOOLEAN DEFAULT FALSE,
+                    public_nickname VARCHAR(255),
+                    referral_count INTEGER DEFAULT 0,
+                    referred_by VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP
+                )
+            ''')
+            
+            # Migrations
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS public_nickname VARCHAR(255)")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS public_id UUID DEFAULT gen_random_uuid()")
+            await conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_public_id ON aphantasia_users(public_id)")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referral_count INTEGER DEFAULT 0")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255)")
 
-        # Badges Table
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS badges (
-                id SERIAL PRIMARY KEY,
-                code VARCHAR(255) UNIQUE NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                icon VARCHAR(255),
-                description TEXT,
-                is_active BOOLEAN DEFAULT TRUE,
-                is_secret BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+            # Badges Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS badges (
+                    id SERIAL PRIMARY KEY,
+                    code VARCHAR(255) UNIQUE NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    icon VARCHAR(255),
+                    description TEXT,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    is_secret BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
-        # User Badges Table
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS user_badges (
-                user_id VARCHAR(255) REFERENCES aphantasia_users(id) ON DELETE CASCADE,
-                badge_id INTEGER REFERENCES badges(id) ON DELETE CASCADE,
-                assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (user_id, badge_id)
-            )
-        ''')
+            # User Badges Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS user_badges (
+                    user_id VARCHAR(255) REFERENCES aphantasia_users(id) ON DELETE CASCADE,
+                    badge_id INTEGER REFERENCES badges(id) ON DELETE CASCADE,
+                    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (user_id, badge_id)
+                )
+            ''')
 
-        # Feature Flags Table
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS feature_flags (
-                code VARCHAR(255) PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                description TEXT,
-                is_enabled BOOLEAN DEFAULT FALSE,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+            # Feature Flags Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS feature_flags (
+                    code VARCHAR(255) PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    is_enabled BOOLEAN DEFAULT FALSE,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
-        # Test Results / Share IDs Table
-        await conn.execute('''
-            CREATE TABLE IF NOT EXISTS test_results (
-                share_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) REFERENCES aphantasia_users(id) ON DELETE CASCADE,
-                test_type VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, test_type)
-            )
-        ''')
-        await conn.execute("CREATE INDEX IF NOT EXISTS idx_test_results_user ON test_results(user_id)")
+            # Test Results / Share IDs Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS test_results (
+                    share_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id VARCHAR(255) REFERENCES aphantasia_users(id) ON DELETE CASCADE,
+                    test_type VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(user_id, test_type)
+                )
+            ''')
+            await conn.execute("CREATE INDEX IF NOT EXISTS idx_test_results_user ON test_results(user_id)")
 
-        logger.info("Async PostgreSQL Database initialized correctly")
-        await seed_badges(conn)
-        await seed_feature_flags(conn)
-        await conn.close()
-    except Exception as e:
-        logger.error(f"Failed to initialize PostgreSQL database: {e}")
+            # News Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS news (
+                    id VARCHAR(255) PRIMARY KEY,
+                    date DATE NOT NULL,
+                    tag VARCHAR(50),
+                    tag_color TEXT,
+                    read_min INTEGER,
+                    title_uk TEXT,
+                    title_en TEXT,
+                    title_ru TEXT,
+                    excerpt_uk TEXT,
+                    excerpt_en TEXT,
+                    excerpt_ru TEXT,
+                    body_uk TEXT[],
+                    body_en TEXT[],
+                    body_ru TEXT[],
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
-async def seed_badges(conn: asyncpg.Connection):
-    badges = [
-        ("founding_member", "Founding Member", "✨", "Recognized as an early contributor who shaped the project's foundation during the initial beta phase.", True, False),
-        ("3_sigma_outlier", "3-Sigma Outlier", "📊", "For exceptional cognitive architecture significantly deviating from the mean.", True, False),
-        ("ux_pioneer", "UX Pioneer", "🎨", "For helping fix critical mobile UI issues.", True, False),
-        ("early_adopter", "Early Adopter", "🚀", "Joined during the initial launch phase of the project.", True, False),
-        ("bug_hunter", "Bug Hunter", "🐛", "For reporting critical bugs that were fixed.", True, False),
-        ("neurodiversity_advocate", "Neurodiversity Advocate", "🧠", "For contributing to the understanding of cognitive diversity.", True, False),
-        ("node_expander", "Node Expander", "📍", "Successfully referred 3 new participants to the cognitive assessment.", True, False)
-    ]
-    
-    try:
-        await conn.executemany('''
-            INSERT INTO badges (code, name, icon, description, is_active, is_secret)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (code) DO UPDATE SET
-                name = EXCLUDED.name,
-                icon = EXCLUDED.icon,
-                description = EXCLUDED.description
-        ''', badges)
-        logger.info("Badges seeded successfully")
-    except Exception as e:
-        logger.error(f"Failed to seed badges: {e}")
-
-async def seed_feature_flags(conn: asyncpg.Connection):
-    flags = [
-        ("share", "Social Sharing", "Enable/Disable profile sharing and referral links.", True),
-        ("multi_survey", "Multi-Survey Management", "Allow users to take multiple tests and manage them in dashboard.", False),
-        ("ai_streaming", "AI Analysis Streaming", "Enable real-time streaming of Gemini analysis results.", True),
-        ("survey_express_demo", "Express Diagnostics (AI)", "Enable/Disable express diagnostics test and AI analysis.", True),
-        ("survey_full_aphantasia_profile", "Full Cognitive Profile (AI)", "Enable/Disable full profile test and AI analysis.", True),
-        ("survey_perfectionism_big_three", "Perfectionism Scale (AI)", "Enable/Disable perfectionism test and AI analysis.", True)
-    ]
-    
-    try:
-        await conn.executemany('''
-            INSERT INTO feature_flags (code, name, description, is_enabled)
-            VALUES ($1, $2, $3, $4)
-            ON CONFLICT (code) DO NOTHING
-        ''', flags)
-        logger.info("Feature flags seeded successfully")
-    except Exception as e:
-        logger.error(f"Failed to seed feature flags: {e}")
+            logger.info("Async PostgreSQL Database initialized correctly")
+            await seed_badges(conn)
+            await seed_feature_flags(conn)
+            await seed_news(conn)
+            await conn.close()
+            break  # Exit loop on success
+        except Exception as e:
+            retries -= 1
+            if retries == 0:
+                logger.error(f"Failed to initialize PostgreSQL database after all attempts: {e}")
+                raise e
+            logger.warning(f"Failed to connect to PostgreSQL (retrying {retries} more times): {e}")
+            await asyncio.sleep(2)

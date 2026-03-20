@@ -131,7 +131,7 @@ const App: React.FC = () => {
     else if (path === '/recommendations') setAppState(AppState.RECOMMENDATIONS);
     else if (path === '/history' || path === '/dashboard') setAppState(AppState.DASHBOARD_RESULTS);
     else if (path === '/users') setAppState(AppState.USERS);
-    else if (path === '/privacy') setAppState(AppState.INTRO); // Or a new state if needed, but INTRO/NONE is fine
+    else if (path === '/privacy' || path === '/blog' || path === '/news') setAppState(AppState.INTRO); // Keep as INTRO for now
     else if (path.startsWith('/survey/')) setAppState(AppState.SURVEY);
   }, [location.pathname]);
 
@@ -961,6 +961,16 @@ const App: React.FC = () => {
             <NewsPage
               ui={ui}
               language={language}
+              userEmail={user?.username}
+              onStartSurvey={() => handleStartSurvey()}
+            />
+          } />
+          
+          <Route path="/blog" element={
+            <NewsPage
+              ui={ui}
+              language={language}
+              userEmail={user?.username}
               onStartSurvey={() => handleStartSurvey()}
             />
           } />

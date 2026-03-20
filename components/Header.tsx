@@ -60,6 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
     const infoLinks = [
         { path: '/about', label: ui.navAbout, icon: Brain },
         { path: '/how-it-works', label: ui.navHowItWorks, icon: Zap },
+        { path: '/blog', label: ui.navBlog, icon: BookOpen, soon: true },
         { path: '/faq', label: ui.navFaq, icon: HelpCircle },
         { path: '/news', label: ui.navNews, icon: Newspaper },
         { path: '/terms', label: ui.navTerms, icon: FileText },
@@ -69,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
     const mainLinks = [
         { state: 'INTRO', label: ui.navTests, active: pathname === '/' && !!user || appState === 'SURVEY' },
         { state: 'DASHBOARD_RESULTS', label: ui.navResults, active: pathname.startsWith('/results') || pathname.startsWith('/history') },
-        { state: 'RECOMMENDATIONS', label: ui.navRecommendations, active: pathname === '/recommendations' },
+        { state: 'RECOMMENDATIONS', label: ui.navRecommendations, active: pathname === '/recommendations', soon: true },
     ];
 
     const infoPathnames = infoLinks.map(l => l.path);
@@ -116,6 +117,11 @@ export const Header: React.FC<HeaderProps> = ({
                                 className={navBtnClass(link.active)}
                             >
                                 {link.label}
+                                {link.soon && (
+                                    <span className="ml-1.5 px-1 py-0.5 rounded-md bg-brand-clay/10 text-brand-clay text-[7px] font-extrabold uppercase tracking-tighter border border-brand-clay/20 leading-none inline-block align-middle">
+                                        {ui.soon}
+                                    </span>
+                                )}
                             </button>
                         ))}
 
@@ -143,6 +149,11 @@ export const Header: React.FC<HeaderProps> = ({
                                         >
                                             <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
                                             {link.label}
+                                            {link.soon && (
+                                                <span className="ml-auto px-1 py-0.5 rounded-md bg-brand-clay/10 text-brand-clay text-[7px] font-extrabold uppercase tracking-tighter border border-brand-clay/20 leading-none">
+                                                    {ui.soon}
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -254,6 +265,11 @@ export const Header: React.FC<HeaderProps> = ({
                                             }`}
                                         >
                                             {link.label}
+                                            {link.soon && (
+                                                <span className="ml-2 px-1 py-0.5 rounded-md bg-brand-clay/10 text-brand-clay text-[7px] font-extrabold uppercase tracking-tighter border border-brand-clay/20 leading-none">
+                                                    {ui.soon}
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -272,6 +288,11 @@ export const Header: React.FC<HeaderProps> = ({
                                         >
                                             <link.icon className="w-4.5 h-4.5 opacity-70" />
                                             {link.label}
+                                            {link.soon && (
+                                                <span className="ml-auto px-1 py-0.5 rounded-md bg-brand-clay/10 text-brand-clay text-[7px] font-extrabold uppercase tracking-tighter border border-brand-clay/20 leading-none">
+                                                    {ui.soon}
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>

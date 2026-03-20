@@ -23,7 +23,7 @@ services:
     environment:
       - POSTGRES_USER=${DB_USER:-user}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
-      - POSTGRES_DB=${DB_NAME:-lugabus}
+      - POSTGRES_DB=${DB_NAME:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
