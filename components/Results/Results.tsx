@@ -92,8 +92,18 @@ export const Results: React.FC<ResultsProps> = ({
     return initialRecommendations[targetSurveyId] || null;
   };
 
+  const [resolvedRecommendations, setResolvedRecommendations] = useState<any>(initialRecommendations);
+  
+  // Sync state with prop if it changes (important when App.tsx finishes its background fetch)
+  useEffect(() => {
+    if (initialRecommendations) {
+      setResolvedRecommendations(initialRecommendations);
+    }
+  }, [initialRecommendations]);
+
   const [geminiRecs, setGeminiRecs] = useState<string | null>(getInitialRec());
   const [shareId, setShareId] = useState<string | null>(initialShareId || null);
+  const [currentVersionIndex, setCurrentVersionIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedVersionIndex, setSelectedVersionIndex] = useState<number | null>(null);
@@ -108,17 +118,17 @@ export const Results: React.FC<ResultsProps> = ({
   // Handle versions from either prop or mapping in recommendations
   const effectiveVersions = useMemo(() => {
     if (analysisVersions && analysisVersions.length > 0) return analysisVersions;
-    if (!initialRecommendations || typeof initialRecommendations !== 'object' || !surveyId) return [];
+    if (!resolvedRecommendations || typeof resolvedRecommendations !== 'object' || !surveyId) return [];
 
     // Look for `${surveyId}_versions` in the flat recommendations object
     const versionKey = `${surveyId}_versions`;
     const discoveryKey = currentSurvey?.id ? `${currentSurvey.id}_versions` : null;
 
-    const foundVersions = (initialRecommendations as any)[versionKey] || (discoveryKey ? (initialRecommendations as any)[discoveryKey] : null);
+    const foundVersions = (resolvedRecommendations as any)[versionKey] || (discoveryKey ? (resolvedRecommendations as any)[discoveryKey] : null);
 
     if (Array.isArray(foundVersions)) return foundVersions;
     return [];
-  }, [analysisVersions, initialRecommendations, surveyId, currentSurvey]);
+  }, [analysisVersions, resolvedRecommendations, surveyId, currentSurvey]);
 
   const radarData = useMemo(() => {
     if (!currentSurvey) return [];
@@ -195,7 +205,7 @@ export const Results: React.FC<ResultsProps> = ({
   };
   const [showActions, setShowActions] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(isPublicView || false);
 
   const isOwner = useMemo(() => {
     const currentUserId = user?.id || localStorage.getItem('neuroprofile_user_id');
@@ -222,29 +232,6 @@ export const Results: React.FC<ResultsProps> = ({
   }, [user, targetUser, ownerId]);
   const [nickname, setNickname] = useState('');
   const [useRealName, setUseRealName] = useState(false);
-
-  // Load initial settings if we have a user
-  useEffect(() => {
-    if (user && !isPublicView) {
-      const authDataString = localStorage.getItem('auth_token');
-      if (!authDataString) return;
-      const authData = JSON.parse(authDataString);
-
-      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/me/result`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(authData.user || authData)
-      }).then(res => res.json()).then(data => {
-        if (data) {
-          setIsPublic(data.is_public || false);
-          setNickname(data.public_nickname || '');
-          if (data.share_id) setShareId(data.share_id);
-          const realName = `${user.first_name} ${user.last_name || ''}`.trim();
-          setUseRealName(!!data.public_nickname && data.public_nickname === realName);
-        }
-      });
-    }
-  }, [user, isPublicView]);
 
   // SEO Handling
   useEffect(() => {
@@ -305,98 +292,105 @@ export const Results: React.FC<ResultsProps> = ({
   useEffect(() => {
     if (hasAttemptedSave.current) return;
 
-    const saveAndGetRecs = async () => {
-      const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
-      const profiles = ProfileService.getProfiles();
-      const activeProfile = profiles.find(p => p.id === activeProfileId);
-
-      const targetSurveyId = surveyId || activeProfile?.surveyId;
-
-      if (activeProfile && targetSurveyId) {
-        // Step 0: Check if we ALREADY have recommendations from initial props or state
-        const existingRec = initialRecommendations[targetSurveyId];
-        if (existingRec && existingRec.trim().length > 0) {
-          setGeminiRecs(existingRec);
-          hasAttemptedSave.current = true;
+    const initializeResults = async () => {
+      hasAttemptedSave.current = true;
+      const targetSurveyId = surveyId || initialRecommendations?.test_type || 'full_aphantasia_profile';
+      
+      try {
+        // Step 1: Check if we have recommendations in props - if yes, we're likely in public or admin view
+        const propRec = initialRecommendations[targetSurveyId];
+        if (propRec && propRec.trim().length > 0 && isPublicView) {
+          setGeminiRecs(propRec);
           return;
         }
 
-        hasAttemptedSave.current = true;
-        setIsSaving(true);
-
-        // Generate dynamic scores based on survey categories
-        const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === targetSurveyId);
-        const scores: Record<string, number> = {};
-
-        if (currentSurvey) {
-          // Logic should match radarData useMemo:
-          // If the first category has subcategories, use them to provide a detailed radar chart
-          const firstCat = currentSurvey.categories[0];
-          const subCats = new Set<string>();
-          firstCat.questions.forEach(q => {
-            if (q.subCategory) subCats.add(q.subCategory.en);
-          });
-
-          if (subCats.size > 0 && currentSurvey.categories.length === 1) {
-            subCats.forEach(sc => {
-              scores[sc] = ProfileService.calculateCategoryScore(surveyAnswers, sc);
-            });
-          } else {
-            // Otherwise use categories - use English title for good labels in OG image
-            currentSurvey.categories.forEach(cat => {
-              scores[cat.title.en] = ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en);
-            });
-          }
-        }
-
-        try {
-          if (!user) {
-            setIsSaving(false);
-            return;
-          }
-
-          // Step 1: Fast save
-          const result = await ProfileService.saveResultToBackend(activeProfile, targetSurveyId, scores, lang);
-
-          if (result && result.status === 'success') {
-            let existingRecForThisTest = null;
-
-            // Check backend if not in initial props
-            const existingResult = await ProfileService.loadResultFromBackend();
-            if (existingResult && existingResult.gemini_recommendations) {
-              if (typeof existingResult.gemini_recommendations === 'string') {
-                existingRecForThisTest = existingResult.gemini_recommendations;
-              } else if (existingResult.gemini_recommendations[targetSurveyId]) {
-                existingRecForThisTest = existingResult.gemini_recommendations[targetSurveyId];
+        // Step 2: Try to load EXISTING result from backend (this also fetches is_public/nickname settings)
+        if (user) {
+          setIsSaving(true);
+          const backendData = await ProfileService.loadResultFromBackend();
+          
+          if (backendData) {
+            // Update profile settings from the same call
+            setIsPublic(backendData.is_public || false);
+            setNickname(backendData.public_nickname || '');
+            
+            // Prioritize specific share_id for this test type, with fallback to global share_id
+            if (backendData.share_ids && backendData.share_ids[targetSurveyId]) {
+              setShareId(backendData.share_ids[targetSurveyId]);
+            } else if (backendData.share_id) {
+              setShareId(backendData.share_id);
+            }
+            
+            setUseRealName(!!backendData.public_nickname && backendData.public_nickname === `${user.first_name} ${user.last_name || ''}`.trim());
+            
+            // Check if backend has recommendations for THIS survey
+            let backendRec = null;
+            if (backendData.gemini_recommendations) {
+              setResolvedRecommendations(backendData.gemini_recommendations);
+              
+              if (typeof backendData.gemini_recommendations === 'string') {
+                backendRec = backendData.gemini_recommendations;
+              } else {
+                backendRec = backendData.gemini_recommendations[targetSurveyId];
               }
             }
+            
+            if (backendData.current_version_index !== undefined) {
+              setCurrentVersionIndex(backendData.current_version_index);
+            }
 
-            if (result && result.share_id) setShareId(result.share_id);
-
-            if (existingRecForThisTest && existingRecForThisTest.trim().length > 0) {
-              setGeminiRecs(existingRecForThisTest);
-            } else {
-              // Step 2: Stream LLM Analysis if missing
-              setGeminiRecs('');
-              setIsSaving(false); // Stop showing the full-block saving spinner
-              setIsAnalyzing(true);
-
-              await ProfileService.streamAnalysisFromBackend(activeProfile, targetSurveyId, scores, lang, (chunk) => {
-                setGeminiRecs(prev => (prev || '') + chunk);
-              });
-
-              setIsAnalyzing(false);
+            if (backendRec && backendRec.trim().length > 0) {
+              setGeminiRecs(backendRec);
+              setIsSaving(false);
+              return;
             }
           }
-        } catch (error) {
-          console.error("Error managing backend results", error);
-        } finally {
-          setIsSaving(false);
         }
+
+        // Step 3: If no backend recs, and we have local answers, SAVE and trigger analysis
+        const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
+        const profiles = ProfileService.getProfiles();
+        const activeProfile = profiles.find(p => p.id === activeProfileId);
+
+        if (activeProfile && targetSurveyId && !isPublicView) {
+          setIsSaving(true);
+          
+          // Generate scores (copied from triggerAnalysis logic for consistency)
+          const radarScores = radarData.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.A }), {});
+          const result = await ProfileService.saveResultToBackend(activeProfile, targetSurveyId, radarScores, lang);
+          
+          if (result && result.status === 'success') {
+             if (result.share_id) setShareId(result.share_id);
+             
+             // Check if save returned recommendations (might have migrated them)
+             const savedRec = result.gemini_recommendations?.[targetSurveyId];
+             if (result.gemini_recommendations) {
+               setResolvedRecommendations(result.gemini_recommendations);
+             }
+             
+             if (savedRec) {
+               setGeminiRecs(savedRec);
+               setIsSaving(false);
+             } else {
+               // Trigger streaming analysis
+               setIsAnalyzing(true);
+               await ProfileService.streamAnalysisFromBackend(activeProfile, targetSurveyId, radarScores, lang, (chunk) => {
+                 setGeminiRecs(prev => (prev || '') + chunk);
+               });
+               setIsAnalyzing(false);
+               setIsSaving(false);
+             }
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing results", error);
+      } finally {
+        setIsSaving(false);
       }
     };
-    saveAndGetRecs();
-  }, [user, surveyId, survey]);
+
+    initializeResults();
+  }, [user, surveyId, isPublicView, radarData, lang, initialRecommendations]);
 
 
 
@@ -603,15 +597,15 @@ export const Results: React.FC<ResultsProps> = ({
                   <BrainCircuit className="w-6 h-6 text-brand-ink" />
                 </div>
                 <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.aiAnalysisTitle}</h3>
-
-                {/* Version Switcher */}
-                {(effectiveVersions && effectiveVersions.length > 1) && (
+ 
+                {/* Version Switcher - Only for owner/admin, never on public view */}
+                {!isPublicView && (effectiveVersions && effectiveVersions.length > 1) && (
                   <div className="flex items-center gap-2 ml-4 p-1 bg-brand-paper-accent/50 rounded-lg border border-stone-line/50">
                     {effectiveVersions.map((_, idx) => (
                       <button
                         key={idx}
                         onClick={() => setSelectedVersionIndex(idx)}
-                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${(selectedVersionIndex === idx || (selectedVersionIndex === null && idx === effectiveVersions.length - 1))
+                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${(selectedVersionIndex === idx || (selectedVersionIndex === null && (currentVersionIndex === idx || (currentVersionIndex === null && idx === effectiveVersions.length - 1))))
                             ? 'bg-brand-ink text-white shadow-sm'
                             : 'text-stone-400 hover:text-brand-ink'
                           }`}
@@ -623,7 +617,7 @@ export const Results: React.FC<ResultsProps> = ({
                 )}
               </div>
 
-              {isAdmin && geminiRecs && (
+              {!isPublicView && isAdmin && geminiRecs && (
                 <button
                   disabled={isAnalyzing}
                   onClick={triggerAnalysis}
@@ -654,20 +648,21 @@ export const Results: React.FC<ResultsProps> = ({
                   prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
                   ${isAnalyzing ? 'animate-pulse-subtle' : ''}`}>
 
-                  {/* Version Info & Actions */}
-                  {effectiveVersions && effectiveVersions.length > 1 && (
+                  {/* Version Info & Actions - Hide on public view */}
+                  {!isPublicView && effectiveVersions && effectiveVersions.length > 1 && (
                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-stone-line/30">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] items-center uppercase font-bold tracking-widest text-stone-400">
-                          Viewing Version {(selectedVersionIndex !== null ? selectedVersionIndex : effectiveVersions.length - 1) + 1}
-                          {(selectedVersionIndex === null || selectedVersionIndex === effectiveVersions.length - 1) && <span className="ml-2 text-brand-clay text-[9px]">(Latest)</span>}
+                           Viewing Version {(selectedVersionIndex !== null ? selectedVersionIndex : (currentVersionIndex !== null ? currentVersionIndex : effectiveVersions.length - 1)) + 1}
+                           {((selectedVersionIndex === null && (currentVersionIndex === null || currentVersionIndex === effectiveVersions.length - 1)) || (selectedVersionIndex !== null && selectedVersionIndex === effectiveVersions.length - 1)) && <span className="ml-2 text-brand-clay text-[9px]">(Latest)</span>}
+                           {selectedVersionIndex === null && currentVersionIndex !== null && currentVersionIndex !== effectiveVersions.length - 1 && <span className="ml-2 text-brand-ink text-[9px]">(Default)</span>}
                         </span>
                       </div>
 
                       {isOwner && (
                         <button
                           onClick={async () => {
-                            const idx = selectedVersionIndex !== null ? selectedVersionIndex : effectiveVersions.length - 1;
+                            const idx = selectedVersionIndex !== null ? selectedVersionIndex : (currentVersionIndex !== null ? currentVersionIndex : effectiveVersions.length - 1);
                             try {
                               const authDataString = localStorage.getItem('auth_token') || localStorage.getItem('telegram_auth');
                               if (!authDataString) {
@@ -677,18 +672,25 @@ export const Results: React.FC<ResultsProps> = ({
                               const authParsed = JSON.parse(authDataString);
                               const authData = authParsed.user || authParsed;
                               
-                              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/set-default-analysis`, {
+                              const apiUrl = import.meta.env.VITE_API_URL || '';
+                              const response = await fetch(`${apiUrl}/api/set-default-analysis`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                   auth_data: authData,
-                                  test_type: surveyId || currentSurvey?.id,
+                                  test_type: targetSurveyId,
                                   version_index: idx
                                 })
                               });
                               if (response.ok) {
-                                window.location.reload(); // Refresh to update main field
-                              } else {
+                                 const resData = await response.json();
+                                 if (resData.current_version_index !== undefined) {
+                                     setCurrentVersionIndex(resData.current_version_index);
+                                     setSelectedVersionIndex(null); // Reset to show the new default
+                                 } else {
+                                     window.location.reload(); 
+                                 }
+                               } else {
                                 const err = await response.json();
                                 console.error('Failed to set default version:', err);
                               }

@@ -33,7 +33,8 @@ TELEGRAM_GROUP_ID = os.getenv("TELEGRAM_GROUP_ID")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 ADMIN_USER_IDS = [id.strip() for id in os.getenv("ADMIN_USER_IDS", os.getenv("ADMIN_TELEGRAM_IDS", "")).split(",") if id.strip()]
 DATA_DIR = os.getenv("DATA_DIR", "/app/data/results")
-AI_ENABLED_TESTS = {"full_aphantasia_profile", "express_demo"}
+# Deprecated: AI_ENABLED_TESTS now controlled via feature_flags table in DB
+# AI_ENABLED_TESTS = {"full_aphantasia_profile", "express_demo"}
 
 # Initialize Telegram Bot Singleton
 bot = Bot(token=TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else None
@@ -64,7 +65,7 @@ class SaveResult(BaseModel):
     lang: Optional[str] = "en"
     tone: Optional[str] = "professional"
     referred_by: Optional[str] = None
-    is_public: Optional[bool] = False
+    is_public: Optional[bool] = None
     public_nickname: Optional[str] = None
 
 class Badge(BaseModel):
@@ -153,7 +154,7 @@ def migrate_scores(flat_scores: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     test_type = "express_demo" if has_demo else "full_aphantasia_profile"
     return {test_type: flat_scores}
 
-async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", tone: str = "professional", model_name: str = 'gemini-3-flash'):
+async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", tone: str = "professional", model_name: str = 'gemini-3-flash-preview'):
     if not client:
         yield "Gemini API key not configured."
         return
@@ -239,11 +240,12 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
     
     if not user_exists:
         is_new_user = True
+        is_public_val = data.is_public if data.is_public is not None else False
         await conn.execute('''
             INSERT INTO aphantasia_users (id, email, first_name, last_name, photo_url, is_public, public_nickname, referred_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ''', user_id, None, data.auth_data.first_name, data.auth_data.last_name, data.auth_data.photo_url, 
-            data.is_public, data.public_nickname, data.referred_by)
+            is_public_val, data.public_nickname, data.referred_by)
         
         # Increment referral count for the referrer if this is a new conversion
         if data.referred_by:
@@ -277,14 +279,30 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
                 VALUES ($1, $2) ON CONFLICT DO NOTHING
             ''', user_id, early_badge['id'])
     else:
-        # Update existing user settings
-        await conn.execute('''
-            UPDATE aphantasia_users SET
-                photo_url = $2,
-                is_public = $3,
-                public_nickname = $4
-            WHERE id = $1
-        ''', user_id, data.auth_data.photo_url, data.is_public, data.public_nickname)
+        # Update existing user settings ONLY if explicitly provided
+        update_fields = []
+        params = []
+        param_idx = 1
+        
+        # Always update photo_url
+        update_fields.append(f"photo_url = ${param_idx}")
+        params.append(data.auth_data.photo_url)
+        param_idx += 1
+        
+        if data.is_public is not None:
+            update_fields.append(f"is_public = ${param_idx}")
+            params.append(data.is_public)
+            param_idx += 1
+            
+        if data.public_nickname is not None:
+            update_fields.append(f"public_nickname = ${param_idx}")
+            params.append(data.public_nickname)
+            param_idx += 1
+            
+        # Add user_id for the WHERE clause
+        params.append(user_id)
+        query = f"UPDATE aphantasia_users SET {', '.join(update_fields)} WHERE id = ${param_idx}"
+        await conn.execute(query, *params)
 
     # 2. File-based Result Storage
     existing_data = {}
@@ -316,8 +334,8 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
         "tone": data.tone,
         "gemini_recommendations": recs,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "is_public": data.is_public,
-        "public_nickname": data.public_nickname
+        "is_public": data.is_public if data.is_public is not None else existing_data.get("is_public", False),
+        "public_nickname": data.public_nickname if data.public_nickname is not None else existing_data.get("public_nickname", None)
     }
 
     async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
@@ -358,19 +376,19 @@ async def update_profile_settings(data: ProfileUpdate, conn: asyncpg.Connection 
 
 @app.get("/api/public-results/{id_or_share_id}")
 async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):
-    """Explicit JSON endpoint for public results via user_id OR anonymous share_id."""
-    user_id = id_or_share_id
-    test_type = t
-    
-    # Check if id_or_share_id is a share_id (UUID)
+    """Explicit JSON endpoint for public results via anonymous share_id (UUID) ONLY."""
+    # Check if id_or_share_id is a valid share_id (UUID)
     try:
         uuid.UUID(id_or_share_id)
         share_lookup = await conn.fetchrow("SELECT user_id, test_type FROM test_results WHERE share_id = $1", id_or_share_id)
-        if share_lookup:
-            user_id = share_lookup['user_id']
-            test_type = t or share_lookup['test_type']
+        if not share_lookup:
+            raise HTTPException(status_code=404, detail="Shared result not found")
+        
+        user_id = share_lookup['user_id']
+        # Strictly use test_type from the share link record to prevent cross-test data leaks
+        test_type = share_lookup['test_type']
     except ValueError:
-        pass # Not a UUID, assume user_id
+        raise HTTPException(status_code=400, detail="Invalid share ID format. Must be a UUID.")
 
     # 1. Check user public status in DB
     user = await conn.fetchrow("SELECT id, is_public, public_nickname FROM aphantasia_users WHERE id = $1", user_id)
@@ -409,6 +427,11 @@ async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, c
     
     recs = data.get("gemini_recommendations", {})
     analysis_versions = recs.get(f"{final_test_type}_versions", []) if isinstance(recs, dict) else []
+    current_version_index = recs.get(f"{final_test_type}_current_index") if isinstance(recs, dict) else None
+    
+    # If index is missing but versions exist, default to the last one
+    if current_version_index is None and analysis_versions:
+        current_version_index = len(analysis_versions) - 1
 
     return {
         "user_id": user_id,
@@ -419,26 +442,29 @@ async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, c
         "answers": answers,
         "gemini_recommendations": recs,
         "analysis_versions": analysis_versions,
+        "current_version_index": current_version_index,
         "badges": await get_user_badges(user_id, conn),
-        "share_id": id_or_share_id if user_id != id_or_share_id else None
+        "share_id": id_or_share_id
     }
 
 @app.get("/results/{id_or_share_id}")
 async def get_public_result_page(request: Request, id_or_share_id: str, conn: asyncpg.Connection = Depends(get_db)):
-    """Serve public profile data OR HTML with OG metadata for social crawlers via user_id OR share_id."""
-    user_id = id_or_share_id
-    test_type_from_query = request.query_params.get("t")
-    
-    # Check if id_or_share_id is a share_id (UUID)
+    """Serve public profile data OR HTML with OG metadata for social crawlers via anonymous share_id (UUID) ONLY."""
+    # Check if id_or_share_id is a valid share_id (UUID)
     try:
         uuid.UUID(id_or_share_id)
         share_lookup = await conn.fetchrow("SELECT user_id, test_type FROM test_results WHERE share_id = $1", id_or_share_id)
-        if share_lookup:
-            user_id = share_lookup['user_id']
-            test_type_from_query = test_type_from_query or share_lookup['test_type']
+        if not share_lookup:
+            raise HTTPException(status_code=404, detail="Shared result not found")
+        
+        user_id = share_lookup['user_id']
+        test_type = share_lookup['test_type']
     except ValueError:
-        pass
-
+        # If it's not a UUID, it's an old style link or invalid. 
+        # We REJECT it for public viewing to hide Google IDs.
+        raise HTTPException(status_code=400, detail="Invalid share ID format. Must be a UUID.")
+    
+    # Check user public status
     user = await conn.fetchrow("SELECT id, is_public, public_nickname FROM aphantasia_users WHERE id = $1", user_id)
     if not user or not user['is_public']:
         raise HTTPException(status_code=403, detail="Profile is private.")
@@ -451,7 +477,7 @@ async def get_public_result_page(request: Request, id_or_share_id: str, conn: as
         data = json.loads(await f.read())
 
     # Determine profile title for OG tags
-    test_type_raw = test_type_from_query or data.get("test_type", "unknown")
+    test_type_raw = test_type or data.get("test_type", "unknown")
     
     nickname = user['public_nickname'] or "Anonymous"
     
@@ -550,6 +576,9 @@ async def post_process_analysis(full_text: str, data: SaveResult, file_path: str
                     recs = {existing_data.get("test_type", "unknown"): recs}
                 else:
                     recs = {}
+            else:
+                # Ensure we have a fresh copy of recs to modify
+                recs = dict(recs)
 
             test_type = data.test_type
             versions_key = f"{test_type}_versions"
@@ -567,8 +596,9 @@ async def post_process_analysis(full_text: str, data: SaveResult, file_path: str
             # Keep only last 10 versions
             recs[versions_key] = current_versions[-10:]
 
-            # Primary recommendation field always points to THE LATEST version
+            # Primary recommendation field always points to THE LATEST version on fresh generation
             recs[test_type] = full_text
+            recs[f"{test_type}_current_index"] = len(recs[versions_key]) - 1
             existing_data["gemini_recommendations"] = recs
 
             async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
@@ -593,13 +623,23 @@ async def post_process_analysis(full_text: str, data: SaveResult, file_path: str
         logger.error(f"Error in background post-processing: {e}")
 
 @app.post("/api/analyze-result")
-async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks):
+async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks, conn: asyncpg.Connection = Depends(get_db)):
     auth_user = verify_auth(data.auth_data)
     
     # Check if AI analysis is allowed for this test type (Admins bypass this)
     is_admin = str(data.auth_data.id) in ADMIN_USER_IDS
-    if data.test_type not in AI_ENABLED_TESTS and not is_admin:
-         logger.info(f"AI analysis disabled for test type: {data.test_type} (and user is not admin)")
+    
+    # 1. Check Global AI Streaming Flag
+    global_ai = await conn.fetchval("SELECT is_enabled FROM feature_flags WHERE code = 'ai_streaming'")
+    if global_ai is False and not is_admin:
+         return StreamingResponse(iter(["AI services are temporarily disabled by administrator"]), media_type="text/plain")
+
+    # 2. Check Test-Specific Flag
+    flag_code = f"survey_{data.test_type}"
+    is_test_enabled = await conn.fetchval("SELECT is_enabled FROM feature_flags WHERE code = $1", flag_code)
+    
+    if is_test_enabled is False and not is_admin:
+         logger.info(f"AI analysis disabled via flag: {flag_code} (and user is not admin)")
          return StreamingResponse(
             iter(["Analysis disabled for this test type"]), 
             media_type="text/event-stream"
@@ -668,11 +708,31 @@ async def get_my_result(auth_data: UserAuth, conn: asyncpg.Connection = Depends(
         versions_key = f"{test_type}_versions"
         if versions_key in recs:
             data["analysis_versions"] = recs[versions_key]
+        
+        # Determine the current default index
+        current_idx_key = f"{test_type}_current_index"
+        if current_idx_key in recs:
+            data["current_version_index"] = recs[current_idx_key]
+        elif versions_key in recs and len(recs[versions_key]) > 0:
+            data["current_version_index"] = len(recs[versions_key]) - 1
 
-    # Include share_id for the current test type if it exists
-    share_id = await conn.fetchval("SELECT share_id FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, data.get("test_type"))
-    if share_id:
-        data["share_id"] = str(share_id)
+    # 2. Get/Create share IDs for all test types to support UUID sharing without user_id
+    share_ids = {}
+    ans_data = data.get("answers", {})
+    test_types = list(ans_data.keys()) if isinstance(ans_data, dict) else [data.get("test_type", "full_aphantasia_profile")]
+    
+    for t_type in test_types:
+        s_id = await conn.fetchval(
+            "INSERT INTO test_results (user_id, test_type) VALUES ($1, $2) ON CONFLICT (user_id, test_type) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING share_id",
+            user_id, t_type
+        )
+        if not s_id: # On non-returning update
+             s_id = await conn.fetchval("SELECT share_id FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, t_type)
+        share_ids[t_type] = str(s_id)
+        
+    data["share_ids"] = share_ids
+    # Backward compatibility for single share_id
+    data["share_id"] = share_ids.get(data.get("test_type", "unknown"))
         
     return data
 
@@ -694,8 +754,16 @@ async def set_default_analysis(data: SetDefaultAnalysis):
         existing_data = json.loads(await f.read())
         
     recs = existing_data.get("gemini_recommendations", {})
+    if recs is None:
+        recs = {}
+    
+    # In-place migration if it's a legacy string
+    if isinstance(recs, str):
+        test_type = existing_data.get("test_type", data.test_type or "unknown")
+        recs = {test_type: recs} if recs.strip() else {}
+    
     if not isinstance(recs, dict):
-        raise HTTPException(status_code=400, detail="Invalid data structure")
+        raise HTTPException(status_code=400, detail="Invalid data structure for recommendations")
         
     versions_key = f"{data.test_type}_versions"
     versions = recs.get(versions_key, [])
@@ -705,12 +773,13 @@ async def set_default_analysis(data: SetDefaultAnalysis):
         
     # Set the selected version as default
     recs[data.test_type] = versions[data.version_index]
+    recs[f"{data.test_type}_current_index"] = data.version_index
     existing_data["gemini_recommendations"] = recs
     
     async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
         await f.write(json.dumps(existing_data, ensure_ascii=False, indent=2))
         
-    return {"status": "success", "message": f"Version {data.version_index + 1} set as default"}
+    return {"status": "success", "message": f"Version {data.version_index + 1} set as default", "current_version_index": data.version_index}
 
 @app.get("/api/results")
 async def get_results(user_id: str, hash: str, q: Optional[str] = None, target_user_id: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):

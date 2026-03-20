@@ -139,7 +139,10 @@ async def seed_feature_flags(conn: asyncpg.Connection):
     flags = [
         ("share", "Social Sharing", "Enable/Disable profile sharing and referral links.", True),
         ("multi_survey", "Multi-Survey Management", "Allow users to take multiple tests and manage them in dashboard.", False),
-        ("ai_streaming", "AI Analysis Streaming", "Enable real-time streaming of Gemini analysis results.", True)
+        ("ai_streaming", "AI Analysis Streaming", "Enable real-time streaming of Gemini analysis results.", True),
+        ("survey_express_demo", "Express Diagnostics (AI)", "Enable/Disable express diagnostics test and AI analysis.", True),
+        ("survey_full_aphantasia_profile", "Full Cognitive Profile (AI)", "Enable/Disable full profile test and AI analysis.", True),
+        ("survey_perfectionism_big_three", "Perfectionism Scale (AI)", "Enable/Disable perfectionism test and AI analysis.", True)
     ]
     
     try:

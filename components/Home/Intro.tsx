@@ -4,6 +4,7 @@ import { AVAILABLE_SURVEYS } from '@/constants';
 import { Language } from '@/types';
 import { ConsentModal } from './ConsentModal';
 import { useNavigate } from 'react-router-dom';
+import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 interface IntroProps {
     ui: any;
@@ -39,6 +40,7 @@ export const Intro: React.FC<IntroProps> = ({
     const navigate = useNavigate();
     const [showConsent, setShowConsent] = useState(false);
     const [pendingAction, setPendingAction] = useState<{ type: 'start' | 'resume', surveyId?: string } | null>(null);
+    const { isEnabled, loading: flagsLoading } = useFeatureFlags();
 
     // Get current survey config to display correct scale
     const activeSurvey = AVAILABLE_SURVEYS.find(s => s.id === activeSurveyId);
@@ -99,6 +101,10 @@ export const Intro: React.FC<IntroProps> = ({
 
                     <div className="flex flex-col gap-5">
                         {AVAILABLE_SURVEYS.filter(s => !s.parentId).map(survey => {
+                            const isTestSupported = isEnabled(`survey_${survey.id}`);
+                            // If flags are still loading, fallback to the hardcoded disabled property; otherwise, use flags.
+                            const isTestDisabled = flagsLoading ? !!survey.disabled : (survey.disabled || !isTestSupported);
+                            
                             const progress = surveyProgress[survey.id] || { answered: 0, total: 0, percent: 0 };
                             const isActive = activeSurveyId === survey.id;
                             const hasAllAnswers = progress.percent === 100;
@@ -115,9 +121,9 @@ export const Intro: React.FC<IntroProps> = ({
                                             <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-ink to-brand-ink/40 rounded-2xl blur opacity-20 transition duration-500"></div>
                                         )}
                                         <div
-                                            onClick={() => !survey.disabled && onSetActiveSurveyId(survey.id)}
+                                            onClick={() => !isTestDisabled && onSetActiveSurveyId(survey.id)}
                                             className={`relative bg-brand-paper-accent border rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:shadow-md transition-all cursor-pointer ${isActive ? 'border-brand-ink/30 ring-1 ring-brand-ink/10' : 'border-stone-line hover:border-stone-line/80'
-                                                } ${survey.disabled ? 'opacity-40 grayscale cursor-not-allowed border-dashed' : ''}`}
+                                                } ${isTestDisabled ? 'opacity-40 grayscale cursor-not-allowed border-dashed' : ''}`}
                                         >
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
@@ -129,7 +135,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                         <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-brand-sage/10 text-brand-sage text-[9px] font-bold uppercase tracking-wider rounded-full border border-brand-sage/20">
                                                             {hasRecommendation ? ui.completed : ui.readyForAnalysis} <CheckCircle className="w-3 h-3" />
                                                         </span>
-                                                    ) : survey.disabled ? (
+                                                    ) : isTestDisabled ? (
                                                         <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded uppercase tracking-wider">{ui.soon}</span>
                                                     ) : (
                                                         <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded border border-stone-line uppercase tracking-wider">
@@ -156,8 +162,9 @@ export const Intro: React.FC<IntroProps> = ({
 
                                              {!hasAllAnswers ? (
                                                 <button
-                                                    onClick={(e) => { e.stopPropagation(); checkConsentAndProceed('start', survey.id); }}
-                                                    className={`shrink-0 h-10 px-6 ${isActive ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-brand-graphite'} rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2`}
+                                                    onClick={(e) => { e.stopPropagation(); !isTestDisabled && checkConsentAndProceed('start', survey.id); }}
+                                                    disabled={isTestDisabled}
+                                                    className={`shrink-0 h-10 px-6 ${isActive ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-brand-graphite'} rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 ${isTestDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
                                                     {isActive ? ui.start : ui.start || 'Start'} <ChevronRight className="w-4 h-4" />
                                                 </button>

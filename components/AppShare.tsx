@@ -28,13 +28,17 @@ export const AppShare: React.FC<AppShareProps> = ({
   onShareStart
 }) => {
   const shareUrl = (source?: string) => {
-     const id = shareId || user?.id || 'public';
+     // Require shareId for public links to hide user.id/google_id
+     const id = shareId || 'public';
      const baseUrl = window.location.origin + '/results/' + id;
      const params = new URLSearchParams();
      if (source) params.set('s', source);
-     if (user?.public_id || user?.id) params.set('ref', user.public_id || user.id);
-     // If we use shareId, it already points to a specific test, 
-     // but we can keep 't' as fallback/extra info if it's NOT a shareId
+     
+     // Only use public_id for referrals, never internal google_id
+     if (user?.public_id) params.set('ref', user.public_id);
+     
+     // If we use shareId, it already points to a specific test, so 't' is not needed.
+     // 't' is only a fallback for legacy non-UUID links which are now deprecated.
      if (!shareId && currentSurvey?.id) params.set('t', currentSurvey.id);
      
      const qs = params.toString();
