@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Answer, UIStrings, Language, QuestionType, SurveyDefinition, Badge } from '@/types';
+import { Answer, UIStrings, Language, QuestionType, SurveyDefinition, Badge, User } from '@/types';
 import { SURVEY_DATA, AVAILABLE_SURVEYS } from '@/constants';
-import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight, User, Settings } from 'lucide-react';
+import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight, User as UserIcon, Settings, RefreshCw, Check } from 'lucide-react';
 import { ProfileService } from '@/services/ProfileService';
 // @ts-ignore
 import { encode } from '@toon-format/toon';
@@ -14,14 +14,14 @@ import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 import { ShareSettingsModal } from './ShareSettingsModal';
 
 interface ResultsProps {
-  answers: Record<string, Answer>;
+  answers: Record<string, Record<string, Answer>>;
   onReset: () => void;
   onGoHome: () => void;
   ui: UIStrings;
   lang: Language;
   filenamePrefix?: string;
-  user: any;
-  targetUser?: any;
+  user: User | null;
+  targetUser?: User | null;
   surveyId?: string;
   survey?: SurveyDefinition | null;
   initialRecommendations?: Record<string, string>;
@@ -29,6 +29,9 @@ interface ResultsProps {
   isPublicView?: boolean;
   publicNickname?: string;
   initialShareId?: string | null;
+  isAdmin?: boolean;
+  analysisVersions?: string[];
+  ownerId?: string;
 }
 
 const RadarIcon = ({ className }: { className?: string }) => (
@@ -42,7 +45,7 @@ const RadarIcon = ({ className }: { className?: string }) => (
 
 export const BadgeIcon = ({ badge, size = "md" }: { badge: Badge, size?: "sm" | "md" | "lg" }) => {
   const [showTooltip, setShowTooltip] = useState(false);
-  
+
   const sizeClasses = {
     sm: "w-6 h-6 text-xs",
     md: "w-10 h-10 text-xl",
@@ -51,14 +54,14 @@ export const BadgeIcon = ({ badge, size = "md" }: { badge: Badge, size?: "sm" | 
 
   return (
     <div className="relative inline-block">
-      <div 
+      <div
         className={`${sizeClasses[size]} rounded-full bg-brand-paper-accent border border-stone-line flex items-center justify-center cursor-pointer hover:bg-brand-ink hover:border-brand-ink transition-all duration-300 shadow-sm`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         <span className="leading-none">{badge.icon || "🏆"}</span>
       </div>
-      
+
       {showTooltip && badge.description && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-brand-paper-accent border border-stone-line rounded-2xl shadow-xl z-[100] animate-fade-in text-center pointer-events-none">
           <div className="font-bold text-[10px] text-brand-ink uppercase tracking-[0.15em] mb-1">{badge.name}</div>
@@ -75,7 +78,10 @@ export const Results: React.FC<ResultsProps> = ({
   answers, onReset, onGoHome, ui, lang, filenamePrefix, user, targetUser, surveyId, survey, initialRecommendations = {}, badges = [],
   isPublicView,
   publicNickname,
-  initialShareId
+  initialShareId,
+  isAdmin,
+  analysisVersions,
+  ownerId
 }) => {
   const navigate = useNavigate();
   const { isEnabled } = useFeatureFlags();
@@ -90,9 +96,130 @@ export const Results: React.FC<ResultsProps> = ({
   const [shareId, setShareId] = useState<string | null>(initialShareId || null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState<number | null>(null);
+
+  const currentSurvey = useMemo(() => survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId), [survey, surveyId]);
+
+  const surveyAnswers = useMemo((): Record<string, Answer> => {
+    if (!currentSurvey) return {};
+    return answers[currentSurvey.id] || {};
+  }, [answers, currentSurvey]);
+
+  // Handle versions from either prop or mapping in recommendations
+  const effectiveVersions = useMemo(() => {
+    if (analysisVersions && analysisVersions.length > 0) return analysisVersions;
+    if (!initialRecommendations || typeof initialRecommendations !== 'object' || !surveyId) return [];
+
+    // Look for `${surveyId}_versions` in the flat recommendations object
+    const versionKey = `${surveyId}_versions`;
+    const discoveryKey = currentSurvey?.id ? `${currentSurvey.id}_versions` : null;
+
+    const foundVersions = (initialRecommendations as any)[versionKey] || (discoveryKey ? (initialRecommendations as any)[discoveryKey] : null);
+
+    if (Array.isArray(foundVersions)) return foundVersions;
+    return [];
+  }, [analysisVersions, initialRecommendations, surveyId, currentSurvey]);
+
+  const radarData = useMemo(() => {
+    if (!currentSurvey) return [];
+
+    // If survey has multiple categories, use them
+    if (currentSurvey.categories.length > 1) {
+      return currentSurvey.categories.map(cat => ({
+        key: cat.id,
+        subject: cat.title[lang],
+        A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
+        fullMark: 5
+      }));
+    }
+
+    // If only one category, look for sub-categories in its questions
+    const cat = currentSurvey.categories[0];
+    const subCats = new Set<string>();
+    const subCatLabels: Record<string, string> = {};
+
+    cat.questions.forEach(q => {
+      if (q.subCategory) {
+        subCats.add(q.subCategory.en);
+        subCatLabels[q.subCategory.en] = q.subCategory[lang];
+      }
+    });
+
+    if (subCats.size > 0) {
+      return Array.from(subCats).map(sc => ({
+        key: sc,
+        subject: subCatLabels[sc],
+        A: ProfileService.calculateCategoryScore(surveyAnswers, sc),
+        fullMark: 5
+      }));
+    }
+
+    return [{
+      key: cat.id,
+      subject: cat.title[lang],
+      A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
+      fullMark: 5
+    }];
+  }, [currentSurvey, surveyAnswers, lang]);
+
+  const triggerAnalysis = async () => {
+    const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
+    const profiles = ProfileService.getProfiles();
+    const activeProfile = profiles.find(p => p.id === activeProfileId) || (targetUser ? { answers } : null);
+
+    // Use surveyId prop or the survey ID from current survey
+    const targetSurveyId = surveyId || currentSurvey?.id;
+
+    if (activeProfile && targetSurveyId) {
+      setIsAnalyzing(true);
+      setGeminiRecs('');
+
+      // Mock Profile object to satisfy service
+      const mockProfile = {
+        ...activeProfile,
+        answers: answers // Use the current answers prop directly
+      } as any;
+
+      const radarScores = radarData.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.A }), {});
+
+      try {
+        await ProfileService.streamAnalysisFromBackend(mockProfile, targetSurveyId, radarScores, lang, (chunk) => {
+          setGeminiRecs(prev => (prev || '') + chunk);
+        });
+      } catch (e) {
+        setGeminiRecs('Error during analysis. Please try again or contact admin.');
+      } finally {
+        setIsAnalyzing(false);
+      }
+    }
+  };
   const [showActions, setShowActions] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
+
+  const isOwner = useMemo(() => {
+    const currentUserId = user?.id || localStorage.getItem('neuroprofile_user_id');
+    if (!currentUserId) return false;
+
+    // Normalize IDs (remove 'g_' prefix if present)
+    const normalize = (id: string) => id.startsWith('g_') ? id.substring(2) : id;
+    const normalizedCurrentId = normalize(String(currentUserId));
+
+    // Primary: check against explicitly passed ownerId (most reliable)
+    if (ownerId) {
+      return normalizedCurrentId === normalize(String(ownerId));
+    }
+
+    // Secondary: check against targetUser id (from public/admin profile data)
+    if (targetUser?.id) {
+      return normalizedCurrentId === normalize(String(targetUser.id));
+    }
+
+    // Tertiary: if no targetUser at all, it's our own local private profile
+    if (!targetUser) return true;
+
+    return false;
+  }, [user, targetUser, ownerId]);
   const [nickname, setNickname] = useState('');
   const [useRealName, setUseRealName] = useState(false);
 
@@ -102,7 +229,7 @@ export const Results: React.FC<ResultsProps> = ({
       const authDataString = localStorage.getItem('auth_token');
       if (!authDataString) return;
       const authData = JSON.parse(authDataString);
-      
+
       fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/me/result`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,9 +258,9 @@ export const Results: React.FC<ResultsProps> = ({
     }
   }, [isPublicView]);
 
-  const handleUpdatePrivacy = async (forcedState?: boolean | any) => {
+  const handleUpdatePrivacy = async (forcedState?: boolean) => {
     let newState = isPublic;
-    
+
     // If forcedState is boolean, use it (e.g. from onShareStart)
     if (forcedState === true || forcedState === false) {
       newState = forcedState;
@@ -141,10 +268,10 @@ export const Results: React.FC<ResultsProps> = ({
       // If called from a direct toggle button (and modal is not open), toggle it
       newState = !isPublic;
     }
-    
+
     // Privacy warning when turning off public access
     if (isPublic && !newState) {
-      const confirmed = window.confirm(lang === 'uk' 
+      const confirmed = window.confirm(lang === 'uk'
         ? "Ви впевнені? Всі посилання, які ви публікували раніше, перестануть працювати, і інші не зможуть бачити ваші результати."
         : "Are you sure? All links you previously shared will stop working, and others won't be able to see your results.");
       if (!confirmed) return;
@@ -153,7 +280,7 @@ export const Results: React.FC<ResultsProps> = ({
     const finalNickname = useRealName ? `${user.first_name} ${user.last_name || ''}`.trim() : (nickname || null);
     const authDataString = localStorage.getItem('auth_token');
     if (!authDataString) return;
-    
+
     try {
       setIsPublic(newState); // Optimistic update
       await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/me/profile`, {
@@ -171,16 +298,6 @@ export const Results: React.FC<ResultsProps> = ({
     }
     setShowShareModal(false);
   };
-  const currentSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
-  const surveyAnswers = useMemo(() => {
-    if (!currentSurvey) return answers;
-    // Check if answers follow the new nested structure { surveyId: { questionId: Answer } }
-    if (answers[currentSurvey.id] && typeof answers[currentSurvey.id] === 'object' && !('questionId' in answers[currentSurvey.id])) {
-      return (answers[currentSurvey.id] as unknown) as Record<string, Answer>;
-    }
-    return answers;
-  }, [answers, currentSurvey]);
-
   const calculateCategoryScore = (subCatKey: string) => ProfileService.calculateCategoryScore(surveyAnswers, subCatKey);
 
   const hasAttemptedSave = useRef(false);
@@ -221,9 +338,9 @@ export const Results: React.FC<ResultsProps> = ({
           });
 
           if (subCats.size > 0 && currentSurvey.categories.length === 1) {
-             subCats.forEach(sc => {
-               scores[sc] = ProfileService.calculateCategoryScore(surveyAnswers, sc);
-             });
+            subCats.forEach(sc => {
+              scores[sc] = ProfileService.calculateCategoryScore(surveyAnswers, sc);
+            });
           } else {
             // Otherwise use categories - use English title for good labels in OG image
             currentSurvey.categories.forEach(cat => {
@@ -283,52 +400,65 @@ export const Results: React.FC<ResultsProps> = ({
 
 
 
-  const radarData = useMemo(() => {
-    if (!currentSurvey) return [];
-
-    // If survey has multiple categories, use them
-    if (currentSurvey.categories.length > 1) {
-      return currentSurvey.categories.map(cat => ({
-        key: cat.id,
-        subject: cat.title[lang],
-        A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
-        fullMark: 5
-      }));
-    }
-
-    // If only one category, look for sub-categories in its questions
-    const cat = currentSurvey.categories[0];
-    const subCats = new Set<string>();
-    const subCatLabels: Record<string, string> = {};
-
-    cat.questions.forEach(q => {
-      if (q.subCategory) {
-        subCats.add(q.subCategory.en);
-        subCatLabels[q.subCategory.en] = q.subCategory[lang];
-      }
-    });
-
-    if (subCats.size > 0) {
-      return Array.from(subCats).map(sc => ({
-        key: sc,
-        subject: subCatLabels[sc],
-        A: ProfileService.calculateCategoryScore(surveyAnswers, sc),
-        fullMark: 5
-      }));
-    }
-
-    return [{
-      key: cat.id,
-      subject: cat.title[lang],
-      A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
-      fullMark: 5
-    }];
-  }, [currentSurvey, surveyAnswers, lang]);
-
   // Prepare textual answers for display
   const textAnswers = useMemo(() => {
     return (Object.values(surveyAnswers) as Answer[]).filter(a => a.note && a.note.trim().length > 0);
   }, [surveyAnswers]);
+
+  const downloadMD = () => {
+    const activeSurvey = survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId);
+    const testTitle = activeSurvey?.title[lang] || activeSurvey?.title['en'] || (surveyId ? surveyId.replace('_', ' ').toUpperCase() : 'Report');
+
+    let md = `# Report for ${targetUser?.first_name || user?.first_name || "User"}\n`;
+    md += `## Test: ${testTitle}\n\n`;
+
+    // 1. Question - Score at the beginning
+    md += "## Summary Scores\n\n";
+    if (activeSurvey) {
+      activeSurvey.categories.forEach(category => {
+        category.questions.forEach(q => {
+          const sAnswers = answers[activeSurvey.id] || {};
+          const ans = sAnswers[q.id];
+          if (ans && typeof ans.value === 'number') {
+            md += `- ${q.text[lang] || q.text['en']}: **${ans.value}**\n`;
+          }
+        });
+      });
+    }
+
+    md += "\n---\n\n";
+
+    // 2. Question - Answer (Comment) for CURRENT test only
+    md += "## Detailed Answers & Comments\n\n";
+    if (activeSurvey) {
+      const sAnswers = answers[activeSurvey.id] || {};
+      if (sAnswers && typeof sAnswers === 'object' && Object.keys(sAnswers).length > 0) {
+        activeSurvey.categories.forEach(cat => {
+          cat.questions.forEach(q => {
+            const ans = sAnswers[q.id];
+            if (ans && (ans.value !== undefined || (ans.note && ans.note.trim() !== ''))) {
+              md += `**Q: ${q.text[lang] || q.text['en']}**\n`;
+              if (ans.value !== undefined && ans.value !== null) md += `A: ${ans.value}\n`;
+              if (ans.note && ans.note.trim() !== '') md += `Comment: ${ans.note}\n`;
+              md += "\n";
+            }
+          });
+        });
+      }
+    }
+
+    const prefix = filenamePrefix || 'report';
+    const date = new Date().toISOString().slice(0, 10);
+    const fileName = `${prefix}_${date}.md`;
+
+    const dataStr = "data:text/markdown;charset=utf-8," + encodeURIComponent(md);
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", fileName);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
 
   const downloadFile = (extension: string) => {
     let content = "";
@@ -394,37 +524,37 @@ export const Results: React.FC<ResultsProps> = ({
                     <img src={targetUser?.photo_url || user.photo_url} className="w-16 h-16 rounded-full border-2 border-white/20 shadow-inner" alt="" />
                   ) : (
                     <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-white border-2 border-white/20">
-                      <User className="w-8 h-8" />
+                      <UserIcon className="w-8 h-8" />
                     </div>
                   )}
                   <div className="space-y-2 flex flex-col items-center">
-                  <h1 className="text-xl md:text-2xl font-serif font-bold text-white tracking-tight">
-                    {isPublicView ? (publicNickname || 'Anonymous') : (nickname || 'Anonymous')}
-                  </h1>
-                  {!isPublicView && (
-                    <div className="flex items-center gap-2">
-                       <button 
-                         onClick={() => setShowShareModal(true)}
-                         className={`px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest border transition-all flex items-center gap-1.5 ${isPublic ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-brand-paper/10 border-white/20 text-brand-paper/40'}`}
-                       >
-                         <div className={`w-1.5 h-1.5 rounded-full ${isPublic ? 'bg-green-400 animate-pulse' : 'bg-white/40'}`}></div>
-                         {isPublic ? ui.publicProfile : ui.privateProfile}
-                         <Settings className="w-3 h-3 ml-1 opacity-60" />
-                       </button>
-                    </div>
-                  )}
+                    <h1 className="text-xl md:text-2xl font-serif font-bold text-white tracking-tight">
+                      {isPublicView ? (publicNickname || 'Anonymous') : (nickname || 'Anonymous')}
+                    </h1>
+                    {!isPublicView && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setShowShareModal(true)}
+                          className={`px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest border transition-all flex items-center gap-1.5 ${isPublic ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-brand-paper/10 border-white/20 text-brand-paper/40'}`}
+                        >
+                          <div className={`w-1.5 h-1.5 rounded-full ${isPublic ? 'bg-green-400 animate-pulse' : 'bg-white/40'}`}></div>
+                          {isPublic ? ui.publicProfile : ui.privateProfile}
+                          <Settings className="w-3 h-3 ml-1 opacity-60" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              {badges.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-3">
-                  {badges.map(b => (
-                    <BadgeIcon key={b.code} badge={b} />
-                  ))}
-                </div>
-              )}
+                {badges.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {badges.map(b => (
+                      <BadgeIcon key={b.code} badge={b} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-            
+
             <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight leading-tight">
               {currentSurvey?.title[lang] || ui.resultsTitle}
             </h2>
@@ -467,11 +597,42 @@ export const Results: React.FC<ResultsProps> = ({
 
           {/* AI Analysis Block */}
           <div className="mb-20">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center">
-                <BrainCircuit className="w-6 h-6 text-brand-ink" />
+            <div className="flex items-center justify-between gap-4 mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center">
+                  <BrainCircuit className="w-6 h-6 text-brand-ink" />
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.aiAnalysisTitle}</h3>
+
+                {/* Version Switcher */}
+                {(effectiveVersions && effectiveVersions.length > 1) && (
+                  <div className="flex items-center gap-2 ml-4 p-1 bg-brand-paper-accent/50 rounded-lg border border-stone-line/50">
+                    {effectiveVersions.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedVersionIndex(idx)}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${(selectedVersionIndex === idx || (selectedVersionIndex === null && idx === effectiveVersions.length - 1))
+                            ? 'bg-brand-ink text-white shadow-sm'
+                            : 'text-stone-400 hover:text-brand-ink'
+                          }`}
+                      >
+                        V{idx + 1}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.aiAnalysisTitle}</h3>
+
+              {isAdmin && geminiRecs && (
+                <button
+                  disabled={isAnalyzing}
+                  onClick={triggerAnalysis}
+                  className="px-4 py-2 bg-brand-clay/10 text-brand-clay font-bold rounded-xl text-[10px] uppercase tracking-widest hover:bg-brand-clay hover:text-white transition-all flex items-center gap-2 group border border-brand-clay/20"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isAnalyzing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
+                  Regenerate
+                </button>
+              )}
             </div>
 
             {(isSaving && !geminiRecs) ? (
@@ -493,6 +654,57 @@ export const Results: React.FC<ResultsProps> = ({
                   prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
                   ${isAnalyzing ? 'animate-pulse-subtle' : ''}`}>
 
+                  {/* Version Info & Actions */}
+                  {effectiveVersions && effectiveVersions.length > 1 && (
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b border-stone-line/30">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] items-center uppercase font-bold tracking-widest text-stone-400">
+                          Viewing Version {(selectedVersionIndex !== null ? selectedVersionIndex : effectiveVersions.length - 1) + 1}
+                          {(selectedVersionIndex === null || selectedVersionIndex === effectiveVersions.length - 1) && <span className="ml-2 text-brand-clay text-[9px]">(Latest)</span>}
+                        </span>
+                      </div>
+
+                      {isOwner && (
+                        <button
+                          onClick={async () => {
+                            const idx = selectedVersionIndex !== null ? selectedVersionIndex : effectiveVersions.length - 1;
+                            try {
+                              const authDataString = localStorage.getItem('auth_token') || localStorage.getItem('telegram_auth');
+                              if (!authDataString) {
+                                console.error('No auth token found');
+                                return;
+                              }
+                              const authParsed = JSON.parse(authDataString);
+                              const authData = authParsed.user || authParsed;
+                              
+                              const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/set-default-analysis`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  auth_data: authData,
+                                  test_type: surveyId || currentSurvey?.id,
+                                  version_index: idx
+                                })
+                              });
+                              if (response.ok) {
+                                window.location.reload(); // Refresh to update main field
+                              } else {
+                                const err = await response.json();
+                                console.error('Failed to set default version:', err);
+                              }
+                            } catch (e) {
+                              console.error('Failed to set default version', e);
+                            }
+                          }}
+                          className="text-[10px] items-center uppercase font-bold tracking-widest text-brand-ink hover:underline flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" />
+                          Set as Default
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   {isAnalyzing && !geminiRecs && (
                     <div className="flex flex-col items-center gap-4 py-12">
                       <div className="w-10 h-10 rounded-full border-4 border-brand-ink/10 border-t-brand-ink animate-spin"></div>
@@ -500,7 +712,7 @@ export const Results: React.FC<ResultsProps> = ({
                     </div>
                   )}
 
-                  <ReactMarkdown>{geminiRecs}</ReactMarkdown>
+                  <ReactMarkdown>{selectedVersionIndex !== null && effectiveVersions.length > 0 ? effectiveVersions[selectedVersionIndex] : geminiRecs}</ReactMarkdown>
 
                   {isAnalyzing && geminiRecs && (
                     <div className="mt-8 flex items-center gap-3 text-brand-ink animate-pulse">
@@ -510,8 +722,34 @@ export const Results: React.FC<ResultsProps> = ({
                   )}
                 </div>
               </div>
+            ) : (isAdmin) ? (
+              <div className="bg-brand-paper-accent/50 backdrop-blur-sm p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-paper-accent/0 via-brand-paper-accent/0 to-brand-ink/[0.05] pointer-events-none"></div>
+                <div className="flex justify-center relative z-10 transition-transform group-hover:scale-110 duration-700">
+                  <div className="w-20 h-20 rounded-full bg-brand-ink/10 shadow-soft flex items-center justify-center border border-brand-ink/20">
+                    <BrainCircuit className="w-10 h-10 text-brand-ink" />
+                  </div>
+                </div>
+                <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">Generate Admin AI Analysis</h4>
+                  <p className="text-stone-500 text-lg leading-relaxed font-sans">
+                    As an administrator, you can force AI analysis for this test result even if it's disabled globally or for the user.
+                  </p>
+                  <div className="pt-4 flex justify-center">
+                    <button
+                      disabled={isAnalyzing}
+                      onClick={triggerAnalysis}
+                      className="h-14 px-8 bg-brand-ink text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-3 group/btn"
+                    >
+                      <Sparkles className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
+                      Run AI Analysis
+                      <ChevronRight className="w-4 h-4 opacity-70 transition-transform group-hover/btn:translate-x-1" />
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : isPublicView ? (
-               null
+              null
             ) : (
               <div className="bg-brand-paper/50 backdrop-blur-md p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-paper-accent/0 via-brand-paper-accent/0 to-brand-ink/[0.02] pointer-events-none"></div>
@@ -532,10 +770,10 @@ export const Results: React.FC<ResultsProps> = ({
               </div>
             )}
           </div>
-          
+
           {/* Share Section - Feature Flagged - Only for owner */}
           {isEnabled('share') && !isPublicView && user && (
-            <AppShare 
+            <AppShare
               ui={ui}
               lang={lang}
               user={user}
@@ -558,8 +796,8 @@ export const Results: React.FC<ResultsProps> = ({
                 {ui.sensorySignatureMap}
               </div>
               <div className="w-full h-[350px] md:h-[450px] min-h-[350px]">
-              <ResponsiveContainer width="100%" height="100%" minHeight={350}>
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                <ResponsiveContainer width="100%" height="100%" minHeight={350}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                     <PolarGrid stroke="#E5E7EB" strokeWidth={1} />
                     <PolarAngleAxis
                       dataKey="subject"
@@ -629,7 +867,7 @@ export const Results: React.FC<ResultsProps> = ({
                 </div>
               ) : (
                 <div className="grid gap-8 md:grid-cols-2">
-                  {Object.values(surveyAnswers).map((ans: any) => {
+                  {Object.values(surveyAnswers).map((ans: Answer) => {
                     const q = SURVEY_DATA.flatMap(c => c.questions).find(q => q.id === ans.questionId);
                     const isDrawing = q?.type === QuestionType.DRAWING && (ans.value as string)?.startsWith('data:image/');
                     const hasNote = ans.note && ans.note.trim() !== '';
@@ -711,9 +949,12 @@ export const Results: React.FC<ResultsProps> = ({
                 <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                 <span>{ui.saveToon}</span>
               </button>
-              <button onClick={onGoHome} className="btn-primary px-10 py-4 shadow-soft">
-                {ui.goHome}
-              </button>
+              {isAdmin && (
+                <button onClick={downloadMD} className="border-2 border-brand-ink/20 text-brand-ink hover:bg-brand-ink hover:text-white px-8 py-4 rounded-2xl font-bold text-sm transition-all shadow-sm hover:shadow-soft flex items-center gap-3 group">
+                  <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                  <span>Download MD (Admin)</span>
+                </button>
+              )}
               {!user && (
                 <button onClick={onReset} className="text-stone-400 hover:text-brand-clay font-bold text-xs uppercase tracking-widest transition-colors py-4">
                   {ui.retake}
@@ -743,9 +984,9 @@ export const Results: React.FC<ResultsProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Share Settings Modal */}
-      <ShareSettingsModal 
+      <ShareSettingsModal
         show={showShareModal}
         onClose={() => setShowShareModal(false)}
         ui={ui}
@@ -755,7 +996,7 @@ export const Results: React.FC<ResultsProps> = ({
         setUseRealName={setUseRealName}
         nickname={nickname}
         setNickname={setNickname}
-        userId={user?.id}
+        userId={user?.id?.toString()}
         publicId={user?.public_id}
         shareId={shareId}
         onSave={handleUpdatePrivacy}

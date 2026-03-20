@@ -2,12 +2,14 @@ import { SurveyDefinition } from './types';
 import { APHANTASIA_CATEGORIES } from './db/aphantasia_test';
 import { PERSONALITY_CATEGORIES } from './db/personality_test';
 import { DEMO_CATEGORIES } from './db/demo_test';
+import { PERFECTIONISM_CATEGORIES } from './db/perfectionism_test';
 
-export const SURVEY_DATA = [...APHANTASIA_CATEGORIES, ...PERSONALITY_CATEGORIES, ...DEMO_CATEGORIES];
+export const SURVEY_DATA = [...APHANTASIA_CATEGORIES, ...PERSONALITY_CATEGORIES, ...DEMO_CATEGORIES, ...PERFECTIONISM_CATEGORIES];
 
 export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   {
     id: 'express_demo',
+    aiEnabled: true,
     title: {
       uk: 'Експрес-діагностика (2 хв)',
       en: 'Express Diagnostics (2 min)',
@@ -33,6 +35,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'full_aphantasia_profile',
+    aiEnabled: true,
     title: {
       uk: 'Повний Когнітивний Профіль',
       en: 'Full Cognitive Profile',
@@ -58,6 +61,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'sensory_only',
+    aiEnabled: false,
     parentId: 'full_aphantasia_profile',
     title: {
       uk: '↳ Тільки Сенсорна Уява',
@@ -84,6 +88,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'processes_only',
+    aiEnabled: false,
     parentId: 'full_aphantasia_profile',
     title: {
       uk: '↳ Тільки Процеси Уяви',
@@ -93,7 +98,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
     description: {
       uk: 'Як саме ваш мозок конструює образи та думки.',
       en: 'How exactly your brain constructs images and thoughts.',
-      ru: 'Как именно ваш мозг конструирует образы и мысли.'
+      ru: 'Как именно ваш мозок конструирует образы и мысли.'
     },
     categories: [APHANTASIA_CATEGORIES[1]],
     scaleConfig: {
@@ -110,6 +115,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   },
   {
     id: 'strategies_only',
+    aiEnabled: false,
     parentId: 'full_aphantasia_profile',
     title: {
       uk: '↳ Тільки Стратегії та Пам\'ять',
@@ -137,6 +143,7 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
   {
     id: 'personality_mbti',
     disabled: true,
+    aiEnabled: false,
     title: {
       uk: 'Особистісний профіль (MBTI-стиль)',
       en: 'Personality Profile (MBTI-style)',
@@ -157,6 +164,32 @@ export const AVAILABLE_SURVEYS: SurveyDefinition[] = [
         3: { uk: "Нейтрально", en: "Neutral", ru: "Нейтрально" },
         4: { uk: "Згоден", en: "Agree", ru: "Согласен" },
         5: { uk: "Цілком згоден", en: "Strongly Agree", ru: "Полностью согласен" }
+      }
+    }
+  },
+  {
+    id: 'perfectionism_big_three',
+    aiEnabled: true,
+    title: {
+      uk: 'Велика тривимірна шкала перфекціонізму',
+      en: 'Big Three Perfectionism Scale',
+      ru: 'Большая трехмерная шкала перфекционизма'
+    },
+    description: {
+      uk: 'Оцінка жорсткого, соціально зумовленого та нарцисичного перфекціонізму за М. Смітом та колегами.',
+      en: 'Assessment of rigid, socially prescribed, and narcissistic perfectionism by M. Smith and colleagues.',
+      ru: 'Оценка жесткого, социально обусловленного и нарциссического перфекционизма по М. Смиту и коллегам.'
+    },
+    categories: [...PERFECTIONISM_CATEGORIES],
+    scaleConfig: {
+      min: 1,
+      max: 5,
+      labels: {
+        1: { uk: "Повністю не погоджуюся", en: "Strongly Disagree", ru: "Полностью не согласен" },
+        2: { uk: "Частково не погоджуюся", en: "Partially Disagree", ru: "Частично не согласен" },
+        3: { uk: "Важко визначитися", en: "Hard to Decide", ru: "Трудно определиться" },
+        4: { uk: "Частково погоджуюся", en: "Partially Agree", ru: "Частично согласен" },
+        5: { uk: "Повністю погоджуюся", en: "Strongly Agree", ru: "Полностью согласен" }
       }
     }
   }

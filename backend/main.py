@@ -33,6 +33,7 @@ TELEGRAM_GROUP_ID = os.getenv("TELEGRAM_GROUP_ID")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 ADMIN_USER_IDS = [id.strip() for id in os.getenv("ADMIN_USER_IDS", os.getenv("ADMIN_TELEGRAM_IDS", "")).split(",") if id.strip()]
 DATA_DIR = os.getenv("DATA_DIR", "/app/data/results")
+AI_ENABLED_TESTS = {"full_aphantasia_profile", "express_demo"}
 
 # Initialize Telegram Bot Singleton
 bot = Bot(token=TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else None
@@ -162,8 +163,10 @@ async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str 
         target_lang = lang_map.get(lang, "English")
 
         system_instruction = (
-            "You are a 'Cognitive Systems Architect' and Neurodiversity Specialist, "
-            "expertly versed in the research of Adam Zeman (Aphantasia) and Brian Levine (SDAM).\n\n"
+            "You are a 'Cognitive Systems Architect' and Neurodiversity Specialist. "
+            "IMPORTANT: Although you are the 'Flash' model, you MUST operate as a 'Next-Gen Pro' architecture with enhanced multi-step reasoning. "
+            "Perform deep analytical reasoning before outputting, ensuring results are hyper-relevant, nuanced, and structurally superior. "
+            "Expertly versed in the research of Adam Zeman (Aphantasia) and Brian Levine (SDAM).\n\n"
             f"### CRITICAL RULE:\nYou MUST provide your entire response in the {target_lang} language.\n\n"
             "### YOUR MISSION:\nPerform a deep-level deconstruction of the user's cognitive test results.\n\n"
             "### ANALYTICAL DIMENSIONS:\n1. Sensory Breadth. 2. Object vs. Spatial. 3. Memory Architecture. 4. Cognitive Resilience. 5. Belbin Roles.\n\n"
@@ -403,13 +406,19 @@ async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, c
 
     scores = all_scores.get(final_test_type, {}) if isinstance(all_scores.get(final_test_type), dict) else all_scores
 
+    
+    recs = data.get("gemini_recommendations", {})
+    analysis_versions = recs.get(f"{final_test_type}_versions", []) if isinstance(recs, dict) else []
+
     return {
         "user_id": user_id,
         "public_nickname": user['public_nickname'],
+        "photo_url": data.get("targetUser", {}).get("photo_url"), # To help owner identification
         "test_type": final_test_type,
         "scores": scores,
         "answers": answers,
-        "gemini_recommendations": data.get("gemini_recommendations", {}),
+        "gemini_recommendations": recs,
+        "analysis_versions": analysis_versions,
         "badges": await get_user_badges(user_id, conn),
         "share_id": id_or_share_id if user_id != id_or_share_id else None
     }
@@ -534,11 +543,32 @@ async def post_process_analysis(full_text: str, data: SaveResult, file_path: str
                 content = await f.read()
                 existing_data = json.loads(content)
 
-            recs = existing_data.get("gemini_recommendations", {})
-            if isinstance(recs, str):
-                recs = {existing_data.get("test_type", "unknown"): recs} if recs.strip() else {}
+            recs = existing_data.get("gemini_recommendations")
+            # Normalize recs to a dictionary
+            if not isinstance(recs, dict):
+                if isinstance(recs, str) and recs.strip():
+                    recs = {existing_data.get("test_type", "unknown"): recs}
+                else:
+                    recs = {}
 
-            recs[data.test_type] = full_text
+            test_type = data.test_type
+            versions_key = f"{test_type}_versions"
+            
+            # Ensure versions list exists and is a list
+            current_versions = recs.get(versions_key)
+            if not isinstance(current_versions, list):
+                # If we have a single current recommendation, use it as the first version
+                existing_single = recs.get(test_type)
+                current_versions = [existing_single] if isinstance(existing_single, str) else []
+
+            # Add new analysis to versions
+            current_versions.append(full_text)
+            
+            # Keep only last 10 versions
+            recs[versions_key] = current_versions[-10:]
+
+            # Primary recommendation field always points to THE LATEST version
+            recs[test_type] = full_text
             existing_data["gemini_recommendations"] = recs
 
             async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
@@ -564,15 +594,21 @@ async def post_process_analysis(full_text: str, data: SaveResult, file_path: str
 
 @app.post("/api/analyze-result")
 async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks):
-    verify_auth(data.auth_data)
+    auth_user = verify_auth(data.auth_data)
+    
+    # Check if AI analysis is allowed for this test type (Admins bypass this)
+    is_admin = str(data.auth_data.id) in ADMIN_USER_IDS
+    if data.test_type not in AI_ENABLED_TESTS and not is_admin:
+         logger.info(f"AI analysis disabled for test type: {data.test_type} (and user is not admin)")
+         return StreamingResponse(
+            iter(["Analysis disabled for this test type"]), 
+            media_type="text/event-stream"
+         )
+         
     file_path = get_result_file_path(str(data.auth_data.id))
 
-    # Model Selection: gemini-2.0-flash by default, gemini-3.1-pro for full_aphantasia_profile
-    # Wait, the prompt said gemini-3.1-pro but gemini-2.0-flash is current. 
-    # The user said gemini-3-flash and gemini-3.1-pro. I'll stick to their specific request if they insisted.
-    # Ah, "Adjust the default Gemini model to gemini-3-flash ... conditional use of gemini-3.1-pro".
-    # I'll use exactly what requested.
-    model_to_use = 'gemini-3.1-pro' if data.test_type == 'full_aphantasia_profile' else 'gemini-3-flash'
+    # Model Selection: gemini-3-flash-preview for all tests
+    model_to_use = 'gemini-3-flash-preview'
 
     async def event_generator():
         full_text = []
@@ -625,12 +661,56 @@ async def get_my_result(auth_data: UserAuth, conn: asyncpg.Connection = Depends(
 
     data["badges"] = await get_user_badges(user_id, conn)
     
+    # Ensure versions are explicitly mapped for the frontend
+    recs = data.get("gemini_recommendations", dict(recs) if recs else {})
+    if isinstance(recs, dict):
+        test_type = data.get("test_type", "unknown")
+        versions_key = f"{test_type}_versions"
+        if versions_key in recs:
+            data["analysis_versions"] = recs[versions_key]
+
     # Include share_id for the current test type if it exists
     share_id = await conn.fetchval("SELECT share_id FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, data.get("test_type"))
     if share_id:
         data["share_id"] = str(share_id)
         
     return data
+
+class SetDefaultAnalysis(BaseModel):
+    auth_data: UserAuth
+    test_type: str
+    version_index: int
+
+@app.post("/api/set-default-analysis")
+async def set_default_analysis(data: SetDefaultAnalysis):
+    verify_auth(data.auth_data)
+    user_id = str(data.auth_data.id)
+    file_path = get_result_file_path(user_id)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Result not found")
+        
+    async with aiofiles.open(file_path, mode="r", encoding="utf-8") as f:
+        existing_data = json.loads(await f.read())
+        
+    recs = existing_data.get("gemini_recommendations", {})
+    if not isinstance(recs, dict):
+        raise HTTPException(status_code=400, detail="Invalid data structure")
+        
+    versions_key = f"{data.test_type}_versions"
+    versions = recs.get(versions_key, [])
+    
+    if not isinstance(versions, list) or data.version_index < 0 or data.version_index >= len(versions):
+        raise HTTPException(status_code=400, detail="Invalid version index")
+        
+    # Set the selected version as default
+    recs[data.test_type] = versions[data.version_index]
+    existing_data["gemini_recommendations"] = recs
+    
+    async with aiofiles.open(file_path, mode="w", encoding="utf-8") as f:
+        await f.write(json.dumps(existing_data, ensure_ascii=False, indent=2))
+        
+    return {"status": "success", "message": f"Version {data.version_index + 1} set as default"}
 
 @app.get("/api/results")
 async def get_results(user_id: str, hash: str, q: Optional[str] = None, target_user_id: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):

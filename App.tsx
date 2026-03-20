@@ -85,10 +85,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const s = searchParams.get('s');
     const ref = searchParams.get('ref');
-    
+
     if (s || ref) {
       const newParams = new URLSearchParams(searchParams);
-      
+
       if (s) {
         const sourceMap: Record<string, string> = {
           'f': 'facebook', 't': 'telegram', 'i': 'instagram', 'y': 'youtube',
@@ -98,12 +98,12 @@ const App: React.FC = () => {
         localStorage.setItem('lead_source', fullSource);
         newParams.delete('s');
       }
-      
+
       if (ref) {
         localStorage.setItem('referred_by', ref);
         newParams.delete('ref');
       }
-      
+
       // Clean URL after capturing to avoid scaring users
       setSearchParams(newParams, { replace: true });
     }
@@ -528,7 +528,7 @@ const App: React.FC = () => {
     AVAILABLE_SURVEYS.forEach(survey => {
       const questions = survey.categories.flatMap(c => c.questions);
       const total = questions.length;
-      
+
       // Merge answers from self and parent (if any) to show unified progress
       let surveyAnswers = { ...(activeProfile.answers[survey.id] || {}) };
       if (survey.parentId && activeProfile.answers[survey.parentId]) {
@@ -767,9 +767,9 @@ const App: React.FC = () => {
     // result here is either the full object or we just need the userId and test_type
     const userId = result.user_id;
     const testType = result.test_type;
-    
+
     if (userId && testType) {
-        navigate(`/results/admin?userId=${userId}&surveyId=${testType}`);
+      navigate(`/results/admin?userId=${userId}&surveyId=${testType}`);
     }
   };
 
@@ -841,7 +841,7 @@ const App: React.FC = () => {
             ) : null
           } />
 
-           <Route path="/results" element={
+          <Route path="/results" element={
             <ProtectedRoute user={user}>
               <DashboardResults
                 profiles={profiles}
@@ -873,6 +873,7 @@ const App: React.FC = () => {
               setActiveProfileId={setActiveProfileId}
               backendRecommendations={backendRecommendations}
               adminResults={adminResults}
+              isAdmin={isAdmin}
             />
           } />
 
@@ -990,16 +991,17 @@ const App: React.FC = () => {
 };
 
 
-const ResultsWrapper: React.FC<any> = ({ 
-  profiles, 
-  onReset, 
-  ui, 
-  lang, 
-  user, 
-  activeSurveyId, 
-  setActiveProfileId, 
-  backendRecommendations, 
-  adminResults = [] 
+const ResultsWrapper: React.FC<any> = ({
+  profiles,
+  onReset,
+  ui,
+  lang,
+  user,
+  activeSurveyId,
+  setActiveProfileId,
+  backendRecommendations,
+  adminResults = [],
+  isAdmin
 }) => {
   const { profileId } = useParams();
   const [searchParams] = useSearchParams();
@@ -1024,23 +1026,23 @@ const ResultsWrapper: React.FC<any> = ({
       // 1. Try to find in adminResults first
       const cached = adminResults.find((r: any) => r.user_id === userIdFromQuery && (r.test_type === surveyIdFromQuery || !surveyIdFromQuery));
       if (cached) {
-         setAdminProfile({
-            id: 'admin',
-            name: `${cached.first_name} ${cached.last_name || ''}`,
-            targetUser: {
-              first_name: cached.first_name,
-              last_name: cached.last_name,
-              photo_url: cached.photo_url,
-              username: cached.username
-            },
-            answers: cached.answers,
-            surveyId: surveyIdFromQuery || cached.test_type,
-            type: cached.scores?.Visual ? ProfileService.getProfileType(cached.scores.Visual) : undefined,
-            recommendations: cached.gemini_recommendations,
-            badges: cached.badges
-         });
-         setLoading(false);
-         return;
+        setAdminProfile({
+          id: 'admin',
+          name: `${cached.first_name} ${cached.last_name || ''}`,
+          targetUser: {
+            first_name: cached.first_name,
+            last_name: cached.last_name,
+            photo_url: cached.photo_url,
+            username: cached.username
+          },
+          answers: cached.answers,
+          surveyId: surveyIdFromQuery || cached.test_type,
+          type: cached.scores?.Visual ? ProfileService.getProfileType(cached.scores.Visual) : undefined,
+          recommendations: cached.gemini_recommendations,
+          badges: cached.badges
+        });
+        setLoading(false);
+        return;
       }
 
       // 2. Fallback to fetch
@@ -1089,7 +1091,7 @@ const ResultsWrapper: React.FC<any> = ({
       const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
       const fetchUrl = `${apiUrl}/api/public-results/${profileId}${surveyIdFromQuery ? `?t=${surveyIdFromQuery}` : ''}`;
       console.log(`[ResultsWrapper] Fetching public result from: ${fetchUrl}`);
-      
+
       fetch(fetchUrl)
         .then(async res => {
           console.log(`[ResultsWrapper] Fetch response status: ${res.status}`);
@@ -1112,7 +1114,7 @@ const ResultsWrapper: React.FC<any> = ({
               badges: data.badges
             });
           } else {
-             console.warn(`[ResultsWrapper] No data returned from ${fetchUrl}`);
+            console.warn(`[ResultsWrapper] No data returned from ${fetchUrl}`);
           }
         })
         .catch((err) => {
@@ -1121,8 +1123,8 @@ const ResultsWrapper: React.FC<any> = ({
         })
         .finally(() => setLoading(false));
     } else {
-       if (profile) console.log(`[ResultsWrapper] Using local profile: ${profile.id}`);
-       if (publicProfile) console.log(`[ResultsWrapper] Already have public profile`);
+      if (profile) console.log(`[ResultsWrapper] Using local profile: ${profile.id}`);
+      if (publicProfile) console.log(`[ResultsWrapper] Already have public profile`);
     }
   }, [profileId, profile, publicProfile, errorStatus]);
 
@@ -1138,11 +1140,11 @@ const ResultsWrapper: React.FC<any> = ({
 
   if (profileId === 'admin' && !adminProfile && !loading) {
     return (
-       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
-         <ShieldAlert className="w-12 h-12 text-brand-clay mb-4" />
-         <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-2">{ui.noRecordsFound}</h2>
-         <button onClick={() => navigate('/')} className="btn-primary px-8 mt-4">{ui.goHome}</button>
-       </div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
+        <ShieldAlert className="w-12 h-12 text-brand-clay mb-4" />
+        <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-2">{ui.noRecordsFound}</h2>
+        <button onClick={() => navigate('/')} className="btn-primary px-8 mt-4">{ui.goHome}</button>
+      </div>
     );
   }
 
@@ -1155,7 +1157,7 @@ const ResultsWrapper: React.FC<any> = ({
               <ShieldAlert className="w-10 h-10 text-brand-clay" />
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <h2 className="text-3xl font-serif font-bold text-brand-graphite">{ui.privateProfileTitle}</h2>
             <p className="text-stone-500 text-lg leading-relaxed">
@@ -1168,13 +1170,13 @@ const ResultsWrapper: React.FC<any> = ({
               {ui.privateProfileCTA}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
+              <button
                 onClick={() => navigate('/survey/express_demo')}
                 className="px-8 py-3 bg-brand-ink text-white rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:shadow-lg hover:scale-105 transition-all duration-300"
               >
                 {ui.tryExpressTest}
               </button>
-              <button 
+              <button
                 onClick={() => navigate('/')}
                 className="px-8 py-3 bg-white text-stone-500 border border-stone-line rounded-2xl text-[11px] font-bold uppercase tracking-widest hover:bg-stone-bg transition-all duration-300"
               >
@@ -1191,6 +1193,8 @@ const ResultsWrapper: React.FC<any> = ({
     console.log(`[ResultsWrapper] No active profile found and loading finished. Redirecting to home...`);
     return <Navigate to="/" replace />;
   }
+
+  console.log(`[ResultsWrapper] Active profile:`, activeProfile);
 
   return (
     <Results
@@ -1209,6 +1213,7 @@ const ResultsWrapper: React.FC<any> = ({
       isPublicView={activeProfile.isPublicView}
       publicNickname={activeProfile.public_nickname}
       initialShareId={activeProfile.share_id}
+      isAdmin={isAdmin}
     />
   );
 }

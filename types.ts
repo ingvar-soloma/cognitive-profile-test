@@ -76,6 +76,7 @@ export interface SurveyDefinition {
   id: string;
   parentId?: string;
   disabled?: boolean;
+  aiEnabled?: boolean; // New property
   title: LocalizedString;
   description?: LocalizedString;
   categories: CategoryData[];
@@ -371,6 +372,10 @@ export interface Profile {
   surveyId: string;
   badges?: Badge[];
   tone?: string;
+  gemini_recommendations?: Record<string, string>;
+  is_public?: boolean;
+  public_nickname?: string;
+  share_id?: string | null;
 }
 
 export interface Badge {
@@ -388,4 +393,15 @@ export interface FeatureFlag {
   name: string;
   description?: string;
   is_enabled: boolean;
+}
+
+export interface User {
+  id: string | number;
+  public_id?: string;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
 }
