@@ -5,18 +5,13 @@ interface SurveyTimerProps {
     totalQuestions: number;
     answeredCount: number;
     ui: any;
+    externalElapsedSeconds?: number;
 }
 
-export const SurveyTimer: React.FC<SurveyTimerProps> = ({ totalQuestions, answeredCount, ui }) => {
-    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+export const SurveyTimer: React.FC<SurveyTimerProps> = ({ totalQuestions, answeredCount, ui, externalElapsedSeconds = 0 }) => {
     const [smoothedRemaining, setSmoothedRemaining] = useState<number | null>(null);
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setElapsedSeconds(prev => prev + 1);
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
+    const elapsedSeconds = externalElapsedSeconds;
 
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);

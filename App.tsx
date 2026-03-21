@@ -137,6 +137,7 @@ const App: React.FC = () => {
 
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
+  const [elapsedSeconds, setElapsedSeconds] = useState<Record<string, number>>({});
   const [language, setLanguage] = useState<Language>(() => {
     if (typeof navigator === 'undefined') return 'en';
     const lang = navigator.language.toLowerCase();
@@ -296,7 +297,7 @@ const App: React.FC = () => {
         if (prevProfile && prevProfile.answers) {
           Object.entries(prevProfile.answers).forEach(([sId, ansMap]) => {
             if (Object.keys(ansMap).length > 0) {
-              ProfileService.updateProfile(userProfileId, sId, ansMap, prevProfile.type, prevProfile.tone);
+              ProfileService.updateProfile(userProfileId, sId, ansMap, prevProfile.type, prevProfile.tone, prevProfile.timeSpent);
             }
           });
           if (activeProfileId === 'anonymous') {
@@ -341,6 +342,15 @@ const App: React.FC = () => {
                   ? { [result.test_type || 'unknown']: result.gemini_recommendations }
                   : result.gemini_recommendations
               );
+            }
+
+            // Sync credits and user metrics from backend
+            if (result.credits !== undefined) {
+              setUser(prev => prev ? { ...prev, credits: result.credits, referral_count: result.referral_count } : null);
+            }
+
+            if (result.time_spent) {
+              setElapsedSeconds(result.time_spent);
             }
           } else {
             setHasExistingResults(false);
@@ -393,6 +403,24 @@ const App: React.FC = () => {
       isActive = false;
     };
   }, [activeSurveyId]);
+
+  // Timer Effect for Survey
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (appState === 'SURVEY' && activeSurveyId) {
+      interval = setInterval(() => {
+        setElapsedSeconds(prev => ({
+          ...prev,
+          [activeSurveyId]: (prev[activeSurveyId] || 0) + 1
+        }));
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [appState, activeSurveyId]);
+
+
 
   const handleStartSurvey = (surveyId?: string) => {
     setIsLoading(true);
@@ -470,9 +498,9 @@ const App: React.FC = () => {
   useEffect(() => {
     // Save state whenever it changes
     if (activeProfileId && Object.keys(answers).length > 0) {
-      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone);
+      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone, elapsedSeconds);
     }
-  }, [answers, activeProfileId, activeSurveyId, tone]);
+  }, [answers, activeProfileId, activeSurveyId, tone, elapsedSeconds]);
 
   useEffect(() => {
     // Warn on exit if in survey
@@ -574,6 +602,15 @@ const App: React.FC = () => {
 
     return progress;
   }, [activeProfile, profiles]);
+  
+  // Sync elapsed seconds when profile changes
+  useEffect(() => {
+    if (activeProfile?.timeSpent) {
+      setElapsedSeconds(activeProfile.timeSpent);
+    } else {
+      setElapsedSeconds({});
+    }
+  }, [activeProfileId, activeProfile?.id]);
 
   const currentSurveyQuestions = useMemo(() => currentSurvey ? currentSurvey.categories.flatMap(c => c.questions) : [], [currentSurvey]);
 
@@ -593,7 +630,7 @@ const App: React.FC = () => {
 
       // Update profile immediately
       if (activeProfileId) {
-        ProfileService.updateProfile(activeProfileId, activeSurveyId, newAnswers, undefined, tone);
+        ProfileService.updateProfile(activeProfileId, activeSurveyId, newAnswers, undefined, tone, elapsedSeconds);
         setProfiles(ProfileService.getProfiles());
       }
 
@@ -677,7 +714,7 @@ const App: React.FC = () => {
   const finalizeFinish = () => {
     setShowFinishConfirmation(false);
     if (activeProfileId) {
-      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone);
+      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone, elapsedSeconds);
       setProfiles(ProfileService.getProfiles());
       navigate(`/results/${activeProfileId}`);
     } else {
@@ -695,7 +732,7 @@ const App: React.FC = () => {
     }
 
     if (targetId) {
-      ProfileService.updateProfile(targetId, activeSurveyId, loadedAnswers);
+      ProfileService.updateProfile(targetId, activeSurveyId, loadedAnswers, undefined, tone, elapsedSeconds);
       setProfiles(ProfileService.getProfiles());
       if (targetId === activeProfileId) {
         setAnswers(loadedAnswers);
@@ -755,6 +792,9 @@ const App: React.FC = () => {
             // If the user uploaded a backend JSON export, extraction the answers part
             if (parsed && typeof parsed === 'object' && parsed.answers && typeof parsed.answers === 'object') {
               loadedAnswers = parsed.answers;
+              if (parsed.time_spent) {
+                setElapsedSeconds(parsed.time_spent);
+              }
             } else {
               loadedAnswers = parsed;
             }
@@ -935,6 +975,7 @@ const App: React.FC = () => {
               showUnansweredIndicators={true}
               totalQuestions={totalQuestions}
               answeredCount={answeredCountInCurrentSurvey}
+              elapsedSeconds={elapsedSeconds[activeSurveyId] || 0}
             />
           } />
 

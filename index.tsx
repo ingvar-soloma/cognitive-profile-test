@@ -5,8 +5,13 @@ import App from './App';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter } from 'react-router-dom';
 import { registerSW } from 'virtual:pwa-register';
+import { ErrorBoundary } from './components/Common/ErrorBoundary';
+import { logger } from './services/LoggingService';
 
 registerSW({ immediate: true });
+
+// Setup global error handlers for non-React/async errors
+logger.setupGlobalHandlers();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -20,7 +25,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <GoogleOAuthProvider clientId={clientId}>
-        <App />
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
       </GoogleOAuthProvider>
     </BrowserRouter>
   </React.StrictMode>

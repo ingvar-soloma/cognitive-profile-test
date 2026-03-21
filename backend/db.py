@@ -48,7 +48,8 @@ async def init_db():
                     referred_by VARCHAR(255),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_login TIMESTAMP,
-                    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    credits INTEGER DEFAULT 300
                 )
             ''')
             
@@ -61,6 +62,20 @@ async def init_db():
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referral_count INTEGER DEFAULT 0")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255)")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 300")
+            await conn.execute("UPDATE aphantasia_users SET credits = 300 WHERE credits IS NULL")
+
+            # Credit Transactions Table
+            await conn.execute('''
+                CREATE TABLE IF NOT EXISTS credit_transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) REFERENCES aphantasia_users(id) ON DELETE CASCADE,
+                    amount INTEGER NOT NULL,
+                    transaction_type VARCHAR(50) NOT NULL,
+                    comment TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
 
             # Badges Table
             await conn.execute('''
@@ -106,6 +121,7 @@ async def init_db():
                     answers JSONB,
                     scores JSONB,
                     recommendations JSONB,
+                    time_spent INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(user_id, test_type)
                 )
@@ -115,6 +131,7 @@ async def init_db():
                 await conn.execute("ALTER TABLE test_results ADD COLUMN IF NOT EXISTS answers JSONB")
                 await conn.execute("ALTER TABLE test_results ADD COLUMN IF NOT EXISTS scores JSONB")
                 await conn.execute("ALTER TABLE test_results ADD COLUMN IF NOT EXISTS recommendations JSONB")
+                await conn.execute("ALTER TABLE test_results ADD COLUMN IF NOT EXISTS time_spent INTEGER DEFAULT 0")
             except Exception as alt_e:
                 logger.warning(f"Could not alter test_results table: {alt_e}")
             # Tests Table

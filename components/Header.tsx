@@ -251,20 +251,28 @@ export const Header: React.FC<HeaderProps> = ({
                     {/* User / Login */}
                     <div className="flex items-center gap-2">
                         {user ? (
-                            <button 
-                                onClick={onLogout}
-                                className="flex items-center gap-2 p-1 hover:bg-stone-bg rounded-lg transition-colors"
-                                title={ui.logout}
-                            >
-                                {user.photo_url ? (
-                                    <img src={user.photo_url} alt={user.first_name} className="w-8 h-8 rounded-lg border border-stone-line shadow-sm" />
-                                ) : (
-                                    <div className="w-8 h-8 rounded-lg bg-brand-clay/10 text-brand-clay flex items-center justify-center font-serif italic font-bold text-sm border border-brand-clay/20">
-                                        {user.first_name?.[0] || 'U'}
-                                    </div>
-                                )}
-                                <span className="hidden lg:block text-[10px] font-bold text-stone-400 uppercase tracking-widest">{ui.logout}</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-brand-sage/10 rounded-full border border-brand-sage/20">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-brand-sage shadow-[0_0_8px_rgba(132,153,135,0.8)]" />
+                                    <span className="text-[10px] font-bold text-brand-sage uppercase tracking-tighter">
+                                        {user.credits ?? 0} {ui.credits || 'Credits'}
+                                    </span>
+                                </div>
+                                <button 
+                                    onClick={onLogout}
+                                    className="flex items-center gap-2 p-1 hover:bg-stone-bg rounded-lg transition-colors"
+                                    title={ui.logout}
+                                >
+                                    {user.photo_url ? (
+                                        <img src={user.photo_url} alt={user.first_name} className="w-8 h-8 rounded-lg border border-stone-line shadow-sm" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-lg bg-brand-clay/10 text-brand-clay flex items-center justify-center font-serif italic font-bold text-sm border border-brand-clay/20">
+                                            {user.first_name?.[0] || 'U'}
+                                        </div>
+                                    )}
+                                    <span className="hidden lg:block text-[10px] font-bold text-stone-400 uppercase tracking-widest">{ui.logout}</span>
+                                </button>
+                            </div>
                         ) : (
                             <div className="scale-90 sm:scale-100 origin-right">
                                 <GoogleAuthButton useOneTap={true} />
@@ -295,6 +303,15 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-5 space-y-8 bg-brand-paper">
+                            {user && (
+                                <div className="mx-1 px-4 py-3 bg-brand-sage/10 rounded-2xl border border-brand-sage/20 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-sage shadow-[0_0_8px_rgba(132,153,135,0.8)]" />
+                                        <span className="text-[10px] font-bold text-brand-sage uppercase tracking-widest">{ui.credits || 'Credits'}</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-brand-sage">{user.credits ?? 0}</span>
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <h3 className="px-3 text-[11px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-3">{ui.navTests}</h3>
                                 <div className="space-y-1">

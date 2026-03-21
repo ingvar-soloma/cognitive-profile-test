@@ -431,6 +431,9 @@ export const Results: React.FC<ResultsProps> = ({
                setIsAnalyzing(false);
                setIsSaving(false);
              }
+          } else if (result && result.status === 'error') {
+              alert(result.detail || "Error saving results. Check your credits.");
+              setIsSaving(false);
           }
         }
       } catch (error) {

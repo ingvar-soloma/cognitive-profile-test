@@ -73,7 +73,7 @@ export const Recommendations: React.FC<RecommendationsProps> = ({ ui, isLocked, 
                     <div className="w-7 h-7 rounded-full bg-brand-clay/10 flex items-center justify-center">
                         <Coins className="w-3.5 h-3.5 text-brand-clay" />
                     </div>
-                    <span className="font-bold text-brand-graphite tracking-tight text-sm">100 {ui.credits}</span>
+                    <span className="font-bold text-brand-graphite tracking-tight text-sm">{user?.credits ?? 0} {ui.credits || 'Credits'}</span>
                 </div>
             </div>
 

@@ -19,6 +19,7 @@ interface SurveyProps {
   showUnansweredIndicators?: boolean;
   totalQuestions?: number;
   answeredCount?: number;
+  elapsedSeconds?: number;
 }
 
 const SkeletonLoader = () => (
@@ -60,7 +61,8 @@ export const Survey: React.FC<SurveyProps> = ({
   isQuestionAnswered,
   showUnansweredIndicators = false,
   totalQuestions = 0,
-  answeredCount = 0
+  answeredCount = 0,
+  elapsedSeconds = 0
 }) => {
   const unansweredIds = React.useMemo(() => {
     if (!activeCategory) return [];
@@ -97,6 +99,7 @@ export const Survey: React.FC<SurveyProps> = ({
         totalQuestions={totalQuestions}
         answeredCount={answeredCount}
         ui={ui}
+        externalElapsedSeconds={elapsedSeconds}
       />
 
       {/* Questions List */}

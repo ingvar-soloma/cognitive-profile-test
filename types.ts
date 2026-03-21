@@ -374,6 +374,7 @@ export interface Profile {
   name: string;
   type?: ProfileType; // Based on results
   answers: Record<string, Record<string, Answer>>; // surveyId -> questions
+  timeSpent?: Record<string, number>; // surveyId -> total seconds spent
   lastUpdated: string;
   surveyId: string;
   badges?: Badge[];
@@ -410,4 +411,6 @@ export interface User {
   photo_url?: string;
   auth_date: number;
   hash: string;
+  credits?: number;
+  referral_count?: number;
 }

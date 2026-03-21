@@ -48,6 +48,18 @@ const FAQ_DATA: Record<Language, FaqItem[]> = {
             q: 'Що означає «AI-аналіз» і як він генерується?',
             a: 'Після проходження тесту ваші агреговані результати передаються до мовної моделі (Gemini від Google), яка генерує персоналізований опис вашого когнітивного профілю. Аналіз носить освітній характер і не є діагнозом.',
         },
+        {
+            q: 'Як працює система кредитів?',
+            a: 'Кожен новий користувач отримує базовий бонус у 300 кредитів при реєстрації. Перше проходження тесту (будь-якого типу) є абсолютно безкоштовним. Повторне проходження того ж тесту для отримання нової версії аналізу коштує 100 кредитів.',
+        },
+        {
+            q: 'Як отримати додаткові кредити безкоштовно?',
+            a: 'Ви можете отримувати бонуси за запрошених друзів через реферальну систему. За перших 5 друзів, які пройдуть тест, ви отримаєте по 100 кредитів за кожного. За друзів з 6-го по 10-й — по 50 кредитів.',
+        },
+        {
+            q: 'Як працює функція спільного доступу (Share)?',
+            a: 'Ви можете зробити свій профіль публічним у налаштуваннях результатів. Це згенерує унікальне анонімне посилання, яким можна поділитися. Публічний доступ можна вимкнути в будь-який момент, що зробить посилання недійсним.',
+        },
     ],
     en: [
         {
@@ -82,6 +94,18 @@ const FAQ_DATA: Record<Language, FaqItem[]> = {
             q: 'What is the "AI analysis" and how is it generated?',
             a: 'After completing the test, your aggregated results are sent to a language model (Google\'s Gemini), which generates a personalized description of your cognitive profile. The analysis is educational in nature and is not a diagnosis.',
         },
+        {
+            q: 'How does the credit system work?',
+            a: 'Every new user receives a 300-credit bonus upon registration. The first time you complete any test, it is free. Retaking the same test to generate a new analysis version costs 100 credits.',
+        },
+        {
+            q: 'How can I get more credits for free?',
+            a: 'You can earn bonuses via our referral system. For the first 5 friends who complete a test, you receive 100 credits each. For referrals 6 through 10, you receive 50 credits each.',
+        },
+        {
+            q: 'How does the Share feature work?',
+            a: 'You can make your profile public in the results settings. This generates a unique, anonymous link you can share. You can revoke public access at any time, making previous links invalid.',
+        },
     ],
     ru: [
         {
@@ -115,6 +139,18 @@ const FAQ_DATA: Record<Language, FaqItem[]> = {
         {
             q: 'Что означает «AI-анализ» и как он генерируется?',
             a: 'После прохождения теста ваши агрегированные результаты передаются языковой модели (Gemini от Google), которая генерирует персонализированное описание вашего когнитивного профиля. Анализ носит образовательный характер и не является диагнозом.',
+        },
+        {
+            q: 'Как работает система кредитов?',
+            a: 'Каждый новый пользователь получает базовый бонус в 300 кредитов при регистрации. Первое прохождение любого теста бесплатно. Повторное прохождение того же теста для получения новой версии анализа стоит 100 кредитов.',
+        },
+        {
+            q: 'Как получить дополнительные кредиты бесплатно?',
+            a: 'Вы можете получать бонусы за приглашенных друзей через реферальную систему. За первых 5 друзей, прошедших тест, вы получите по 100 кредитов. За друзей с 6-го по 10-й — по 50 кредитов.',
+        },
+        {
+            q: 'Как работает функция "Поделиться" (Share)?',
+            a: 'Вы можете сделать свой профиль публичным в настройках результатов. Это создаст уникальную анонимную ссылку. Вы можете отключить публичный доступ в любой момент, тогда все старые ссылки перестанут работать.',
         },
     ],
 };

@@ -145,6 +145,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                          {res.email && (
                            <span className="text-[10px] text-stone-400 font-sans italic">{res.email}</span>
                          )}
+                         <span className="text-[10px] text-stone-400 font-mono tracking-tighter bg-stone-bg px-1.5 py-0.5 rounded border border-stone-line/50 ml-1">
+                           Credits: {res.credits || 0}
+                         </span>
                       </div>
                       
                       {res.badges && res.badges.length > 0 && (
@@ -178,15 +181,56 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                   </div>
                 </td>
                 <td className="px-8 py-6 text-right">
-                  <button
-                    onClick={() => onViewResult(res)}
-                    className="inline-flex items-center gap-2 text-brand-ink font-bold text-[10px] uppercase tracking-[0.2em] hover:text-brand-graphite transition-all group/btn"
-                  >
-                    {ui.details}
-                    <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center group-hover/btn:bg-brand-ink group-hover/btn:text-white transition-all">
-                      <ChevronRight className="w-4 h-4 translate-x-0 group-hover/btn:translate-x-0.5 transition-transform" />
-                    </div>
-                  </button>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      onClick={() => onViewResult(res)}
+                      className="inline-flex items-center gap-2 text-brand-ink font-bold text-[10px] uppercase tracking-[0.2em] hover:text-brand-graphite transition-all group/btn"
+                    >
+                      {ui.details}
+                      <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center group-hover/btn:bg-brand-ink group-hover/btn:text-white transition-all">
+                        <ChevronRight className="w-4 h-4 translate-x-0 group-hover/btn:translate-x-0.5 transition-transform" />
+                      </div>
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const amountStr = window.prompt(`Deposit credits for ${res.first_name}:`, "500");
+                        if (!amountStr) return;
+                        const amount = parseInt(amountStr);
+                        if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+                        const comment = window.prompt("Optional comment:", "Admin bonus") || "Admin bonus";
+                        
+                        const authDataStr = localStorage.getItem('auth_token');
+                        if (!authDataStr) return;
+                        const authData = JSON.parse(authDataStr).user || JSON.parse(authDataStr);
+                        
+                        try {
+                          const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/admin/users/${res.user_id}/deposit`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              auth_data: authData,
+                              amount,
+                              comment
+                            })
+                          });
+                          if (response.ok) {
+                            alert("Deposit successful!");
+                            // Quick local state update
+                            if (onSetResults) {
+                              onSetResults(results.map(r => r.user_id === res.user_id ? { ...r, credits: (r.credits || 0) + amount } : r));
+                            }
+                          } else {
+                            alert("Failed to deposit.");
+                          }
+                        } catch (e) {
+                          alert("Error making deposit.");
+                        }
+                      }}
+                      className="inline-flex items-center px-2 py-1 bg-brand-sage/10 text-brand-sage rounded text-[9px] font-bold tracking-widest uppercase hover:bg-brand-sage hover:text-white transition-colors"
+                    >
+                      + Deposit
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

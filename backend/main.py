@@ -72,6 +72,7 @@ class SaveResult(BaseModel):
     referred_by: Optional[str] = None
     is_public: Optional[bool] = None
     public_nickname: Optional[str] = None
+    time_spent: Optional[int] = 0
 
 class Badge(BaseModel):
     id: Optional[int] = None
@@ -90,6 +91,14 @@ class ProfileUpdate(BaseModel):
 class UserBadgeAssign(BaseModel):
     user_id: str
     badge_id: int
+
+class ErrorLog(BaseModel):
+    message: str
+    stack: Optional[str] = None
+    url: Optional[str] = None
+    user_id: Optional[str] = None
+    userAgent: Optional[str] = None
+    timestamp: Optional[str] = None
 
 from auth import router as auth_router
 
@@ -331,8 +340,16 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
 
     # 1. Database User Management & Referral Logic
     is_new_user = False
-    user_exists = await conn.fetchrow("SELECT id, referred_by FROM aphantasia_users WHERE id = $1", user_id)
+    user_exists = await conn.fetchrow("SELECT id, referred_by, credits FROM aphantasia_users WHERE id = $1", user_id)
+    current_credits = user_exists['credits'] if user_exists else 300
     
+    # 2. Test generation credit check logic
+    existing_result = await conn.fetchrow("SELECT 1 FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, data.test_type)
+    cost = 0 if not existing_result else 100
+    
+    if current_credits < cost:
+        raise HTTPException(status_code=403, detail="Insufficient credits to regenerate test results.")
+        
     if not user_exists:
         is_new_user = True
         is_public_val = data.is_public if data.is_public is not None else False
@@ -343,8 +360,11 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ''', user_id, email, data.auth_data.first_name, data.auth_data.last_name, data.auth_data.photo_url, 
             is_public_val, data.public_nickname, data.referred_by)
+            
+        await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment) 
+                              VALUES ($1, 300, 'registration_bonus', 'Initial registration bonus')''', user_id)
         
-        # Referral and Badge logic remains the same (truncated here for brevity but logic is preserved)
+        # Referral and Badge logic
         if data.referred_by:
             target_referrer_id = data.referred_by
             try:
@@ -352,7 +372,21 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
                 resolved_id = await conn.fetchval("SELECT id FROM aphantasia_users WHERE public_id = $1", data.referred_by)
                 if resolved_id: target_referrer_id = resolved_id
             except ValueError: pass
+            
             await conn.execute("UPDATE aphantasia_users SET referral_count = referral_count + 1 WHERE id = $1", target_referrer_id)
+            new_ref_count = await conn.fetchval("SELECT referral_count FROM aphantasia_users WHERE id = $1", target_referrer_id)
+            
+            if new_ref_count:
+                bonus = 0
+                if new_ref_count <= 5:
+                    bonus = 100
+                elif new_ref_count <= 10:
+                    bonus = 50
+                if bonus > 0:
+                    await conn.execute("UPDATE aphantasia_users SET credits = credits + $1 WHERE id = $2", bonus, target_referrer_id)
+                    await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment)
+                                          VALUES ($1, $2, 'referral_bonus', $3)''',
+                                       target_referrer_id, bonus, f"Bonus for referral #{new_ref_count}")
         
         early_badge = await conn.fetchrow("SELECT id FROM badges WHERE code = 'early_adopter'")
         if early_badge:
@@ -379,21 +413,48 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
         params.append(user_id)
         await conn.execute(f"UPDATE aphantasia_users SET {', '.join(update_fields)} WHERE id = ${param_idx}", *params)
 
-    # 2. Database-based Result Storage
-    logger.info(f"Saving {data.test_type} for {user_id}: {len(data.answers)} answers")
+    # Deduct credits if cost > 0
+    if cost > 0:
+        await conn.execute("UPDATE aphantasia_users SET credits = credits - $1 WHERE id = $2", cost, user_id)
+        await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment)
+                              VALUES ($1, $2, 'test_purchase', $3)''',
+                           user_id, -cost, f"Generated new {data.test_type} version")
+
+    # 3. Database-based Result Storage
+    logger.info(f"Saving {data.test_type} for {user_id}: {len(data.answers)} answers (Cost: {cost})")
 
     # Manage Share ID and Save Result in DB
     share_id = await conn.fetchval('''
-        INSERT INTO test_results (user_id, test_type, answers, scores)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO test_results (user_id, test_type, answers, scores, time_spent)
+        VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (user_id, test_type) DO UPDATE SET
             answers = EXCLUDED.answers,
             scores = EXCLUDED.scores,
+            time_spent = EXCLUDED.time_spent,
             created_at = CURRENT_TIMESTAMP
         RETURNING share_id
-    ''', user_id, data.test_type, data.answers, data.scores)
+    ''', user_id, data.test_type, data.answers, data.scores, data.time_spent)
 
     return {"status": "success", "share_id": str(share_id)}
+
+@app.post("/api/logs/error")
+async def log_frontend_error(error: ErrorLog, background_tasks: BackgroundTasks):
+    """Logs frontend errors and sends Telegram notifications if configured."""
+    logger.error(f"Frontend Error: {error.message}\nURL: {error.url}\nUser: {error.user_id}\nStack: {error.stack}")
+    
+    if bot and TELEGRAM_GROUP_ID:
+        # Simple HTML escaping for Telegram
+        msg = (
+            f"❌ <b>Frontend Error Alert</b>\n\n"
+            f"<b>Message:</b> {html.escape(error.message)}\n"
+            f"<b>URL:</b> {html.escape(error.url or 'N/A')}\n"
+            f"<b>User:</b> <code>{html.escape(error.user_id or 'Anonymous')}</code>\n"
+            f"<b>UA:</b> <code>{html.escape(error.userAgent or 'N/A')}</code>\n\n"
+            f"<b>Stack Snippet:</b>\n<pre>{html.escape((error.stack or '')[:500])}</pre>"
+        )
+        background_tasks.add_task(send_telegram_notification, msg)
+    
+    return {"status": "ok"}
 
 @app.post("/api/me/profile")
 async def update_profile_settings(data: ProfileUpdate, conn: asyncpg.Connection = Depends(get_db)):
@@ -483,7 +544,8 @@ async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, c
         "analysis_versions": analysis_versions,
         "current_version_index": current_version_index,
         "badges": await get_user_badges(user_id, conn),
-        "share_id": id_or_share_id
+        "share_id": id_or_share_id,
+        "time_spent": res_row.get('time_spent', 0)
     }
 
 async def build_og_image_url(id_or_share_id: str, conn: asyncpg.Connection) -> str:
@@ -874,11 +936,14 @@ async def get_my_result(auth_data: UserAuth, conn: asyncpg.Connection = Depends(
         "photo_url": user_row['photo_url'],
         "is_public": user_row['is_public'],
         "public_nickname": user_row['public_nickname'],
+        "credits": user_row.get('credits', 0),
+        "referral_count": user_row.get('referral_count', 0),
         "badges": await get_user_badges(user_id, conn),
         "answers": {},
         "scores": {},
         "gemini_recommendations": {},
-        "share_ids": {}
+        "share_ids": {},
+        "time_spent": {}
     }
 
     for row in result_rows:
@@ -896,6 +961,7 @@ async def get_my_result(auth_data: UserAuth, conn: asyncpg.Connection = Depends(
             data["gemini_recommendations"].update(row_recs)
         
         data["share_ids"][t_type] = str(row['share_id'])
+        data["time_spent"][t_type] = row.get("time_spent", 0)
 
     # Backward compatibility for single values (usually the most recent)
     if result_rows:
@@ -1014,6 +1080,27 @@ async def get_results(user_id: str, hash: str, q: Optional[str] = None, target_u
     return list(users_map.values())
 
     return results
+
+class DepositRequest(BaseModel):
+    auth_data: UserAuth
+    amount: int
+    comment: Optional[str] = "Admin deposit"
+
+@app.post("/api/admin/users/{target_user_id}/deposit")
+async def admin_deposit(target_user_id: str, data: DepositRequest, conn: asyncpg.Connection = Depends(get_db)):
+    verify_auth(data.auth_data)
+    if str(data.auth_data.id) not in ADMIN_USER_IDS:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    user_exists = await conn.fetchrow("SELECT id FROM aphantasia_users WHERE id = $1", target_user_id)
+    if not user_exists:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    await conn.execute("UPDATE aphantasia_users SET credits = credits + $1 WHERE id = $2", data.amount, target_user_id)
+    await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment) 
+                          VALUES ($1, $2, 'admin_deposit', $3)''',
+                       target_user_id, data.amount, data.comment)
+    return {"status": "success"}
 
 @app.get("/api/admin/online-stats")
 async def get_online_stats(user_id: str, hash: str, conn: asyncpg.Connection = Depends(get_db)):

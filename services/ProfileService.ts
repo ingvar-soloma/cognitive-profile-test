@@ -60,6 +60,7 @@ export class ProfileService {
           auth_data: user,
           test_type: testType,
           answers: profile.answers[testType] || {},
+          time_spent: profile.timeSpent ? (profile.timeSpent[testType] || 0) : 0,
           scores: scores,
           lang: lang,
           tone: profile.tone || 'professional',
@@ -69,6 +70,10 @@ export class ProfileService {
       });
 
       const result = await response.json();
+      if (!response.ok) {
+        console.error('[ProfileService] Save error payload:', result);
+        return { status: 'error', detail: result.detail };
+      }
       this.loadPromise = null; // Invalidate cache on save
       console.log('[ProfileService] Save result response:', result);
       return result;
@@ -450,6 +455,7 @@ export class ProfileService {
       id: customId || 'profile_' + Math.random().toString(36).slice(2, 11) + '_' + Date.now().toString(36),
       name,
       answers: { [surveyId]: {} },
+      timeSpent: { [surveyId]: 0 },
       lastUpdated: new Date().toISOString(),
       surveyId,
     };
@@ -459,7 +465,7 @@ export class ProfileService {
     return newProfile;
   }
 
-  static updateProfile(profileId: string, surveyId: string, answers: Record<string, Answer>, type?: ProfileType, tone?: string): void {
+  static updateProfile(profileId: string, surveyId: string, answers: Record<string, Answer>, type?: ProfileType, tone?: string, timeSpent?: Record<string, number>): void {
     const profiles = this.getProfiles();
     const index = profiles.findIndex(p => p.id === profileId);
     if (index !== -1) {
@@ -468,6 +474,7 @@ export class ProfileService {
       profiles[index].lastUpdated = new Date().toISOString();
       if (type) profiles[index].type = type;
       if (tone) profiles[index].tone = tone;
+      if (timeSpent) profiles[index].timeSpent = timeSpent;
       this.saveProfiles(profiles);
     }
   }
