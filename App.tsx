@@ -571,9 +571,12 @@ const App: React.FC = () => {
 
   const isQuestionAnswered = (q: any, ans: Answer | undefined) => {
     if (!ans) return false;
-    if (q.type === QuestionType.SCALE) return typeof ans.value === 'number';
-    if (q.type === QuestionType.CHOICE) return typeof ans.value === 'string' && ans.value !== '';
-    if (q.type === QuestionType.TEXT) return typeof ans.note === 'string' && ans.note.trim() !== '';
+    const hasValue = ans.value !== undefined && ans.value !== null && (typeof ans.value === 'number' || (typeof ans.value === 'string' && ans.value !== ''));
+    const hasNote = typeof ans.note === 'string' && ans.note.trim() !== '';
+
+    if (q.type === QuestionType.SCALE) return hasValue || hasNote;
+    if (q.type === QuestionType.CHOICE) return hasValue || hasNote;
+    if (q.type === QuestionType.TEXT) return hasNote;
     if (q.type === QuestionType.DRAWING) return typeof ans.value === 'string' && ans.value.startsWith('data:image/');
     return false;
   };
@@ -700,6 +703,16 @@ const App: React.FC = () => {
         description: ui.loginToContinue
       });
       setShowLoginModal(true);
+      return;
+    }
+
+    // Validation: check if all questions in the current category are answered
+    const unanswered = activeCategory.questions.filter(q => !isQuestionAnswered(q, answers[q.id]));
+    if (unanswered.length > 0) {
+      alert(ui.pleaseAnswerAll || "Please answer all questions before proceeding.");
+      // Scroll to first unanswered
+      const el = document.getElementById(`question-${unanswered[0].id}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 

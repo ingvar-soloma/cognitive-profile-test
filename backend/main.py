@@ -433,7 +433,7 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
             time_spent = EXCLUDED.time_spent,
             created_at = CURRENT_TIMESTAMP
         RETURNING share_id
-    ''', user_id, data.test_type, data.answers, data.scores, data.time_spent)
+    ''', user_id, data.test_type, json.dumps(data.answers), json.dumps(data.scores), data.time_spent)
 
     return {"status": "success", "share_id": str(share_id)}
 
@@ -828,7 +828,7 @@ async def post_process_analysis(full_text: str, data: SaveResult, conn: asyncpg.
         # 3. Save back to DB
         await db_conn.execute('''
             UPDATE test_results SET recommendations = $1 WHERE user_id = $2 AND test_type = $3
-        ''', recs, user_id, test_type)
+        ''', json.dumps(recs), user_id, test_type)
 
         # Telegram notification
         user_name = f"{data.auth_data.first_name} {data.auth_data.last_name or ''}".strip()

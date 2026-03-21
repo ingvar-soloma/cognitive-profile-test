@@ -183,6 +183,7 @@ export interface UIStrings {
   redo: string;
   clear: string;
   drawHint: string;
+  pleaseAnswerAll: string;
   loginRequired: string;
   loginToContinue: string;
   loginModalTitle: string;
