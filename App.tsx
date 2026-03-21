@@ -378,16 +378,20 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Fetch Survey Data (Simulation of DB call)
+  // Fetch Survey Data
   useEffect(() => {
-    // Only fetch if we are starting the survey or if we need to preload data
-    // For now, we fetch when activeSurveyId changes, but we don't block UI unless we are entering SURVEY mode
+    let isActive = true;
+
     SurveyService.getSurveyById(activeSurveyId)
       .then((data) => {
-        if (data) {
+        if (data && isActive) {
           setCurrentSurvey(data);
         }
       });
+
+    return () => {
+      isActive = false;
+    };
   }, [activeSurveyId]);
 
   const handleStartSurvey = (surveyId?: string) => {
