@@ -761,7 +761,13 @@ const App: React.FC = () => {
     const typeLabel = ProfileService.getProfileTypeLabel(activeProfile?.type, language) || 'unknown';
     const filename = `${profileName}_${typeLabel}_${activeSurveyId}_${new Date().toISOString().slice(0, 10)}.json`;
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(answers, null, 2));
+    const exportData = {
+      answers,
+      time_spent: elapsedSeconds[activeSurveyId] || 0,
+      test_type: activeSurveyId,
+      exported_at: new Date().toISOString()
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", filename);
