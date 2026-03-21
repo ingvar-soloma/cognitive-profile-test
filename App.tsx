@@ -166,7 +166,8 @@ const App: React.FC = () => {
     } else if (loadedProfiles.length > 0) {
       return loadedProfiles[0].id;
     }
-    return null;
+    const anonProfile = ProfileService.createProfile('Особистий Профіль', 'full_aphantasia_profile', 'anonymous');
+    return anonProfile.id;
   });
 
   // Update HTML lang attribute
@@ -289,6 +290,22 @@ const App: React.FC = () => {
         setProfiles(ProfileService.getProfiles());
       }
 
+      const updatedProfiles = ProfileService.getProfiles();
+      if (activeProfileId && activeProfileId !== userProfileId) {
+        const prevProfile = updatedProfiles.find(p => p.id === activeProfileId);
+        if (prevProfile && prevProfile.answers) {
+          Object.entries(prevProfile.answers).forEach(([sId, ansMap]) => {
+            if (Object.keys(ansMap).length > 0) {
+              ProfileService.updateProfile(userProfileId, sId, ansMap, prevProfile.type, prevProfile.tone);
+            }
+          });
+          if (activeProfileId === 'anonymous') {
+             ProfileService.deleteProfile('anonymous');
+          }
+          setProfiles(ProfileService.getProfiles());
+        }
+      }
+
       if (activeProfileId !== userProfileId) {
         setActiveProfileId(userProfileId);
       }
@@ -374,12 +391,6 @@ const App: React.FC = () => {
   }, [activeSurveyId]);
 
   const handleStartSurvey = (surveyId?: string) => {
-    if (!user) {
-      setLoginModalConfig({});
-      setShowLoginModal(true);
-      return;
-    }
-
     setIsLoading(true);
     const surveyIdToStart = surveyId || activeSurveyId;
     
