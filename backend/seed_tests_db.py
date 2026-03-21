@@ -13,7 +13,7 @@ async def seed_tests():
     conn = await asyncpg.connect(database_url)
     
     try:
-        seed_path = os.path.join(os.path.dirname(__file__), "data", "tests_seed.json")
+        seed_path = os.path.join(os.path.dirname(__file__), "tests_seed.json")
         with open(seed_path, "r", encoding="utf-8") as f:
             tests_data = json.load(f)
             
