@@ -138,9 +138,21 @@ export const Intro: React.FC<IntroProps> = ({
                                                     ) : isTestDisabled ? (
                                                         <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded uppercase tracking-wider">{ui.soon}</span>
                                                     ) : (
-                                                        <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded border border-stone-line uppercase tracking-wider">
-                                                            {survey.id === 'express_demo' ? `2 ${ui.minutesLabel}` : `15 ${ui.minutesLabel}`}
-                                                        </span>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-[9px] font-bold text-stone-400 bg-stone-bg px-2 py-0.5 rounded border border-stone-line uppercase tracking-wider">
+                                                                {survey.id === 'express_demo' ? `2 ${ui.minutesLabel}` : `15 ${ui.minutesLabel}`}
+                                                            </span>
+                                                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-brand-clay/80">
+                                                                {!hasRecommendation ? (
+                                                                    <>
+                                                                        <span className="line-through opacity-50">50</span>
+                                                                        <span className="bg-brand-clay/10 px-1.5 py-0.5 rounded text-brand-clay">0 {ui.credits.toLowerCase()}</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span className="bg-brand-clay/10 px-1.5 py-0.5 rounded text-brand-clay">50 {ui.credits.toLowerCase()}</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-stone-500 pr-4 leading-relaxed">

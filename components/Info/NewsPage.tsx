@@ -4,6 +4,7 @@ import { UIStrings, Language } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { NewsletterSubscribe } from './NewsletterSubscribe';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
+import { toast } from 'react-hot-toast';
 
 interface NewsPageProps {
     ui: UIStrings;
@@ -87,9 +88,13 @@ const ArticleView: React.FC<{ article: Article; language: Language; ui: UIString
 
     const shareUrl = window.location.origin + `/blog?id=${article.id}`;
 
-    const handleCopy = () => {
-        navigator.clipboard.writeText(shareUrl);
-        alert(ui.linkCopied || 'Copied!');
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            toast.success(ui.linkCopied || 'Copied!');
+        } catch (err) {
+            toast.error('Failed to copy');
+        }
     };
 
     return (

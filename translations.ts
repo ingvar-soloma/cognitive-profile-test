@@ -95,6 +95,9 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     drawHint: "Намалюйте тут...",
     pleaseAnswerAll: "Будь ласка, дайте відповідь на всі запитання (оцінка або коментар) перед тим, як продовжити.",
     loginRequired: "Необхідна авторизація",
+    generationCost: "Вартість генерації",
+    firstGenerationFree: "Перша генерація безкоштовна",
+    regenerate: "Перегенерувати",
     loginToContinue: "Ви повинні увійти за допомогою Google, щоб продовжити до наступного розділу.",
     loginModalTitle: "Вітаємо у NeuroProfile!",
     loginModalDesc: "Для того, щоб ми могли зберегти ваші результати та надати AI-аналіз, будь ласка, авторизуйтесь перед початком.",
@@ -269,7 +272,10 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     shareResult: "Поділитися результатом",
     shareNews: "Поділитися новиною",
     copyLink: "Копіювати посилання",
-    linkCopied: "Посилання скопійовано!"
+    linkCopied: "Посилання скопійовано!",
+    errorFound: "Помилка валідації",
+    returnToSurvey: "Повернутися до тесту та виправити",
+    analysisReadyDesc: "Ваші відповіді зібрані та збережені. Ви можете ще раз перевірити їх або згенерувати аналіз прямо зараз.",
   },
   en: {
     title: "Cognitive Profile Assessment",
@@ -365,6 +371,9 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     drawHint: "Draw here...",
     pleaseAnswerAll: "Please answer all questions (rating or comment) before proceeding.",
     loginRequired: "Authentication Required",
+    generationCost: "Generation Cost",
+    firstGenerationFree: "First generation is free",
+    regenerate: "Regenerate",
     loginToContinue: "You must sign in with Google to continue to the next part.",
     loginModalTitle: "Welcome to NeuroProfile!",
     loginModalDesc: "To ensure we can save your results and provide AI analysis, please sign in before starting.",
@@ -539,7 +548,10 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     shareResult: "Share Result",
     shareNews: "Share News",
     copyLink: "Copy Link",
-    linkCopied: "Link copied!"
+    linkCopied: "Link copied!",
+    errorFound: "Validation Error",
+    returnToSurvey: "Back to Survey & Fix",
+    analysisReadyDesc: "Your answers are collected and saved. You can double-check them or generate your AI analysis right now.",
   },
   ru: {
     title: "Оценка Когнитивного Профиля",
@@ -635,6 +647,9 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     drawHint: "Нарисуйте здесь...",
     pleaseAnswerAll: "Пожалуйста, ответьте на все вопросы (оценка или комментарий) перед тем, как продолжить.",
     loginRequired: "Требуется авторизация",
+    generationCost: "Стоимость генерации",
+    firstGenerationFree: "Первая генерация бесплатна",
+    regenerate: "Перегенерировать",
     loginToContinue: "Вы должны войти с помощью Google, чтобы продолжить к следующему разделу.",
     loginModalTitle: "Добро пожаловать в NeuroProfile!",
     loginModalDesc: "Для того, чтобы мы могли сохранить ваши результаты и предоставить AI-анализ, пожалуйста, авторизуйтесь перед началом.",
@@ -809,7 +824,10 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     shareResult: "Поделиться результатом",
     shareNews: "Поделиться новостью",
     copyLink: "Копировать ссылку",
-    linkCopied: "Ссылка скопирована!"
+    linkCopied: "Ссылка скопирована!",
+    errorFound: "Ошибка валидации",
+    returnToSurvey: "Вернуться к тесту и исправить",
+    analysisReadyDesc: "Ваши ответы собраны и сохранены. Вы можете еще раз проверить их или сгенерировать анализ прямо сейчас.",
   }
 
 };

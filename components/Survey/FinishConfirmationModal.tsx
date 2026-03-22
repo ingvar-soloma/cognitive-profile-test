@@ -11,6 +11,7 @@ interface FinishConfirmationModalProps {
     onLanguageChange: (lang: Language) => void;
     tone: string;
     onToneChange: (tone: string) => void;
+    cost?: number;
 }
 
 export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = ({
@@ -21,7 +22,8 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
     language,
     onLanguageChange,
     tone,
-    onToneChange
+    onToneChange,
+    cost = 0
 }) => {
     if (!isOpen) return null;
 
@@ -116,6 +118,27 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                         <p className="text-[10px] text-stone-400 font-sans italic mt-2 leading-relaxed">
                             {ui.toneHelp}
                         </p>
+                    </div>
+
+                    <div className="w-full mb-8 pt-2">
+                         <div className="flex items-center justify-between px-2 text-stone-400 text-[11px] font-bold uppercase tracking-widest border-y border-stone-line/50 py-3">
+                             <span>{ui.generationCost}</span>
+                             <div className="flex items-center gap-2">
+                                 {cost === 0 ? (
+                                     <>
+                                         <span className="line-through opacity-50">100</span>
+                                         <span className="text-brand-sage text-xs">0 {ui.credits}</span>
+                                     </>
+                                 ) : (
+                                     <span className="text-brand-ink text-xs">{cost} {ui.credits}</span>
+                                 )}
+                             </div>
+                         </div>
+                         {cost === 0 && (
+                             <p className="text-brand-sage text-[10px] mt-2 font-medium italic">
+                                 ✨ {ui.firstGenerationFree}
+                             </p>
+                         )}
                     </div>
 
                     <div className="w-full flex flex-col gap-3">

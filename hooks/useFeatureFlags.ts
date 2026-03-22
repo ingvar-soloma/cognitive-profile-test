@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { ProfileService } from '@/services/ProfileService';
 import { FeatureFlag } from '@/types';
 
+let fetchPromise: Promise<FeatureFlag[]> | null = null;
+
 export const useFeatureFlags = () => {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    ProfileService.fetchFeatureFlags().then(data => {
+    if (!fetchPromise) {
+      fetchPromise = ProfileService.fetchFeatureFlags();
+    }
+    
+    fetchPromise.then(data => {
       setFlags(data);
       setLoading(false);
     });

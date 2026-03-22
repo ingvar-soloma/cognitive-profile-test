@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Answer, UIStrings, Language, QuestionType, SurveyDefinition, Badge, User } from '@/types';
 import { SURVEY_DATA, AVAILABLE_SURVEYS } from '@/constants';
-import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight, User as UserIcon, Settings, RefreshCw, Check } from 'lucide-react';
+import { Download, FileJson, BrainCircuit, ShieldAlert, Sparkles, Zap, MessageSquare, ChevronRight, User as UserIcon, Settings, RefreshCw, Check, ArrowLeft } from 'lucide-react';
 import { ProfileService } from '@/services/ProfileService';
+import { toast, Toaster } from 'react-hot-toast';
 // @ts-ignore
 import { encode } from '@toon-format/toon';
 import ReactMarkdown from 'react-markdown';
@@ -107,6 +108,7 @@ export const Results: React.FC<ResultsProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedVersionIndex, setSelectedVersionIndex] = useState<number | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const currentSurvey = useMemo(() => survey || AVAILABLE_SURVEYS.find(s => s.id === surveyId), [survey, surveyId]);
 
@@ -168,7 +170,7 @@ export const Results: React.FC<ResultsProps> = ({
         let count = 0;
         group.criteria.forEach(c => {
           const score = ProfileService.calculateCategoryScore(surveyAnswers, c);
-          if (score > 0) {
+          if (score !== null) {
             total += score;
             count++;
           }
@@ -176,7 +178,7 @@ export const Results: React.FC<ResultsProps> = ({
         return {
           key: group.key,
           subject: group.subject,
-          A: count > 0 ? Number((total / count).toFixed(1)) : 0,
+          A: count > 0 ? Number((total / count).toFixed(1)) : 3,
           fullMark: 5
         };
       });
@@ -187,7 +189,7 @@ export const Results: React.FC<ResultsProps> = ({
       return currentSurvey.categories.map(cat => ({
         key: cat.id,
         subject: cat.title[lang],
-        A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
+        A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en) ?? 3,
         fullMark: 5
       }));
     }
@@ -208,7 +210,7 @@ export const Results: React.FC<ResultsProps> = ({
       return Array.from(subCats).map(sc => ({
         key: sc,
         subject: subCatLabels[sc],
-        A: ProfileService.calculateCategoryScore(surveyAnswers, sc),
+        A: ProfileService.calculateCategoryScore(surveyAnswers, sc) ?? 3,
         fullMark: 5
       }));
     }
@@ -216,40 +218,48 @@ export const Results: React.FC<ResultsProps> = ({
     return [{
       key: cat.id,
       subject: cat.title[lang],
-      A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en),
+      A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en) ?? 3,
       fullMark: 5
     }];
   }, [currentSurvey, surveyAnswers, lang]);
 
-  const triggerAnalysis = async () => {
+  const triggerAnalysis = async (forceRegenerate = false) => {
     const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
     const profiles = ProfileService.getProfiles();
-    const activeProfile = profiles.find(p => p.id === activeProfileId) || (targetUser ? { answers } : null);
+    const activeProfile = profiles.find(p => p.id === activeProfileId) 
+      || (user ? { ...user, answers } : (targetUser ? { answers } : (typeof answers !== 'undefined' ? { answers, id: 'temp' } : null)));
 
-    // Use surveyId prop or the survey ID from current survey
     const targetSurveyId = surveyId || currentSurvey?.id;
 
+    if (!activeProfile) {
+      toast.error("Profile not identified. Please try refreshing or re-entering some data.");
+      return;
+    }
+    
+    if (!targetSurveyId) {
+      toast.error("Survey identification failed.");
+      return;
+    }
+
     if (activeProfile && targetSurveyId) {
-      setIsAnalyzing(true);
-      setGeminiRecs('');
-
-      // Mock Profile object to satisfy service
-      const mockProfile = {
-        ...activeProfile,
-        answers: answers // Use the current answers prop directly
-      } as any;
-
-      const radarScores = radarData.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.A }), {});
-
-      try {
-        await ProfileService.streamAnalysisFromBackend(mockProfile, targetSurveyId, radarScores, lang, (chunk) => {
-          setGeminiRecs(prev => (prev || '') + chunk);
-        });
-      } catch (e) {
-        setGeminiRecs('Error during analysis. Please try again or contact admin.');
-      } finally {
-        setIsAnalyzing(false);
-      }
+        setIsAnalyzing(true);
+        setGeminiRecs(null);
+        setAnalysisError(null);
+  
+        const radarScores = radarData.reduce((acc, curr) => ({ ...acc, [curr.key]: curr.A }), {});
+  
+        try {
+          // Use the profile's own answers which should be up to date in localStorage
+          await ProfileService.streamAnalysisFromBackend(activeProfile as any, targetSurveyId, radarScores, lang, (chunk) => {
+            setGeminiRecs(prev => (prev || '') + chunk);
+          }, forceRegenerate);
+        } catch (e) {
+          const errMsg = (e as Error).message || 'Error during analysis. Please try again.';
+          setAnalysisError(errMsg);
+          toast.error(errMsg);
+        } finally {
+          setIsAnalyzing(false);
+        }
     }
   };
   const [showActions, setShowActions] = useState(false);
@@ -432,14 +442,18 @@ export const Results: React.FC<ResultsProps> = ({
                setIsSaving(false);
              }
           } else if (result && result.status === 'error') {
-              alert(result.detail || "Error saving results. Check your credits.");
+                             toast.error(result.detail || "Error saving results. Check your credits.");
               setIsSaving(false);
           }
         }
       } catch (error) {
+        const errMsg = (error as Error).message || "Error initializing results";
         console.error("Error initializing results", error);
+        setAnalysisError(errMsg);
+        toast.error(errMsg);
       } finally {
         setIsSaving(false);
+        setIsAnalyzing(false);
       }
     };
 
@@ -557,6 +571,97 @@ export const Results: React.FC<ResultsProps> = ({
     return ProfileService.getProfileTypeLabel(type, lang);
   }, [radarData, lang]);
 
+  const tryParseGeminiJSON = (text: string | null) => {
+    if (!text) return text;
+    const trimmed = text.trim();
+    if (!trimmed.startsWith('{')) return text;
+
+    // Helper to close JSON structure for parsing
+    const heal = (str: string) => {
+      let healed = str.trim();
+      
+      // Remove trailing comma if present
+      healed = healed.replace(/,\s*$/, '');
+      
+      // Close open string if necessary
+      const lastQuoteIdx = healed.lastIndexOf('"');
+      const lastBackslashIdx = healed.lastIndexOf('\\');
+      const isEscaped = lastBackslashIdx !== -1 && lastBackslashIdx === healed.length - 1;
+      
+      // Count non-escaped quotes
+      let quoteCount = 0;
+      for (let i = 0; i < healed.length; i++) {
+        if (healed[i] === '"' && (i === 0 || healed[i-1] !== '\\')) quoteCount++;
+      }
+      
+      if (quoteCount % 2 !== 0 && !isEscaped) healed += '"';
+      
+      // Count braces and brackets
+      const openBraces = (healed.match(/{/g) || []).length;
+      const closeBraces = (healed.match(/}/g) || []).length;
+      const openBrackets = (healed.match(/\[/g) || []).length;
+      const closeBrackets = (healed.match(/]/g) || []).length;
+      
+      // Close them in reverse order
+      let suffix = '';
+      for (let i = 0; i < openBrackets - closeBrackets; i++) suffix += ']';
+      for (let i = 0; i < openBraces - closeBraces; i++) suffix += '}';
+      
+      return healed + suffix;
+    };
+
+    try {
+        const healed = heal(trimmed);
+        const parsed = JSON.parse(healed);
+        
+        if (parsed.title || parsed.executive_summary || parsed.deep_dive) {
+            let md = '';
+            if (parsed.title) md += `## 🧩 ${parsed.title}\n\n`;
+            if (parsed.executive_summary) md += `### 1. Executive Summary\n${parsed.executive_summary}\n\n`;
+            if (parsed.deep_dive) md += `### 2. Deep Dive\n${parsed.deep_dive}\n\n`;
+            if (parsed.memory_analysis) md += `### 3. Memory Analysis\n${parsed.memory_analysis}\n\n`;
+            
+            if (parsed.professional_superpowers && Array.isArray(parsed.professional_superpowers)) {
+                md += `### 4. Professional Superpowers\n`;
+                parsed.professional_superpowers.forEach((p: string) => {
+                  if (typeof p === 'string' && p.trim()) md += `- ${p}\n`;
+                });
+                md += '\n';
+            }
+            
+            if (parsed.external_brain_toolkit && Array.isArray(parsed.external_brain_toolkit)) {
+                md += `### 5. The 'External Brain' Toolkit\n`;
+                parsed.external_brain_toolkit.forEach((p: string) => {
+                  if (typeof p === 'string' && p.trim()) md += `- ${p}\n`;
+                });
+                md += '\n';
+            }
+            return md;
+        }
+    } catch (e) {
+        // If healing fails, use Regex as a last resort for very broken streams
+        const extract = (key: string) => {
+            const regex = new RegExp(`"${key}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"?`);
+            const match = trimmed.match(regex);
+            return match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : null;
+        };
+
+        let md = '';
+        const title = extract('title');
+        const summary = extract('executive_summary');
+        const deepDive = extract('deep_dive');
+        
+        if (title) md += `## 🧩 ${title}\n\n`;
+        if (summary) md += `### 1. Executive Summary\n${summary}\n\n`;
+        if (deepDive) md += `### 2. Deep Dive\n${deepDive}\n\n`;
+        
+        if (md) return md;
+    }
+
+    // Last resort fallback
+    return text.replace(/[{}"]/g, '').replace(/\\n/g, '\n');
+  };
+
   return (
     <div className="animate-fade-in text-left">
       <div className="bg-brand-paper-accent/40 backdrop-blur-xl rounded-[2.5rem] border border-stone-line shadow-soft overflow-hidden mb-12">
@@ -671,15 +776,23 @@ export const Results: React.FC<ResultsProps> = ({
                 )}
               </div>
 
-              {!isPublicView && isAdmin && geminiRecs && (
-                <button
-                  disabled={isAnalyzing}
-                  onClick={triggerAnalysis}
-                  className="px-4 py-2 bg-brand-clay/10 text-brand-clay font-bold rounded-xl text-[10px] uppercase tracking-widest hover:bg-brand-clay hover:text-white transition-all flex items-center gap-2 group border border-brand-clay/20"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isAnalyzing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
-                  Regenerate
-                </button>
+              {!isPublicView && (isAdmin || isOwner) && geminiRecs && (
+                <div className="flex items-center gap-3">
+                  {!isAdmin && isOwner && (
+                    <div className="flex flex-col items-end">
+                       <span className="text-[8px] font-bold text-stone-400 uppercase tracking-widest leading-none mb-1">{ui.generationCost}</span>
+                       <span className="text-[10px] font-bold text-brand-clay leading-none">50 {ui.credits}</span>
+                    </div>
+                  )}
+                  <button
+                    disabled={isAnalyzing}
+                    onClick={() => triggerAnalysis(true)} // Always force regenerate when clicking this button
+                    className={`px-4 py-2 bg-brand-clay/10 text-brand-clay font-bold rounded-xl text-[10px] uppercase tracking-widest hover:bg-brand-clay hover:text-white transition-all flex items-center gap-2 group border border-brand-clay/20 ${isAnalyzing ? 'opacity-50' : ''}`}
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isAnalyzing ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-700'}`} />
+                    {ui.regenerate}
+                  </button>
+                </div>
               )}
             </div>
 
@@ -694,7 +807,7 @@ export const Results: React.FC<ResultsProps> = ({
                   <p className="text-stone-400 text-sm font-sans">{ui.connectingNodes}</p>
                 </div>
               </div>
-            ) : (geminiRecs !== null) ? (
+            ) : (analysisError || geminiRecs || (effectiveVersions && effectiveVersions.length > 0) || (isAnalyzing && geminiRecs)) ? (
               <div className="relative transition-all duration-700">
                 <div className={`bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans 
                   prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-brand-ink dark:prose-headings:text-brand-clay
@@ -768,9 +881,27 @@ export const Results: React.FC<ResultsProps> = ({
                     </div>
                   )}
 
-                  <ReactMarkdown>{selectedVersionIndex !== null && effectiveVersions.length > 0 ? effectiveVersions[selectedVersionIndex] : geminiRecs}</ReactMarkdown>
+                  {analysisError || (geminiRecs && (geminiRecs.includes('Invalid input') || geminiRecs.includes('Error getting recommendations') || geminiRecs.includes('Bad Request'))) ? (
+                    <div className="bg-red-50/50 border border-red-100 p-8 rounded-3xl text-center space-y-6">
+                      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                        <MessageSquare className="w-8 h-8 text-red-500" />
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="text-xl font-serif font-bold text-brand-graphite">{ui.errorFound || 'Validation Error'}</h4>
+                        <p className="text-stone-500 text-sm font-sans">{analysisError || geminiRecs}</p>
+                      </div>
+                      <button
+                        onClick={() => navigate(`/survey/${targetSurveyId}`)}
+                        className="px-8 py-3 bg-brand-ink text-white rounded-full font-bold text-sm tracking-widest uppercase hover:scale-105 transition-all shadow-soft mx-auto block"
+                      >
+                        {ui.returnToSurvey || 'Back to Survey & Fix'}
+                      </button>
+                    </div>
+                  ) : (
+                    <ReactMarkdown>{tryParseGeminiJSON(selectedVersionIndex !== null && effectiveVersions.length > 0 ? effectiveVersions[selectedVersionIndex] : geminiRecs)}</ReactMarkdown>
+                  )}
 
-                  {isAnalyzing && geminiRecs && (
+                  {isAnalyzing && geminiRecs && !geminiRecs.includes('Invalid input') && (
                     <div className="mt-8 flex items-center gap-3 text-brand-ink animate-pulse">
                       <Zap className="w-4 h-4 fill-current" />
                       <span className="text-[10px] items-center uppercase font-bold tracking-widest">{ui.predictedTime?.split(' ')[0] || 'AI'} is typing...</span>
@@ -794,7 +925,7 @@ export const Results: React.FC<ResultsProps> = ({
                   <div className="pt-4 flex justify-center">
                     <button
                       disabled={isAnalyzing}
-                      onClick={triggerAnalysis}
+                      onClick={() => triggerAnalysis()}
                       className="h-14 px-8 bg-brand-ink text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-3 group/btn"
                     >
                       <Sparkles className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
@@ -809,26 +940,66 @@ export const Results: React.FC<ResultsProps> = ({
             ) : (
               <div className="bg-brand-paper/50 backdrop-blur-md p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-paper-accent/0 via-brand-paper-accent/0 to-brand-ink/[0.02] pointer-events-none"></div>
+                {analysisError && (
+                  <div className="relative z-20 p-6 bg-red-50/80 border border-red-200 rounded-3xl text-center flex flex-col items-center animate-fade-in mb-8">
+                     <ShieldAlert className="w-10 h-10 text-red-500/50 mb-4" />
+                     <h4 className="text-red-700 font-bold mb-1">Analysis Error</h4>
+                     <p className="text-red-600 text-sm max-w-md">{analysisError}</p>
+                     <button onClick={() => setAnalysisError(null)} className="mt-4 text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-700 transition-colors">Dismiss</button>
+                  </div>
+                )}
                 <div className="flex justify-center relative z-10 transition-transform group-hover:scale-110 duration-700">
                   <div className="w-20 h-20 rounded-full bg-brand-paper-accent shadow-soft flex items-center justify-center border border-stone-line">
-                    <ShieldAlert className="w-10 h-10 text-brand-clay" />
+                    <Sparkles className="w-10 h-10 text-brand-ink" />
                   </div>
                 </div>
                 <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">{ui.unlockNarrativeTitle}</h4>
+                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">
+                    {ui.readyForAnalysis || 'Ready for Analysis'}
+                  </h4>
                   <p className="text-stone-500 text-lg leading-relaxed font-sans">
-                    {ui.unlockNarrativeDesc}
+                    {ui.analysisReadyDesc || 'Your answers are collected. You can double-check them or generate your AI narrative now.'}
                   </p>
-                  <div className="pt-4 flex justify-center">
-                    <GoogleAuthButton />
+                  <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button
+                      onClick={() => navigate(`/survey/${targetSurveyId}`)}
+                      className="h-14 px-8 bg-brand-paper border border-stone-line text-brand-ink rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-paper-accent transition-all flex items-center gap-3"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      {ui.editAnswers}
+                    </button>
+                    {!user ? (
+                      <div className="flex flex-col items-center gap-4">
+                        <GoogleAuthButton />
+                        <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">— OR —</span>
+                        <button
+                          onClick={() => triggerAnalysis()}
+                          className="text-brand-ink text-[10px] font-bold uppercase tracking-widest hover:underline"
+                        >
+                          Generate as Guest (No Cloud Backup)
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        disabled={isAnalyzing}
+                        onClick={() => triggerAnalysis()}
+                        className="h-14 px-8 bg-brand-ink text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-3 group/btn"
+                      >
+                        <Sparkles className="w-5 h-5 transition-transform group-hover/btn:scale-110" />
+                        {ui.analyze}
+                        <ChevronRight className="w-4 h-4 opacity-70 transition-transform group-hover/btn:translate-x-1" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             )}
+            <Toaster position="bottom-center" toastOptions={{ style: { zIndex: 99999 } }} />
+
           </div>
 
-          {/* Share Section - Feature Flagged - Only for owner */}
-          {isEnabled('share') && !isPublicView && user && (
+          {/* Share Section - Feature Flagged - Only for owner and ONLY if result exists */}
+          {isEnabled('share') && !isPublicView && user && (geminiRecs || effectiveVersions.length > 0) && (
             <AppShare
               ui={ui}
               lang={lang}

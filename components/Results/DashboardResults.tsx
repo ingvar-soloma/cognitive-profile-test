@@ -57,7 +57,8 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                 
                 const questions = survey.categories.flatMap(c => c.questions);
                 const surveyAnswers = profile.answers[survey.id] || {};
-                return questions.some(q => surveyAnswers[q.id]);
+                const hasRecommendation = !!(profile as any).gemini_recommendations?.[survey.id];
+                return questions.some(q => surveyAnswers[q.id]) || hasRecommendation;
             })
             .map(survey => {
                 const surveyAnswers = profile.answers[survey.id] || {};

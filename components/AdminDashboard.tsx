@@ -5,6 +5,7 @@ import { Users, Search, Calendar, ChevronRight, User, Award, Table, Settings } f
 import { BadgeManager } from './Admin/BadgeManager';
 import { FeatureFlagManager } from './Admin/FeatureFlagManager';
 import { BadgeIcon } from './Results/Results';
+import { toast } from 'react-hot-toast';
 
 interface AdminDashboardProps {
   ui: UIStrings;
@@ -196,7 +197,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                         const amountStr = window.prompt(`Deposit credits for ${res.first_name}:`, "500");
                         if (!amountStr) return;
                         const amount = parseInt(amountStr);
-                        if (isNaN(amount) || amount <= 0) return alert("Invalid amount");
+                        if (isNaN(amount) || amount <= 0) {
+                          toast.error("Invalid amount");
+                          return;
+                        }
                         const comment = window.prompt("Optional comment:", "Admin bonus") || "Admin bonus";
                         
                         const authDataStr = localStorage.getItem('auth_token');
@@ -214,16 +218,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                             })
                           });
                           if (response.ok) {
-                            alert("Deposit successful!");
+                            toast.success("Deposit successful!");
                             // Quick local state update
                             if (onSetResults) {
                               onSetResults(results.map(r => r.user_id === res.user_id ? { ...r, credits: (r.credits || 0) + amount } : r));
                             }
                           } else {
-                            alert("Failed to deposit.");
+                            toast.error("Failed to deposit.");
                           }
                         } catch (e) {
-                          alert("Error making deposit.");
+                          toast.error("Error making deposit.");
                         }
                       }}
                       className="inline-flex items-center px-2 py-1 bg-brand-sage/10 text-brand-sage rounded text-[9px] font-bold tracking-widest uppercase hover:bg-brand-sage hover:text-white transition-colors"

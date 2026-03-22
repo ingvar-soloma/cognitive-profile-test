@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge, UIStrings, Language } from '@/types';
 import { ProfileService } from '@/services/ProfileService';
 import { Plus, Edit2, Trash2, X, Check, Award, UserPlus, ShieldOff, Shield } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface BadgeManagerProps {
   ui: UIStrings;
@@ -49,11 +50,11 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
     if (!assigningToUserId || !assigningToBadgeId) return;
     const res = await ProfileService.assignBadge(assigningToUserId, assigningToBadgeId);
     if (res?.status === 'success') {
-      alert('Badge assigned successfully');
+      toast.success('Badge assigned successfully');
       setAssigningToUserId('');
       setAssigningToBadgeId(null);
     } else {
-      alert('Failed to assign badge: ' + (res?.detail || 'Unknown error'));
+      toast.error('Failed to assign badge: ' + (res?.detail || 'Unknown error'));
     }
   };
 

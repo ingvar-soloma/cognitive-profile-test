@@ -185,6 +185,9 @@ export interface UIStrings {
   drawHint: string;
   pleaseAnswerAll: string;
   loginRequired: string;
+  generationCost: string;
+  firstGenerationFree: string;
+  regenerate: string;
   loginToContinue: string;
   loginModalTitle: string;
   loginModalDesc: string;
@@ -245,6 +248,9 @@ export interface UIStrings {
   viewResults: string;
   editAnswers: string;
   sectionLabel: string;
+  errorFound: string;
+  returnToSurvey: string;
+  analysisReadyDesc: string;
   whyExploreTitle: string;
   aphantasiaLabel: string;
   hyperphantasiaLabel: string;

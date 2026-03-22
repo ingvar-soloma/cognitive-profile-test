@@ -1,9 +1,9 @@
-import { Answer, ProfileType, Profile, Language, Badge } from '../types';
+import { Answer, ProfileType, Profile, Language, Badge, QuestionType } from '../types';
 import { SURVEY_DATA } from '../constants';
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== null) 
   ? import.meta.env.VITE_API_URL 
-  : 'http://localhost:8000';
+  : ''; // Empty string for relative API URL
 
 export class ProfileService {
   private static loadPromise: Promise<any> | null = null;
@@ -83,7 +83,7 @@ export class ProfileService {
     }
   }
 
-  static async streamAnalysisFromBackend(profile: Profile, testType: string, scores: any, lang: Language, onChunk: (text: string) => void) {
+  static async streamAnalysisFromBackend(profile: Profile, testType: string, scores: any, lang: Language, onChunk: (text: string) => void, forceRegenerate = false) {
     const authDataString = localStorage.getItem('auth_token');
     if (!authDataString) return null;
 
@@ -106,9 +106,19 @@ export class ProfileService {
           answers: profile.answers[testType] || {},
           scores: scores,
           lang: lang,
-          tone: profile.tone || 'professional'
+          tone: profile.tone || 'professional',
+          force_regenerate: forceRegenerate
         }),
       });
+
+      if (!response.ok) {
+        let errorMsg = `Error getting recommendations: ${response.status}`;
+        try {
+          const errData = await response.json();
+          if (errData.message) errorMsg = errData.message;
+        } catch { /* skip */ }
+        throw new Error(errorMsg);
+      }
 
       if (!response.body) return null;
 
@@ -124,7 +134,7 @@ export class ProfileService {
       return true;
     } catch (e) {
       console.error('[ProfileService] Failed to stream from backend', e);
-      return null;
+      throw e;
     }
   }
 
@@ -348,7 +358,7 @@ export class ProfileService {
     }
   }
 
-  static calculateCategoryScore(answers: Record<string, Answer>, criteria: string): number {
+  static calculateCategoryScore(answers: Record<string, Answer>, criteria: string): number | null {
     const allCategories = SURVEY_DATA;
     const allQuestions = allCategories.flatMap(c => c.questions);
 
@@ -366,14 +376,14 @@ export class ProfileService {
       return false;
     });
 
-    if (targetQuestions.length === 0) return 0;
+    if (targetQuestions.length === 0) return null;
 
     let total = 0;
     let count = 0;
     
     targetQuestions.forEach(q => {
       const ans = answers[q.id];
-      if (!ans) return;
+      if (!ans || q.type === QuestionType.DRAWING) return;
 
       if (typeof ans.value === 'number') {
         total += ans.value;
@@ -402,7 +412,7 @@ export class ProfileService {
       }
     });
 
-    return count > 0 ? Number((total / count).toFixed(1)) : 0;
+    return count > 0 ? Number((total / count).toFixed(1)) : null;
   }
 
   static getProfileTypeLabel(type: ProfileType | undefined, lang: Language): string {
