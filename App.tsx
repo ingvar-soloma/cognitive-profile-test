@@ -137,9 +137,35 @@ const App: React.FC = () => {
   }, [location.pathname]);
 
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, Answer>>({});
-  const [elapsedSeconds, setElapsedSeconds] = useState<Record<string, number>>({});
+  const [answers, setAnswers] = useState<Record<string, Answer>>(() => {
+    const path = globalThis.window?.location?.pathname;
+    let startingSurveyId = path?.startsWith('/survey/') ? path.split('/survey/')[1] : 'full_aphantasia_profile';
+    // Handle nested routes or trailing slashes
+    if (startingSurveyId?.includes('/')) startingSurveyId = startingSurveyId.split('/')[0];
+    
+    const loadedProfiles = ProfileService.getProfiles();
+    const storedProfileId = localStorage.getItem('neuroprofile_active_profile_id');
+    const activeId = storedProfileId && loadedProfiles.some(p => p.id === storedProfileId) 
+        ? storedProfileId 
+        : (loadedProfiles.length > 0 ? loadedProfiles[0].id : null);
+        
+    if (activeId && startingSurveyId) {
+      const profile = loadedProfiles.find(p => p.id === activeId);
+      if (profile) {
+        return profile.answers[startingSurveyId] || {};
+      }
+    }
+    return {};
+  });
+  const [elapsedSeconds, setElapsedSeconds] = useState<Record<string, number>>(() => {
+    const loadedProfiles = ProfileService.getProfiles();
+    const storedProfileId = localStorage.getItem('neuroprofile_active_profile_id');
+    const profile = (storedProfileId && loadedProfiles.find(p => p.id === storedProfileId)) || (loadedProfiles.length > 0 ? loadedProfiles[0] : null);
+    return profile?.timeSpent || {};
+  });
   const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('neuroprofile_language') as Language;
+    if (saved && ['en', 'uk', 'ru'].includes(saved)) return saved;
     if (typeof navigator === 'undefined') return 'en';
     const lang = navigator.language.toLowerCase();
     if (lang.includes('uk')) return 'uk';
@@ -155,7 +181,13 @@ const App: React.FC = () => {
     return 'light';
   });
 
-  const [activeSurveyId, setActiveSurveyId] = useState<string>('full_aphantasia_profile'); // ID за замовчуванням
+  const [activeSurveyId, setActiveSurveyId] = useState<string>(() => {
+    const path = globalThis.window?.location?.pathname;
+    let startingId = path?.startsWith('/survey/') ? path.split('/survey/')[1] : 'full_aphantasia_profile';
+    if (startingId?.includes('/')) startingId = startingId.split('/')[0];
+    if (startingId && AVAILABLE_SURVEYS.find(s => s.id === startingId)) return startingId;
+    return 'full_aphantasia_profile';
+  }); 
   const [currentSurvey, setCurrentSurvey] = useState<SurveyDefinition | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -168,13 +200,14 @@ const App: React.FC = () => {
     } else if (loadedProfiles.length > 0) {
       return loadedProfiles[0].id;
     }
-    const anonProfile = ProfileService.createProfile('Особистий Профіль', 'full_aphantasia_profile', 'anonymous');
+    const anonProfile = ProfileService.createProfile('Особистий Профіль', activeSurveyId || 'full_aphantasia_profile', 'anonymous');
     return anonProfile.id;
   });
 
-  // Update HTML lang attribute
+  // Update HTML lang attribute and persist
   useEffect(() => {
     document.documentElement.lang = language;
+    localStorage.setItem('neuroprofile_language', language);
   }, [language]);
 
   const [backendRecommendations, setBackendRecommendations] = useState<Record<string, string>>({});
@@ -338,7 +371,7 @@ const App: React.FC = () => {
               const next = [...prev];
               const idx = next.findIndex(p => p.id === userProfileId);
               if (idx !== -1) {
-                next[idx].answers = result.answers;
+                next[idx].answers = { ...next[idx].answers, ...result.answers };
                 next[idx].badges = result.badges;
                 next[idx].gemini_recommendations = result.gemini_recommendations;
                 next[idx].timeSpent = result.time_spent;
@@ -512,11 +545,23 @@ const App: React.FC = () => {
   }, [activeProfileId, activeSurveyId]);
 
   useEffect(() => {
-    // Save state whenever it changes
-    if (activeProfileId && Object.keys(answers).length > 0) {
-      ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone, elapsedSeconds);
+    // Background save for timer and tone. We must be careful not to overwrite
+    // survey-specific answers when survey transitions occur.
+    if (activeProfileId) {
+      const survey = AVAILABLE_SURVEYS.find(s => s.id === activeSurveyId);
+      const surveyQuestionIds = survey?.categories.flatMap(c => c.questions.map(q => q.id)) || [];
+      const isMatchingSurvey = Object.keys(answers).length > 0 && Object.keys(answers).every(qId => surveyQuestionIds.includes(qId));
+
+      if (isMatchingSurvey) {
+        ProfileService.updateProfile(activeProfileId, activeSurveyId, answers, undefined, tone, elapsedSeconds);
+      } else {
+        // Still update tone and timeSpent but use existing answers from the profile record to avoid wipe-out
+        const profile = profiles.find(p => p.id === activeProfileId);
+        const existingAnswers = profile?.answers[activeSurveyId] || {};
+        ProfileService.updateProfile(activeProfileId, activeSurveyId, existingAnswers, undefined, tone, elapsedSeconds);
+      }
     }
-  }, [answers, activeProfileId, activeSurveyId, tone, elapsedSeconds]);
+  }, [answers, activeProfileId, activeSurveyId, tone]); // Removed elapsedSeconds to avoid constant saving every second
 
   useEffect(() => {
     // Warn on exit if in survey
@@ -556,7 +601,20 @@ const App: React.FC = () => {
       questions: cat.questions.map(localizeQuestion)
     });
 
-    return currentSurvey.categories.map(localizeCategory);
+    return currentSurvey.categories.map(cat => {
+      const localized = localizeCategory(cat);
+      // Ensure questions are sorted numerically by their ID suffix for YSQ-S3
+      if (currentSurvey.id === 'ysq_s3') {
+        localized.questions.sort((a, b) => {
+          const aMatch = a.id.match(/(\d+)$/);
+          const bMatch = b.id.match(/(\d+)$/);
+          const aNum = aMatch ? parseInt(aMatch[1], 10) : 0;
+          const bNum = bMatch ? parseInt(bMatch[1], 10) : 0;
+          return aNum - bNum;
+        });
+      }
+      return localized;
+    });
   }, [language, currentSurvey]);
 
   const localizedScaleConfig: LocalizedScaleConfig | undefined = useMemo(() => {
@@ -646,8 +704,17 @@ const App: React.FC = () => {
 
   const handleAnswerChange = (questionId: string, value: string | number | null, note: string) => {
     setAnswers((prev) => {
+      // Strictly filter previous answers to only include those belonging to the current survey.
+      // This prevents data leaked from other surveys during transitions.
+      const currentSurveySpecs = AVAILABLE_SURVEYS.find(s => s.id === activeSurveyId);
+      const validQuestionIds = currentSurveySpecs?.categories.flatMap(c => c.questions.map(q => q.id)) || [];
+      
+      const filteredPrev = Object.fromEntries(
+        Object.entries(prev).filter(([id]) => validQuestionIds.includes(id))
+      );
+
       const newAnswers = {
-        ...prev,
+        ...filteredPrev,
         [questionId]: { questionId, value, note },
       };
 
@@ -931,6 +998,7 @@ const App: React.FC = () => {
                   />
                 )}
                 <Intro
+                  isAdmin={isAdmin}
                   ui={ui}
                   language={language}
                   activeSurveyId={activeSurveyId}

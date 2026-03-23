@@ -35,7 +35,8 @@ async def seed_feature_flags(conn: asyncpg.Connection):
         ("ai_streaming", "AI Analysis Streaming", "Enable real-time streaming of Gemini analysis results.", True),
         ("survey_express_demo", "Express Diagnostics (AI)", "Enable/Disable express diagnostics test and AI analysis.", True),
         ("survey_full_aphantasia_profile", "Full Cognitive Profile (AI)", "Enable/Disable full profile test and AI analysis.", True),
-        ("survey_perfectionism_big_three", "Perfectionism Scale (AI)", "Enable/Disable perfectionism test and AI analysis.", True)
+        ("survey_perfectionism_big_three", "Perfectionism Scale (AI)", "Enable/Disable perfectionism test and AI analysis.", True),
+        ("survey_ysq_s3", "YSQ – S3 Schema Questionnaire (AI)", "Enable/Disable YSQ test and AI analysis.", True)
     ]
     
     try:

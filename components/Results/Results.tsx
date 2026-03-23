@@ -195,15 +195,16 @@ export const Results: React.FC<ResultsProps> = ({
     }
 
     // If only one category, look for sub-categories in its questions
-    const cat = currentSurvey.categories[0];
     const subCats = new Set<string>();
     const subCatLabels: Record<string, string> = {};
 
-    cat.questions.forEach(q => {
-      if (q.subCategory) {
-        subCats.add(q.subCategory.en);
-        subCatLabels[q.subCategory.en] = q.subCategory[lang];
-      }
+    currentSurvey.categories.forEach(cat => {
+      cat.questions.forEach(q => {
+        if (q.subCategory) {
+          subCats.add(q.subCategory.en);
+          subCatLabels[q.subCategory.en] = q.subCategory[lang];
+        }
+      });
     });
 
     if (subCats.size > 0) {
@@ -215,10 +216,11 @@ export const Results: React.FC<ResultsProps> = ({
       }));
     }
 
+    const firstCat = currentSurvey.categories[0];
     return [{
-      key: cat.id,
-      subject: cat.title[lang],
-      A: ProfileService.calculateCategoryScore(surveyAnswers, cat.title.en) ?? 3,
+      key: firstCat.id,
+      subject: firstCat.title[lang],
+      A: ProfileService.calculateCategoryScore(surveyAnswers, firstCat.title.en) ?? 3,
       fullMark: 5
     }];
   }, [currentSurvey, surveyAnswers, lang]);
