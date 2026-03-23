@@ -1349,6 +1349,120 @@ async def assign_badge_to_user(req: UserBadgeAssign, user_id: str, hash: str, co
     await conn.execute("INSERT INTO user_badges (user_id, badge_id) VALUES ($1, $2) ON CONFLICT DO NOTHING", req.user_id, req.badge_id)
     return {"status": "success"}
 
+
+# SEO Meta Tag Injection for static pages
+SEO_TRANSLATIONS = {
+    "en": {
+        "": {"title": "NeuroProfile: Cognitive & Aphantasia Test", "desc": "Discover your unique mental architecture through our science-based assessment."},
+        "about": {"title": "What is Aphantasia? | NeuroProfile", "desc": "A scientific explanation of the phenomenon of absent imagination and its place in the spectrum of cognitive traits."},
+        "faq": {"title": "FAQ | NeuroProfile", "desc": "Answers to the most common questions about the test, results, and cognitive profiles."},
+        "how-it-works": {"title": "How it works? | NeuroProfile", "desc": "From taking the test to a personalized cognitive profile — step by step."},
+        "news": {"title": "Project News | NeuroProfile", "desc": "Stay updated with the latest features and research in the NeuroProfile project."},
+        "blog": {"title": "Cognitive Blog | NeuroProfile", "desc": "Expert articles on neuroscience, imagination, and cognitive diversity."},
+        "terms": {"title": "Terms of Service | NeuroProfile", "desc": "Please read our terms before using the service."},
+        "privacy": {"title": "Privacy Policy | NeuroProfile", "desc": "Learn how we protect your data and ensure your privacy."},
+    },
+    "uk": {
+        "": {"title": "NeuroProfile: Оцінка Когнітивного Профілю", "desc": "Дізнайтеся більше про те, як працює ваша уява, пам'ять та мислення за допомогою нашого тесту."},
+        "about": {"title": "Що таке афантазія? | NeuroProfile", "desc": "Наукове пояснення феномену відсутності уяви та його місця в спектрі когнітивних особливостей."},
+        "faq": {"title": "FAQ | NeuroProfile", "desc": "Відповіді на найпоширеніші питання про тест, результати та когнітивні профілі."},
+        "how-it-works": {"title": "Як це працює? | NeuroProfile", "desc": "Від проходження тесту до персоналізованого когнітивного профілю — покроково."},
+        "news": {"title": "Новини проекту | NeuroProfile", "desc": "Будьте в курсі нових функцій та досліджень у проекті NeuroProfile."},
+        "blog": {"title": "Когнітивний блог | NeuroProfile", "desc": "Експертні статті про нейронауку, уяву та когнітивне різноманіття."},
+        "terms": {"title": "Умови використання | NeuroProfile", "desc": "Будь ласка, ознайомтеся з умовами використання нашого сервісу."},
+        "privacy": {"title": "Політика конфіденційності | NeuroProfile", "desc": "Дізнайтеся, як ми захищаємо ваші дані та забезпечуємо конфіденційність."},
+    },
+    "ru": {
+        "": {"title": "NeuroProfile: Оценка Когнитивного Профиля", "desc": "Узнайте больше о том, как работает ваше воображение, память и мышление с помощью нашего теста."},
+        "about": {"title": "Что такое афантазия? | NeuroProfile", "desc": "Научное объяснение феномена отсутствия воображения и его места в спектре когнитивных особенностей."},
+        "faq": {"title": "FAQ | NeuroProfile", "desc": "Ответы на самые распространённые вопросы о тесте, результатах и когнитивных профилях."},
+        "how-it-works": {"title": "Как это работает? | NeuroProfile", "desc": "От прохождения теста до персонализированного когнитивного профиля — пошагово."},
+        "news": {"title": "Новости проекта | NeuroProfile", "desc": "Будьте в курсе новых функций и исследований в проекте NeuroProfile."},
+        "blog": {"title": "Когнитивный блог | NeuroProfile", "desc": "Экспертные статьи о нейронауке, воображении и когнитивном разнообразии."},
+        "terms": {"title": "Условия использования | NeuroProfile", "desc": "Пожалуйста, ознакомьтесь с условиями использования нашего сервиса."},
+        "privacy": {"title": "Политика конфиденциальности | NeuroProfile", "desc": "Узнайте, как мы защищаем ваши данные и обеспечиваем конфиденциальность."},
+    }
+}
+
+async def get_index_html():
+    """Reads index.html from available paths."""
+    possible_paths = [
+        "/app/frontend_dist/index.html",
+        "/app/frontend_source/index.html",
+        "/app/index.html",
+        os.path.join(os.path.dirname(__file__), "..", "index.html")
+    ]
+    for p in possible_paths:
+        if os.path.exists(p):
+            async with aiofiles.open(p, mode="r", encoding="utf-8") as f:
+                return await f.read()
+    return None
+
+@app.get("/{full_path:path}")
+async def catch_all_static(request: Request, full_path: str):
+    """Catch-all for static routes to inject SEO meta tags."""
+    # Skip API, OG-Image and Result routes (they have their own handlers)
+    if full_path.startswith("api/") or full_path.startswith("results/") or "." in full_path:
+        # If it contains a dot, it's likely a file (favicon, manifest, etc.)
+        raise HTTPException(status_code=404)
+
+    # Determine language
+    lang = request.query_params.get("lang", "en").lower()
+    if lang not in SEO_TRANSLATIONS:
+        # Detect from Accept-Language header
+        accept_lang = request.headers.get("Accept-Language", "").lower()
+        if "uk" in accept_lang: lang = "uk"
+        elif "ru" in accept_lang: lang = "ru"
+        else: lang = "en"
+
+    # Normalize path (remove trailing slashes)
+    clean_path = full_path.rstrip('/')
+    
+    # Check if we have SEO data for this path
+    meta_sets = SEO_TRANSLATIONS.get(lang, SEO_TRANSLATIONS["en"])
+    meta = meta_sets.get(clean_path, meta_sets[""]) # Default to home meta if path unknown (but listed in robots)
+
+    html_content = await get_index_html()
+    if not html_content:
+        raise HTTPException(status_code=404, detail="Index file not found")
+
+    # Build Tags
+    og_title = html.escape(meta["title"], quote=True)
+    og_desc = html.escape(meta["desc"], quote=True)
+    canonical_url = f"{BASE_URL}/{clean_path}"
+    if request.query_params.get("lang"):
+        canonical_url += f"?lang={lang}"
+    
+    # Hreflang tags for multilingual indexing
+    hreflangs = []
+    for l in ["en", "uk", "ru"]:
+        l_url = f"{BASE_URL}/{clean_path}"
+        if l != "en":
+            l_url += f"?lang={l}"
+        hreflangs.append(f'<link rel="alternate" hreflang="{l}" href="{l_url}" />')
+    hreflangs.append(f'<link rel="alternate" hreflang="x-default" href="{BASE_URL}/{clean_path}" />')
+
+    tags = f'''
+        <title>{og_title}</title>
+        <meta name="description" content="{og_desc}" />
+        <link rel="canonical" href="{html.escape(canonical_url, quote=True)}" />
+        {" ".join(hreflangs)}
+        <meta property="og:title" content="{og_title}" />
+        <meta property="og:description" content="{og_desc}" />
+        <meta property="og:url" content="{html.escape(canonical_url, quote=True)}" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="NeuroProfile" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="{og_title}" />
+        <meta name="twitter:description" content="{og_desc}" />
+    '''
+    
+    # Remove existing title if present to avoid duplicates
+    html_content = re.sub(r'<title>.*?</title>', '', html_content)
+    html_content = html_content.replace("<head>", f"<head>{tags}")
+    
+    return HTMLResponse(content=html_content)
+
 @app.delete("/api/user-badges/{target_user_id}/{badge_id}")
 async def remove_badge_from_user(target_user_id: str, badge_id: int, user_id: str, hash: str, conn: asyncpg.Connection = Depends(get_db)):
     if user_id not in ADMIN_USER_IDS: raise HTTPException(status_code=403)

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { BrainCircuit, Moon, Sun, ChevronDown, BookOpen, HelpCircle, FileText, Zap, Newspaper, Brain, Menu, X, Globe } from 'lucide-react';
 import { Language, UIStrings } from '@/types';
 import { GoogleLogin } from '@react-oauth/google';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 interface HeaderProps {
     appState: string;
@@ -128,9 +128,9 @@ export const Header: React.FC<HeaderProps> = ({
                         <Menu className="w-5 h-5" />
                     </button>
 
-                    <button
+                    <Link
+                        to="/"
                         className="flex items-center gap-2 text-brand-graphite cursor-pointer focus:outline-none rounded-lg transition-transform active:scale-95"
-                        onClick={() => navigate('/')}
                         aria-label="Go to Home"
                     >
                         <div className="bg-brand-ink p-1.5 rounded-lg shrink-0">
@@ -139,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <span className="font-serif text-base sm:text-lg lg:text-xl font-bold tracking-tight text-brand-graphite hidden xs:block">
                             NeuroProfile
                         </span>
-                    </button>
+                    </Link>
 
                     <nav className="hidden md:flex ml-4 lg:ml-8 bg-stone-bg/80 p-1 rounded-full border border-stone-line gap-0.5 lg:gap-1">
                         {mainLinks.map(link => (
@@ -170,9 +170,10 @@ export const Header: React.FC<HeaderProps> = ({
                             {infoOpen && (
                                 <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-52 bg-brand-paper-accent border border-stone-line rounded-2xl shadow-soft py-1.5 z-50">
                                     {infoLinks.map(link => (
-                                        <button
+                                        <Link
                                             key={link.path}
-                                            onClick={() => { navigate(link.path); setInfoOpen(false); }}
+                                            to={link.path}
+                                            onClick={() => setInfoOpen(false)}
                                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider transition-colors ${
                                                 pathname === link.path
                                                     ? 'text-brand-ink bg-brand-ink/5'
@@ -186,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                     {ui.soon}
                                                 </span>
                                             )}
-                                        </button>
+                                        </Link>
                                     ))}
                                 </div>
                             )}
@@ -338,9 +339,10 @@ export const Header: React.FC<HeaderProps> = ({
                                 <h3 className="px-3 text-[11px] font-bold text-stone-400 uppercase tracking-[0.2em] mb-3">{ui.navAbout}</h3>
                                 <div className="grid grid-cols-1 gap-1">
                                     {infoLinks.map(link => (
-                                        <button
+                                        <Link
                                             key={link.path}
-                                            onClick={() => { navigate(link.path); setMobileMenuOpen(false); }}
+                                            to={link.path}
+                                            onClick={() => setMobileMenuOpen(false)}
                                             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${
                                                 pathname === link.path ? 'bg-brand-ink/10 text-brand-ink ring-1 ring-brand-ink/20' : 'text-brand-graphite hover:bg-stone-bg'
                                             }`}
@@ -352,7 +354,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                     {ui.soon}
                                                 </span>
                                             )}
-                                        </button>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>

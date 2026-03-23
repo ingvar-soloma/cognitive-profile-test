@@ -1,4 +1,8 @@
+# meta: index, follow
+# x-robots: index, follow
+
 # Allow social crawlers to access shared results for previews (unfurling)
+
 User-agent: LinkedInBot
 User-agent: RedditBot
 User-agent: TelegramBot
@@ -16,7 +20,7 @@ Allow: /about
 Allow: /landing
 Allow: /faq
 Allow: /terms
-Allow: /privacy-policy
+Allow: /privacy
 Disallow: /blog
 Allow: /news
 
