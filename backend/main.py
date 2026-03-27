@@ -862,6 +862,8 @@ async def get_public_result_page(request: Request, id_or_share_id: str, conn: as
                 <meta property="og:url" content="{safe_canonical_url}" />
                 <meta property="og:type" content="article" />
                 <meta property="og:site_name" content="NeuroProfile" />
+                <meta property="og:locale" content="en_US" />
+                <meta property="og:logo" content="{BASE_URL}/favicon.png" />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="{safe_og_title}" />
                 <meta name="twitter:description" content="{safe_og_desc}" />
@@ -1452,9 +1454,13 @@ async def catch_all_static(request: Request, full_path: str):
         <meta property="og:url" content="{html.escape(canonical_url, quote=True)}" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="NeuroProfile" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:locale" content="{"en_US" if lang == 'en' else f'{lang}_{lang.upper()}'}" />
+        <meta property="og:image" content="{BASE_URL}/pwa-512x512.png" />
+        <meta property="og:logo" content="{BASE_URL}/favicon.png" />
+        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="{og_title}" />
         <meta name="twitter:description" content="{og_desc}" />
+        <meta name="twitter:image" content="{BASE_URL}/pwa-512x512.png" />
     '''
     
     # Remove existing title and description if present to avoid duplicates
