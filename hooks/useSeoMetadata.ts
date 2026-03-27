@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const SITE_NAME = import.meta.env.VITE_SITE_NAME || 'NeuroProfile';
+const SITE_NAME = import.meta.env.VITE_SITE_NAME || 'NP42 | NeuroProfile';
 const BASE_URL = import.meta.env.VITE_BASE_URL || 'https://np42.dev';
 
 interface SeoProps {
@@ -16,7 +16,7 @@ export function useSeoMetadata({ title, description, canonical }: SeoProps) {
   useEffect(() => {
     // 1. Title
     const prevTitle = document.title;
-    if (title) {
+    if (title && title !== SITE_NAME) {
       document.title = `${title} | ${SITE_NAME}`;
     } else {
       document.title = SITE_NAME;

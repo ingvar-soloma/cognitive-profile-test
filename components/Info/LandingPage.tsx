@@ -18,7 +18,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
     const heroRef = useRef<HTMLDivElement>(null);
 
     useSeoMetadata({
-        title: ui.title, // Use the shorter main title
         description: ui.description,
         canonical: '/'
     });
