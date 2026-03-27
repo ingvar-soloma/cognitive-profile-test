@@ -18,6 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
     const heroRef = useRef<HTMLDivElement>(null);
 
     useSeoMetadata({
+        title: ui.title, // Use the shorter main title
         description: ui.description,
         canonical: '/'
     });
@@ -26,7 +27,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
     useEffect(() => {
         const hero = heroRef.current;
         if (!hero) return;
-        
+
         let rafId: number;
         const handleMove = (e: MouseEvent) => {
             if (rafId) cancelAnimationFrame(rafId);
@@ -188,22 +189,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
 
                     <div className="mt-16 text-left bg-white/5 dark:bg-black/5 rounded-[2.5rem] p-8 border border-stone-line/50">
                         <div className="grid md:grid-cols-2 gap-12">
-                           <div className="space-y-4">
+                            <div className="space-y-4">
                                 <h3 className="text-xl font-serif font-bold text-brand-graphite">{ui.aboutWhatIsAphantasia}</h3>
                                 <p className="text-sm text-stone-500 leading-relaxed">
                                     {ui.aboutWhatIsAphantasiaDesc}
                                     <br /><br />
                                     {ui.aboutHowCommonDesc}
                                 </p>
-                           </div>
-                           <div className="space-y-4">
+                            </div>
+                            <div className="space-y-4">
                                 <h3 className="text-xl font-serif font-bold text-brand-graphite">{ui.aboutSpectrum}</h3>
                                 <p className="text-sm text-stone-500 leading-relaxed">
                                     {ui.aboutSpectrumDesc}
                                     <br /><br />
                                     {ui.aboutWhoDiscoveredDesc}
                                 </p>
-                           </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -227,7 +228,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                             </p>
                         </div>
                         <div className="space-y-6">
-                             <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-brand-ink/10 flex items-center justify-center border border-brand-ink/20">
                                     <Mail className="w-4 h-4 text-brand-ink dark:text-brand-clay" />
                                 </div>
@@ -240,13 +241,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                     {ui.contactText}
                                 </p>
                                 <div className="flex gap-4 pt-2">
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/terms')}
                                         className="text-[10px] font-bold uppercase tracking-widest text-brand-ink hover:text-brand-clay transition-colors"
                                     >
                                         {ui.navTerms}
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/privacy-policy')}
                                         className="text-[10px] font-bold uppercase tracking-widest text-brand-ink hover:text-brand-clay transition-colors"
                                     >
@@ -256,7 +257,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="pt-12 border-t border-stone-line/20 text-center">
                         <p className="text-[10px] text-stone-400 font-sans tracking-tight">
                             &copy; {new Date().getFullYear()} NeuroProfile Research Project. Built for cognitive exploration.

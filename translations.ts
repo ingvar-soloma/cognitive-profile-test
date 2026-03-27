@@ -279,7 +279,7 @@ export const UI_TRANSLATIONS: Record<Language, UIStrings> = {
     analysisReadyDesc: "Ваші відповіді зібрані та збережені. Ви можете ще раз перевірити їх або згенерувати аналіз прямо зараз.",
   },
   en: {
-    title: "Cognitive Profile Assessment",
+    title: "NP42",
     description: "Discover more about how your imagination, memory, and thinking work. This test helps identify signs of aphantasia, hyperphantasia, and define your thinking strategies.",
     start: "Start Test",
     resume: "Load Answers",
