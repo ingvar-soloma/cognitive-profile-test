@@ -99,10 +99,10 @@ export const Header: React.FC<HeaderProps> = ({
         { path: '/privacy', label: ui.privacyPolicy, icon: BookOpen },
     ];
 
-    const mainLinks = [
+    const mainLinks: { path: string; label: string; active: boolean; soon?: boolean; isNew?: boolean }[] = [
         { path: '/', label: ui.navTests, active: pathname === '/' || appState === 'SURVEY' },
         { path: '/results', label: ui.navResults, active: pathname.startsWith('/results') || pathname.startsWith('/history') },
-        { path: '/recommendations', label: ui.navRecommendations, active: pathname === '/recommendations', soon: true },
+        { path: '/recommendations', label: ui.navRecommendations, active: pathname === '/recommendations', isNew: true },
     ];
 
     const infoPathnames = infoLinks.map(l => l.path);
@@ -139,6 +139,9 @@ export const Header: React.FC<HeaderProps> = ({
                         <span className="font-serif text-base sm:text-lg lg:text-xl font-bold tracking-tight text-brand-graphite hidden xs:block">
                             NP42 | NeuroProfile
                         </span>
+                        <span className="ml-[6px] px-1.5 py-0.5 rounded-full bg-brand-ink/10 text-brand-ink text-[10px] font-bold uppercase tracking-tight border border-brand-ink/20 leading-none inline-flex items-center shadow-sm shrink-0">
+                            beta V4
+                        </span>
                     </Link>
 
                     <nav className="hidden md:flex ml-4 lg:ml-8 bg-stone-bg/80 p-1 rounded-full border border-stone-line gap-0.5 lg:gap-1">
@@ -152,6 +155,11 @@ export const Header: React.FC<HeaderProps> = ({
                                 {link.soon && (
                                     <span className="ml-1.5 px-1 py-0.5 rounded-md bg-brand-clay/10 text-brand-clay text-[7px] font-extrabold uppercase tracking-tighter border border-brand-clay/20 leading-none inline-block align-middle">
                                         {ui.soon}
+                                    </span>
+                                )}
+                                {link.isNew && (
+                                    <span className="ml-1.5 px-1.5 py-0.5 rounded-md bg-brand-ink/10 text-brand-ink text-[7px] font-extrabold uppercase tracking-tighter border border-brand-ink/20 leading-none inline-block align-middle shadow-sm">
+                                        {ui.newLabel}
                                     </span>
                                 )}
                             </Link>
@@ -297,6 +305,9 @@ export const Header: React.FC<HeaderProps> = ({
                                     <BrainCircuit className="w-5 h-5 text-white" />
                                 </div>
                                 <span className="font-serif text-lg font-bold text-brand-graphite">NP42 | NeuroProfile</span>
+                                <span className="ml-2 px-1.5 py-0.5 rounded-full bg-brand-ink/10 text-brand-ink text-[10px] font-bold uppercase tracking-tight border border-brand-ink/20 leading-none inline-flex items-center shadow-sm">
+                                    beta V4
+                                </span>
                             </div>
                             <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-stone-500 hover:text-brand-clay">
                                 <X className="w-6 h-6" />
@@ -329,6 +340,11 @@ export const Header: React.FC<HeaderProps> = ({
                                             {link.soon && (
                                                 <span className="ml-2 px-1 py-0.5 rounded-md bg-brand-clay/10 text-brand-clay text-[7px] font-extrabold uppercase tracking-tighter border border-brand-clay/20 leading-none">
                                                     {ui.soon}
+                                                </span>
+                                            )}
+                                            {link.isNew && (
+                                                <span className="ml-2 px-1.5 py-0.5 rounded-md bg-brand-ink/10 text-brand-ink text-[7px] font-extrabold uppercase tracking-tighter border border-brand-ink/20 leading-none shadow-sm">
+                                                    {ui.newLabel}
                                                 </span>
                                             )}
                                         </Link>

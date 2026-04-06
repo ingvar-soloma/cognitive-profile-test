@@ -98,19 +98,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
 
                 <div className="relative z-10 max-w-3xl mx-auto">
                     {/* Label */}
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-paper-accent/80 backdrop-blur-md border border-stone-line rounded-full text-[10px] font-bold tracking-[0.2em] uppercase text-stone-500 mb-8 shadow-sm">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-paper-accent/60 backdrop-blur-md border border-stone-line/50 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase text-stone-500 mb-8 shadow-sm">
                         <Zap className="w-3 h-3 text-amber-500" />
                         {ui.cognitiveAssessment}
                     </div>
 
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-graphite leading-[1.05] tracking-tight mb-6"
-                        style={{ transform: 'translateX(calc(var(--hero-dx) * 0.3)) translateY(calc(var(--hero-dy) * 0.3))' }}>
-                        {ui.heroTitle}
-                    </h1>
+                    <div className="relative p-2 md:p-0">
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-graphite leading-[1.05] tracking-tight mb-6"
+                            style={{ transform: 'translateX(calc(var(--hero-dx) * 0.3)) translateY(calc(var(--hero-dy) * 0.3))' }}>
+                            {ui.heroTitle}
+                        </h1>
 
-                    <p className="text-lg text-stone-500 leading-relaxed max-w-xl mx-auto mb-10 font-sans">
-                        {ui.heroSubtitle}
-                    </p>
+                        <p className="text-base sm:text-lg text-stone-500 leading-relaxed max-w-xl mx-auto mb-10 font-sans">
+                            {ui.heroSubtitle}
+                        </p>
+                    </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button

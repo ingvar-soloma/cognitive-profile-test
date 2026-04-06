@@ -904,9 +904,30 @@ export const Results: React.FC<ResultsProps> = ({
                   )}
 
                   {isAnalyzing && geminiRecs && !geminiRecs.includes('Invalid input') && (
-                    <div className="mt-8 flex items-center gap-3 text-brand-ink animate-pulse">
+                    <div className="mt-8 flex items-center gap-3 text-brand-ink animate-pulse text-left">
                       <Zap className="w-4 h-4 fill-current" />
                       <span className="text-[10px] items-center uppercase font-bold tracking-widest">{ui.predictedTime?.split(' ')[0] || 'AI'} is typing...</span>
+                    </div>
+                  )}
+
+                  {!isPublicView && geminiRecs && !isAnalyzing && (
+                    <div className="mt-12 pt-10 border-t border-stone-line/30 flex flex-col md:flex-row items-center justify-between gap-6 text-left">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center">
+                            <Sparkles className="w-6 h-6 text-brand-ink" />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-serif font-bold text-brand-graphite leading-tight">{ui.navRecommendations}</h4>
+                            <p className="text-stone-400 text-xs font-sans mt-0.5">Explore cognitive tools tailored to your mind</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => navigate('/recommendations')}
+                        className="shrink-0 h-14 px-8 bg-brand-ink text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:shadow-soft transition-all flex items-center justify-center gap-3 group/btn"
+                      >
+                        {ui.resultsToRecommendations}
+                        <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+                      </button>
                     </div>
                   )}
                 </div>

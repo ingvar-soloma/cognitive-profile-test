@@ -143,12 +143,12 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 @keyframes pulse-extra-slow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 0.25; transform: scale(1); }
+  50% { opacity: 0.12; transform: scale(1.05); }
 }
 
 .animate-pulse-slow {
-  animation: pulse-extra-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-extra-slow 12s ease-in-out infinite;
 }
 
 @keyframes fade-in {

@@ -212,12 +212,28 @@ export interface UIStrings {
   recommendationsDesc: string;
   credits: string;
   recommendationsLockedDesc: string;
+  recommendationsCTATitle: string;
+  recommendationsCTADesc: string;
+  recommendationsCTAButton: string;
   careerAdvisorDesc: string;
   worldviewDesc: string;
   selfExplorationDesc: string;
   mediaRecsDesc: string;
   creativityRecsDesc: string;
-  selectTestTitle: string;
+  jumpToGemini: string;
+  jumpToGeminiDesc: string;
+  copyToClipboard: string;
+  continueToGemini: string;
+  copied: string;
+  readyToUse: string;
+  clickToCustomize: string;
+  freeInBeta: string;
+  workshopResume: string;
+  workshopCoverLetter: string;
+  exploreJobIdeas: string;
+  customPromptTitle: string;
+  customPromptPlaceholder: string;
+  promptCopied: string;
   tryExpressTest: string;
   privateProfileTitle: string;
   privateProfileDesc: string;
@@ -368,6 +384,22 @@ export interface UIStrings {
   shareNews: string;
   copyLink: string;
   linkCopied: string;
+  sectionCareer: string;
+  sectionCareerDesc: string;
+  sectionSelf: string;
+  sectionSelfDesc: string;
+  sectionCreativity: string;
+  sectionCreativityDesc: string;
+  sectionRelationships: string;
+  sectionRelationshipsDesc: string;
+  cognitiveAudit: string;
+  cognitiveAuditDesc: string;
+  brainstormPartner: string;
+  brainstormPartnerDesc: string;
+  interpersonal: string;
+  interpersonalDesc: string;
+  newLabel: string;
+  resultsToRecommendations: string;
 }
 
 export enum ProfileType {

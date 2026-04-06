@@ -28,3 +28,4 @@ backend/data/results/
 backend/__pycache__
 .env
 /debug_results/
+/reports/

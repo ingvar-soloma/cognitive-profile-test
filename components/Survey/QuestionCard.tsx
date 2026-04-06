@@ -160,11 +160,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               value={answer?.note || ''}
               onChange={handleNoteChange}
               placeholder={question.placeholder || ""}
-              maxLength={150}
+              maxLength={300}
               className="w-full min-h-[100px] p-4 text-sm text-brand-graphite bg-brand-paper-accent border border-stone-line rounded-2xl focus:ring-2 focus:ring-brand-ink/20 focus:border-brand-ink/30 outline-none transition-all resize-y placeholder-stone-400"
             />
             <div className="absolute bottom-3 right-4 text-[10px] text-stone-400 font-bold pointer-events-none">
-              {(answer?.note || '').length} / 150
+              {(answer?.note || '').length} / 300
             </div>
           </div>
         </div>

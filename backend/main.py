@@ -84,8 +84,8 @@ class AnswerItem(BaseModel):
     @classmethod
     def validate_note_length_and_escape(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
-            if len(v) > 150:
-                raise ValueError("Note exceeds 150 characters.")
+            if len(v) > 300:
+                raise ValueError("Note exceeds 300 characters.")
             return html.escape(v)
         return v
         

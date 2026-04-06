@@ -1070,7 +1070,9 @@ const App: React.FC = () => {
               <Recommendations
                 ui={ui}
                 isLocked={!profiles.some(p => Object.keys(p.answers).length > 0)}
+                activeProfile={activeProfile}
                 user={user}
+                lang={language}
               />
             </ProtectedRoute>
           } />

@@ -36,12 +36,12 @@ class TestLLMMiddleware(unittest.TestCase):
     def test_note_exceeds_length(self):
         payload = {
             "answers": {
-                "q1": {"note": "A" * 151}
+                "q1": {"note": "A" * 301}
             }
         }
         with self.assertRaises(ValidationError) as context:
             TestResultsValidator(**payload)
-        self.assertIn("Note exceeds 150 characters", str(context.exception))
+        self.assertIn("Note exceeds 300 characters", str(context.exception))
 
     def test_note_is_html_escaped(self):
         payload = {
