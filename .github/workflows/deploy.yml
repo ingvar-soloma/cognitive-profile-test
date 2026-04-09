@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to server via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -20,28 +20,28 @@ jobs:
             set -e
             cd ${{ secrets.DEPLOY_PATH }}
             
-            # Ensure proper SSH setup for pulling from GitHub
-            mkdir -p ~/.ssh && chmod 700 ~/.ssh
+            # Ensure github.com is in known_hosts to avoid interactive prompts
+            mkdir -p ~/.ssh
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts 2>/dev/null
             
-            # Use ssh-agent to handle keys if they exist in the deployer's home
-            eval $(ssh-agent -s)
-            for key in id_rsa id_ed25519 id_ecdsa; do
-              if [ -f ~/.ssh/$key ]; then
-                ssh-add ~/.ssh/$key 2>/dev/null && echo "Added $key"
-              fi
-            done
-            
-            # Check for .env file (critical for docker-compose build/up)
-            if [ ! -f .env ]; then
-              echo "CRITICAL: .env file missing in $PWD. Build may fail or use development defaults."
+            # Handle SSH Agent if needed for server-side git operations
+            if [ -z "$SSH_AUTH_SOCK" ]; then
+              eval $(ssh-agent -s)
+              for key in id_rsa id_ed25519 id_ecdsa; do
+                [ -f ~/.ssh/$key ] && ssh-add ~/.ssh/$key 2>/dev/null
+              done
             fi
             
-            # Update source code
-            git fetch origin
-            git checkout main
-            git pull origin main
+            # Check for .env file
+            if [ ! -f .env ]; then
+              echo "WARNING: .env file missing in $PWD. Build might use incorrect config."
+            fi
             
-            # Build and restart containers using Makefile commands
+            # Update source code reliably
+            git fetch origin main
+            git reset --hard origin/main
+            
+            # Build and restart containers
             make prod-build
             make prod-up
+
