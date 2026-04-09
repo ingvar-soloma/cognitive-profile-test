@@ -22,7 +22,9 @@ ENV VITE_BASE_URL=$VITE_BASE_URL
 RUN npm run build
 
 FROM nginx:alpine AS prod
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy files to a temporary location first (volumes shadow the default location)
+COPY --from=build /app/dist /app/static
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Sync files to the volume at runtime and start nginx
+CMD ["sh", "-c", "cp -rf /app/static/* /usr/share/nginx/html/ && nginx -g 'daemon off;'"]
