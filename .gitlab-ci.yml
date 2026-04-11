@@ -6,11 +6,14 @@ deploy:
   stage: deploy
   image: alpine:latest
   before_script:
-    - apk add --no-cache openssh-client
+    - apk add --no-cache openssh-client curl
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
   script:
-    - ssh $SSH_USER@$SSH_HOST "
+    - chmod +x scripts/notify_deploy.sh
+    - ./scripts/notify_deploy.sh "started"
+    - |
+      ssh $SSH_USER@$SSH_HOST "
         set -e;
         cd $DEPLOY_PATH;
         
@@ -31,12 +34,12 @@ deploy:
 
         git fetch origin;
         git checkout main;
-        # git reset --hard origin/main; # Optional: force update if there are local changes
         git pull origin main;
         
         make prod-build;
         make prod-up;
-      "
+      " || (./scripts/notify_deploy.sh "failed" && exit 1)
+    - ./scripts/notify_deploy.sh "success"
   only:
     - main
   environment:

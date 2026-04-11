@@ -49,6 +49,10 @@ prune:
 clean-volumes:
 	docker volume prune -f
 
+# Notification
+notify-status:
+	@./scripts/notify_deploy.sh "$(STATUS)"
+
 # Help
 help:
 	@echo "Available commands:"
@@ -63,3 +67,4 @@ help:
 	@echo "  make logs-backend     - View backend logs"
 	@echo "  make list-subscribers - List all newsletter subscribers"
 	@echo "  make prune            - Remove unused docker objects"
+	@echo "  make notify-status STATUS=success - Send Telegram notification"
