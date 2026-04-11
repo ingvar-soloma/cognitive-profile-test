@@ -156,6 +156,7 @@ export interface UIStrings {
   selectTestToDownload: string;
   disclaimerTitle: string;
   disclaimer: string;
+  complianceDisclaimer: string;
   gdprTitle: string;
   gdprText: string;
   contactTitle: string;

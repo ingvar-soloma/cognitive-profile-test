@@ -228,6 +228,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                             <p className="text-xs text-stone-500 leading-relaxed font-sans max-w-sm">
                                 {ui.disclaimer}
                             </p>
+                            <p className="text-[10px] text-amber-600/80 dark:text-amber-400/60 leading-relaxed font-sans max-w-sm font-medium">
+                                {ui.complianceDisclaimer}
+                            </p>
                         </div>
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">

@@ -531,6 +531,11 @@ ${ctx.analysisText}
                         <p className="text-muted-foreground max-w-2xl leading-relaxed text-sm md:text-lg">
                             {ui.jumpToGeminiDesc.split('.')[0]}. {ui.jumpToGeminiDesc.split('.')[1] || ''}
                         </p>
+                        <div className="mt-4 bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 max-w-2xl">
+                            <p className="text-[10px] md:text-xs text-amber-600/80 dark:text-amber-400/60 font-medium leading-relaxed">
+                                {ui.complianceDisclaimer}
+                            </p>
+                        </div>
                     </div>
                     <div className="bg-card border border-border px-6 py-3 rounded-full flex items-center gap-4 shadow-xl">
                         <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center text-xs font-bold text-white">₿</div>

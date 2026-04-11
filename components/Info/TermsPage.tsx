@@ -63,6 +63,11 @@ export const TermsPage: React.FC<TermsPageProps> = ({ ui }) => {
                 <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-4 tracking-tight">
                     {ui.termsTitle}
                 </h1>
+                <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-6 mb-8">
+                    <p className="text-amber-800 dark:text-amber-200 text-sm font-medium leading-relaxed font-sans">
+                        {ui.complianceDisclaimer}
+                    </p>
+                </div>
                 <p className="text-stone-500 text-base leading-relaxed max-w-xl font-sans">
                     {ui.termsSubtitle}
                 </p>

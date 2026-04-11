@@ -38,8 +38,11 @@ export const Footer: React.FC<FooterProps> = ({ ui, language }) => {
                                 NP42 NeuroProfile
                             </span>
                         </Link>
-                        <p className="text-stone-500 text-sm leading-relaxed mb-8 max-w-sm">
+                        <p className="text-stone-500 text-sm leading-relaxed mb-4 max-w-sm">
                             {ui.heroSubtitle}
+                        </p>
+                        <p className="text-[10px] text-stone-400 leading-relaxed mb-8 max-w-sm font-medium italic">
+                            {ui.complianceDisclaimer}
                         </p>
                         <div className="flex gap-4">
                             <a href="mailto:ingvar.soloma@gmail.com" className="w-10 h-10 rounded-xl bg-white dark:bg-brand-paper-accent border border-stone-line flex items-center justify-center text-stone-400 hover:text-brand-ink transition-all shadow-sm">

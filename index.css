@@ -84,9 +84,11 @@
   ::selection {
     @apply bg-brand-clay/20 text-brand-graphite;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
+
   html {
     @apply font-sans;
   }
@@ -134,8 +136,15 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 @keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.85; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.85;
+  }
 }
 
 .animate-pulse-subtle {
@@ -143,8 +152,17 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 @keyframes pulse-extra-slow {
-  0%, 100% { opacity: 0.25; transform: scale(1); }
-  50% { opacity: 0.12; transform: scale(1.05); }
+
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.12;
+    transform: scale(1.05);
+  }
 }
 
 .animate-pulse-slow {
@@ -152,13 +170,14 @@ textarea::-webkit-scrollbar-thumb:hover {
 }
 
 @keyframes fade-in {
-  from { 
-    opacity: 0; 
-    transform: translateY(8px); 
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
