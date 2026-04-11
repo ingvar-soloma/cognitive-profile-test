@@ -10,6 +10,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Notify Telegram (Started)
+        run: |
+          chmod +x scripts/notify_deploy.sh
+          ./scripts/notify_deploy.sh "started"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_ID: ${{ secrets.TELEGRAM_GROUP_ID }}
+
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -44,4 +55,18 @@ jobs:
             # Build and restart containers
             make prod-build
             make prod-up
+
+      - name: Notify Telegram (Success)
+        if: success()
+        run: ./scripts/notify_deploy.sh "success"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_ID: ${{ secrets.TELEGRAM_GROUP_ID }}
+
+      - name: Notify Telegram (Failure)
+        if: failure()
+        run: ./scripts/notify_deploy.sh "failed"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_GROUP_ID: ${{ secrets.TELEGRAM_GROUP_ID }}
 

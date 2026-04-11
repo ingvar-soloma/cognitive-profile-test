@@ -12,23 +12,44 @@ if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_GROUP_ID" ]; then
     exit 0
 fi
 
+# Platform-agnostic variable mapping
+PROJECT_NAME=${CI_PROJECT_NAME:-${GITHUB_REPOSITORY:-"Aphantasia Test"}}
+COMMIT_TITLE=${CI_COMMIT_TITLE:-"N/A"}
+COMMIT_AUTHOR=${CI_COMMIT_AUTHOR:-${GITHUB_ACTOR:-"N/A"}}
+JOB_URL=${CI_JOB_URL:-"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"}
+JOB_NAME=${CI_JOB_NAME:-${GITHUB_WORKFLOW:-"Deploy"}}
+
+# Try to get commit title if on GitHub and not provided
+if [ "$COMMIT_TITLE" == "N/A" ] && [ -f "$GITHUB_EVENT_PATH" ]; then
+    if command -v jq >/dev/null 2>&1; then
+        COMMIT_TITLE=$(jq -r '.head_commit.message' "$GITHUB_EVENT_PATH" | head -n 1)
+    else
+        COMMIT_TITLE=$(grep -Po '(?<="message": ")[^"]*' "$GITHUB_EVENT_PATH" | head -n 1)
+    fi
+fi
+
+if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_GROUP_ID" ]; then
+    echo "Warning: TELEGRAM_BOT_TOKEN or TELEGRAM_GROUP_ID not set. Skipping notification."
+    exit 0
+fi
+
 case $STATUS in
     "started")
         MESSAGE="🚀 <b>Deploy started</b>
-<b>Project:</b> ${CI_PROJECT_NAME:-'Aphantasia Test'}
-<b>Commit:</b> ${CI_COMMIT_TITLE:-'N/A'}
-<b>Author:</b> ${CI_COMMIT_AUTHOR:-'N/A'}"
+<b>Project:</b> ${PROJECT_NAME}
+<b>Commit:</b> ${COMMIT_TITLE}
+<b>Author:</b> ${COMMIT_AUTHOR}"
         ;;
     "success")
         MESSAGE="✅ <b>Deploy successful</b>
-<b>Project:</b> ${CI_PROJECT_NAME:-'Aphantasia Test'}
+<b>Project:</b> ${PROJECT_NAME}
 <b>Environment:</b> Production"
         ;;
     "failed")
         MESSAGE="❌ <b>Deploy failed</b>
-<b>Project:</b> ${CI_PROJECT_NAME:-'Aphantasia Test'}
-<b>Commit:</b> ${CI_COMMIT_TITLE:-'N/A'}
-<b>Job:</b> <a href=\"${CI_JOB_URL}\">${CI_JOB_NAME}</a>"
+<b>Project:</b> ${PROJECT_NAME}
+<b>Commit:</b> ${COMMIT_TITLE}
+<b>Job:</b> <a href=\"${JOB_URL}\">${JOB_NAME}</a>"
         ;;
     *)
         MESSAGE="📦 <b>Deploy status:</b> ${STATUS}
