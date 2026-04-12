@@ -285,7 +285,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </div>
                         ) : (
                             <div className="scale-90 sm:scale-100 origin-right">
-                                <GoogleAuthButton useOneTap={true} />
+                                <GoogleAuthButton useOneTap={false} />
                             </div>
                         )}
                     </div>
