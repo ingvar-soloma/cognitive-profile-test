@@ -17,6 +17,24 @@ const FloatingOrb: React.FC<{ className?: string }> = ({ className }) => (
 export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) => {
     const navigate = useNavigate();
     const heroRef = useRef<HTMLDivElement>(null);
+    const [isLockedReport] = React.useState(true);
+    const [email, setEmail] = React.useState('');
+    const [leadStatus, setLeadStatus] = React.useState<'idle'|'loading'|'success'|'error'>('idle');
+
+    const handleLeadSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLeadStatus('loading');
+        try {
+            await fetch('/api/leads', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            setLeadStatus('success');
+        } catch {
+            setLeadStatus('error');
+        }
+    };
 
     useSeoMetadata({
         title: ui.title, // Use the shorter main title
@@ -99,13 +117,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
 
                 <div className="relative z-10 max-w-3xl mx-auto">
                     {/* Label */}
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-paper-accent/60 backdrop-blur-md rounded-full text-[10px] font-bold tracking-[0.2em] uppercase text-stone-500 mb-8 shadow-sm">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-bgCard/60 backdrop-blur-md rounded-full text-[10px] font-bold tracking-[0.2em] uppercase text-stone-500 mb-8 shadow-sm">
                         <Zap className="w-3 h-3 text-amber-500" />
                         {ui.cognitiveAssessment}
                     </div>
 
                     <div className="relative p-2 md:p-0">
-                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-graphite leading-[1.05] tracking-tight mb-6"
+                        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-brand-textPrimary leading-[1.05] tracking-tight mb-6"
                             style={{ transform: 'translateX(calc(var(--hero-dx) * 0.3)) translateY(calc(var(--hero-dy) * 0.3))' }}>
                             {ui.heroTitle}
                         </h1>
@@ -125,12 +143,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                         </button>
                         <button
                             onClick={() => navigate('/about')}
-                            className="inline-flex items-center gap-2 px-6 py-4 bg-brand-paper-accent rounded-2xl text-sm font-bold text-brand-graphite hover:shadow-soft transition-all"
+                            className="inline-flex items-center gap-2 px-6 py-4 bg-brand-bgCard rounded-2xl text-sm font-bold text-brand-textPrimary hover:shadow-soft transition-all"
                         >
                             {ui.landingLearnMore}
                             <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
+
+                    {/* Scientific Authority Block */}
+                    <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-stone-500 uppercase tracking-widest">
+                        <span>Based on VVIQ (1973)</span>
+                        <span>PSIQ Multisensory Metrics</span>
+                        <span>MBTI Cognitive Functions</span>
+                        <span>SDAM Memory Framework</span>
+                    </a>
 
                     {/* Trust signals */}
                     <div className="flex items-center justify-center gap-6 mt-12 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
@@ -153,12 +179,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                         {profiles.map((p) => (
                             <div
                                 key={p.label}
-                                className="bg-brand-paper-accent rounded-[1.5rem] p-6 text-center shadow-sm hover:shadow-soft transition-shadow"
+                                className="bg-brand-bgCard rounded-[1.5rem] p-6 text-center shadow-sm hover:shadow-soft transition-shadow"
                             >
                                 <div className={`w-12 h-12 rounded-xl ${p.chip} flex items-center justify-center mx-auto mb-4`}>
                                     <p.icon className={`w-5 h-5 ${p.color}`} />
                                 </div>
-                                <div className="text-2xl font-serif font-bold text-brand-graphite mb-1">{p.pct}</div>
+                                <div className="text-2xl font-serif font-bold text-brand-textPrimary mb-1">{p.pct}</div>
                                 <div className="text-xs text-stone-500 font-sans">{p.label}</div>
                             </div>
                         ))}
@@ -167,10 +193,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
             </section>
 
             {/* ── FEATURES ─────────────────────────────── */}
-            <section className="py-16 px-4 bg-brand-paper-accent/50">
+            <section className="py-16 px-4 bg-brand-bgCard/50">
                 <div className="max-w-5xl mx-auto">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-graphite mb-3 tracking-tight">
+                        <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-textPrimary mb-3 tracking-tight">
                             {ui.marketingTitle}
                         </h2>
                         <p className="text-stone-500 text-sm max-w-lg mx-auto font-sans">{ui.whyTakeTest}</p>
@@ -179,33 +205,90 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                         {features.map((f) => (
                             <div
                                 key={f.title}
-                                className="bg-brand-paper-accent rounded-[1.5rem] p-6 shadow-sm hover:shadow-soft transition-shadow flex flex-col gap-3"
+                                className="bg-brand-bgCard rounded-[1.5rem] p-6 shadow-sm hover:shadow-soft transition-shadow flex flex-col gap-3"
                             >
                                 <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center`}>
                                     <f.icon className={`w-5 h-5 ${f.color}`} />
                                 </div>
-                                <h3 className="text-sm font-serif font-bold text-brand-graphite leading-snug">{f.title}</h3>
+                                <h3 className="text-sm font-serif font-bold text-brand-textPrimary leading-snug">{f.title}</h3>
                                 <p className="text-xs text-stone-500 leading-relaxed font-sans">{f.desc}</p>
                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-16 text-left bg-white/5 dark:bg-black/5 rounded-[2.5rem] p-8">
-                        <div className="grid md:grid-cols-2 gap-12">
+                    {/* Curiosity Hook */}
+                    <div className="mt-16 mb-8 text-left">
+                        <h3 className="text-lg font-serif font-bold text-brand-textPrimary mb-6">
+                            {ui.curiosityTitle}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-stone-100/50 dark:bg-black/20 p-4 rounded-2xl border-l-4 border-brand-ink/50">
+                            {[
+                                ui.curiosityInsight1,
+                                ui.curiosityInsight2,
+                                ui.curiosityInsight3,
+                                ui.curiosityInsight4,
+                                ui.curiosityInsight5
+                            ].map((insight, idx) => (
+                                <div key={idx} className="bg-brand-bgCard p-4 rounded-xl text-sm text-stone-600 shadow-sm border border-black/5">
+                                    {insight}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Lead Capture Form */}
+                    <div className="my-16 mx-auto max-w-2xl bg-brand-ink text-white rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
+                        <FloatingOrb className="w-64 h-64 bg-purple-500/20 -top-16 -right-16 opacity-50" />
+                        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-4 relative z-10">
+                            {ui.leadFormTitle}
+                        </h2>
+                        <p className="text-sm text-stone-300 mb-8 max-w-md mx-auto relative z-10">
+                            {ui.leadFormSubtitle}
+                        </p>
+                        <form onSubmit={handleLeadSubmit} className="relative z-10 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                            <input 
+                                type="email" 
+                                required 
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder={ui.leadFormEmailPlaceholder}
+                                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-stone-400 focus:outline-none focus:border-white/50 transition-colors"
+                            />
+                            <button 
+                                type="submit" 
+                                disabled={leadStatus === 'loading' || leadStatus === 'success'}
+                                className="px-6 py-3 bg-white text-brand-ink rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-stone-200 transition-colors disabled:opacity-50"
+                            >
+                                {leadStatus === 'success' ? '✓' : ui.leadFormButton}
+                            </button>
+                        </form>
+                    </div>
+
+                    {/* Locked Report Preview */}
+                    <div className="mt-16 text-left bg-white/5 dark:bg-black/5 rounded-[2.5rem] p-8 relative overflow-hidden">
+                        {isLockedReport && (
+                            <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/30 dark:bg-black/30 flex flex-col items-center justify-center">
+                                <div className="bg-brand-bgCard p-4 rounded-full shadow-sm mb-4 border border-stone-line">
+                                    <EyeOff className="w-8 h-8 text-stone-400" />
+                                </div>
+                                <p className="font-bold uppercase tracking-widest text-sm text-brand-textPrimary">{ui.lockedReportLabel}</p>
+                            </div>
+                        )}
+                        <div className={`grid md:grid-cols-2 gap-12 ${isLockedReport ? 'opacity-30 blur-sm pointer-events-none select-none' : ''}`}>
                             <div className="space-y-4">
-                                <h3 className="text-xl font-serif font-bold text-brand-graphite">{ui.aboutWhatIsAphantasia}</h3>
+                                <h3 className="text-xl font-serif font-bold text-brand-textPrimary">{ui.sectionCareer}</h3>
                                 <p className="text-sm text-stone-500 leading-relaxed">
-                                    {ui.aboutWhatIsAphantasiaDesc}
+                                    {ui.sectionCareerDesc}
                                     <br /><br />
-                                    {ui.aboutHowCommonDesc}
+                                    [Personalized career insights based on cognitive profile...]
                                 </p>
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-xl font-serif font-bold text-brand-graphite">{ui.aboutSpectrum}</h3>
+                                <h3 className="text-xl font-serif font-bold text-brand-textPrimary">{ui.sectionRelationships}</h3>
                                 <p className="text-sm text-stone-500 leading-relaxed">
-                                    {ui.aboutSpectrumDesc}
+                                    {ui.sectionRelationshipsDesc}
                                     <br /><br />
-                                    {ui.aboutWhoDiscoveredDesc}
+                                    [Team dynamics and communication adaptation guidelines...]
                                 </p>
                             </div>
                         </div>
@@ -214,20 +297,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
             </section>
 
             {/* ── PRICING TEASER ─────────────────────────────── */}
-            <section className="py-16 px-4 bg-brand-paper-accent/30 border-t border-stone-line/30">
+            <section className="py-16 px-4 bg-brand-bgCard/30 border-t border-stone-line/30">
                 <div className="max-w-4xl mx-auto text-center space-y-6">
-                    <h2 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite">
+                    <h2 className="text-2xl md:text-3xl font-serif font-bold text-brand-textPrimary">
                         {ui.pricingTitle || "Access your full profile"}
                     </h2>
                     <p className="text-stone-500 max-w-xl mx-auto">
                         We offer a flexible Free Tier for research contributions, and a Pro Tier for detailed self-exploration.
                     </p>
-                    <button 
-                        onClick={() => navigate('/pricing')}
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-brand-ink text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-inkHover hover:shadow-lg transition-all"
-                    >
-                        View Pricing Options <ArrowRight className="w-4 h-4" />
-                    </button>
+                    {/* Pricing Node */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '24px' }} className="mx-auto max-w-lg bg-black/5 dark:bg-white/5">
+                        <span style={{ textDecoration: 'line-through', opacity: 0.5, fontSize: '14px' }}>{ui.pricingFuturePrice}</span>
+                        <span style={{ fontWeight: 700, fontSize: '24px' }} className="text-brand-ink mt-2">{ui.pricingBetaOffer}</span>
+                        <a href="/survey/express_demo" style={{ opacity: 0.7, marginTop: '16px', fontSize: '14px', textDecoration: 'underline' }}>{ui.pricingFallbackCTA}</a>
+                    </div>
                 </div>
             </section>
 

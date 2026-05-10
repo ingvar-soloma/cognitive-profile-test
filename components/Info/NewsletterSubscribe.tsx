@@ -81,7 +81,7 @@ export const NewsletterSubscribe: React.FC<NewsletterSubscribeProps> = ({
                 <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
                     <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <p className="text-sm font-bold text-brand-graphite">{ui.subscribeSuccess}</p>
+                <p className="text-sm font-bold text-brand-textPrimary">{ui.subscribeSuccess}</p>
                 <p className="text-xs text-stone-400 font-sans">{email}</p>
             </div>
         );
@@ -93,7 +93,7 @@ export const NewsletterSubscribe: React.FC<NewsletterSubscribeProps> = ({
                 <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
                     <Mail className="w-6 h-6 text-amber-600 dark:text-amber-400" />
                 </div>
-                <p className="text-sm font-bold text-brand-graphite">{ui.subscribeAlreadySubscribed}</p>
+                <p className="text-sm font-bold text-brand-textPrimary">{ui.subscribeAlreadySubscribed}</p>
                 <p className="text-xs text-stone-400 font-sans">{email}</p>
             </div>
         );
@@ -112,7 +112,7 @@ export const NewsletterSubscribe: React.FC<NewsletterSubscribeProps> = ({
                             if (state === 'error') setState('idle');
                         }}
                         placeholder={ui.subscribePlaceholder}
-                        className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-sans bg-brand-paper-accent text-brand-graphite placeholder-stone-400 outline-none transition-all ${
+                        className={`w-full pl-10 pr-4 py-3 rounded-xl border text-sm font-sans bg-brand-bgCard text-brand-textPrimary placeholder-stone-400 outline-none transition-all ${
                             state === 'error'
                                 ? 'border-red-400 ring-1 ring-red-300 dark:ring-red-800'
                                 : 'border-stone-line focus:border-brand-ink focus:ring-1 focus:ring-brand-ink/30'

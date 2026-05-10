@@ -45,14 +45,14 @@ export const SurveyTimer: React.FC<SurveyTimerProps> = ({ totalQuestions, answer
     }, [elapsedSeconds, answeredCount, totalQuestions]);
 
     return (
-        <div className="flex flex-wrap items-center gap-6 mb-12 p-5 bg-brand-paper-accent/40 dark:bg-stone-bg/30 backdrop-blur-xl rounded-2xl border border-stone-line dark:border-white/5 shadow-sm transition-all duration-500">
+        <div className="flex flex-wrap items-center gap-6 mb-12 p-5 bg-brand-bgCard/40 dark:bg-stone-bg/30 backdrop-blur-xl rounded-2xl border border-stone-line dark:border-white/5 shadow-sm transition-all duration-500">
             <div className="flex items-center gap-3.5">
                 <div className="w-10 h-10 flex items-center justify-center bg-brand-ink/5 dark:bg-brand-ink/10 rounded-xl border border-brand-ink/10">
                     <Timer className="w-5 h-5 text-brand-ink" />
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">{ui.timeSpent}</span>
-                    <span className="text-base font-bold text-brand-graphite dark:text-white tabular-nums leading-tight">
+                    <span className="text-base font-bold text-brand-textPrimary dark:text-white tabular-nums leading-tight">
                         {formatTime(elapsedSeconds)}
                     </span>
                 </div>
@@ -66,7 +66,7 @@ export const SurveyTimer: React.FC<SurveyTimerProps> = ({ totalQuestions, answer
                 </div>
                 <div className="flex flex-col">
                     <span className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">{ui.predictedTime}</span>
-                    <span className="text-base font-bold text-brand-graphite dark:text-white tabular-nums transition-all duration-1000 leading-tight">
+                    <span className="text-base font-bold text-brand-textPrimary dark:text-white tabular-nums transition-all duration-1000 leading-tight">
                         {smoothedRemaining !== null ? formatTime(Math.round(smoothedRemaining)) : '...'}
                     </span>
                 </div>

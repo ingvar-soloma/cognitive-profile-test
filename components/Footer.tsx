@@ -31,11 +31,11 @@ export const Footer: React.FC<FooterProps> = ({ ui, language }) => {
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
                     {/* Brand */}
                     <div className="md:col-span-4">
-                        <Link to="/" className="flex items-center gap-2 text-brand-graphite mb-6 group">
+                        <Link to="/" className="flex items-center gap-2 text-brand-textPrimary mb-6 group">
                             <div className="bg-brand-ink p-1.5 rounded-lg group-hover:scale-105 transition-transform">
                                 <BrainCircuit className="w-5 h-5 text-white" />
                             </div>
-                            <span className="font-serif text-xl font-bold tracking-tight text-brand-graphite">
+                            <span className="font-serif text-xl font-bold tracking-tight text-brand-textPrimary">
                                 NP42 NeuroProfile
                             </span>
                         </Link>
@@ -46,10 +46,10 @@ export const Footer: React.FC<FooterProps> = ({ ui, language }) => {
                             {ui.complianceDisclaimer}
                         </p>
                         <div className="flex gap-4">
-                            <a href="mailto:ingvar.soloma@gmail.com" className="w-10 h-10 rounded-xl bg-white dark:bg-brand-paper-accent border border-stone-line flex items-center justify-center text-stone-400 hover:text-brand-ink transition-all shadow-sm">
+                            <a href="mailto:ingvar.soloma@gmail.com" className="w-10 h-10 rounded-xl bg-white dark:bg-brand-bgCard border border-stone-line flex items-center justify-center text-stone-400 hover:text-brand-ink transition-all shadow-sm">
                                 <Mail className="w-5 h-5" />
                             </a>
-                            <a href="https://t.me/ingvar_soloma" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-white dark:bg-brand-paper-accent border border-stone-line flex items-center justify-center text-stone-400 hover:text-brand-ink transition-all shadow-sm">
+                            <a href="https://t.me/ingvar_soloma" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-xl bg-white dark:bg-brand-bgCard border border-stone-line flex items-center justify-center text-stone-400 hover:text-brand-ink transition-all shadow-sm">
                                 <MessageCircle className="w-5 h-5" />
                             </a>
                         </div>
@@ -63,7 +63,7 @@ export const Footer: React.FC<FooterProps> = ({ ui, language }) => {
                         <ul className="space-y-4">
                             {infoLinks.map(link => (
                                 <li key={link.path}>
-                                    <Link to={link.path} className="text-sm font-bold text-brand-graphite hover:text-brand-ink transition-colors">
+                                    <Link to={link.path} className="text-sm font-bold text-brand-textPrimary hover:text-brand-ink transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>
@@ -79,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({ ui, language }) => {
                         <ul className="space-y-4">
                             {legalLinks.map(link => (
                                 <li key={link.path}>
-                                    <Link to={link.path} className="text-sm font-bold text-brand-graphite hover:text-brand-ink transition-colors">
+                                    <Link to={link.path} className="text-sm font-bold text-brand-textPrimary hover:text-brand-ink transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>

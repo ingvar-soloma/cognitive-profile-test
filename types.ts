@@ -284,6 +284,7 @@ export interface UIStrings {
   analysisReadyDesc: string;
   whyExploreTitle: string;
   aphantasiaLabel: string;
+  phantasiaLabel: string;
   hyperphantasiaLabel: string;
   vagueLabel: string;
   systemDatabase: string;
@@ -459,6 +460,20 @@ export interface UIStrings {
   compatibilityF3Desc: string;
   compatibilityDemoCta: string;
   compatibilityDemoDesc: string;
+  curiosityTitle: string;
+  curiosityInsight1: string;
+  curiosityInsight2: string;
+  curiosityInsight3: string;
+  curiosityInsight4: string;
+  curiosityInsight5: string;
+  pricingFuturePrice: string;
+  pricingBetaOffer: string;
+  pricingFallbackCTA: string;
+  leadFormTitle: string;
+  leadFormSubtitle: string;
+  leadFormEmailPlaceholder: string;
+  leadFormButton: string;
+  lockedReportLabel: string;
 }
 
 export enum ProfileType {

@@ -113,12 +113,12 @@ export const Header: React.FC<HeaderProps> = ({
     const navBtnClass = (active: boolean) =>
         `px-3 lg:px-5 py-1.5 rounded-full text-[10px] lg:text-[11px] uppercase tracking-widest font-bold transition-all duration-300 ${
             active
-                ? 'bg-brand-paper-accent text-brand-ink shadow-sm ring-1 ring-stone-line'
-                : 'text-stone-400 hover:text-brand-graphite'
+                ? 'bg-brand-bgCard text-brand-ink shadow-sm ring-1 ring-stone-line'
+                : 'text-stone-400 hover:text-brand-textPrimary'
         }`;
 
     return (
-        <header className="border-b border-stone-line bg-brand-paper/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300">
+        <header className="border-b border-stone-line bg-brand-bgMain/80 backdrop-blur-md sticky top-0 z-50 transition-colors duration-300">
             <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                 {/* Logo + Nav */}
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -132,13 +132,13 @@ export const Header: React.FC<HeaderProps> = ({
 
                     <Link
                         to="/"
-                        className="flex items-center gap-2 text-brand-graphite cursor-pointer focus:outline-none rounded-lg transition-transform active:scale-95"
+                        className="flex items-center gap-2 text-brand-textPrimary cursor-pointer focus:outline-none rounded-lg transition-transform active:scale-95"
                         aria-label="Go to Home"
                     >
                         <div className="bg-brand-ink p-1.5 rounded-lg shrink-0">
                             <BrainCircuit className="w-5 h-5 text-white" />
                         </div>
-                        <span className="font-serif text-base sm:text-lg lg:text-xl font-bold tracking-tight text-brand-graphite hidden xs:block">
+                        <span className="font-serif text-base sm:text-lg lg:text-xl font-bold tracking-tight text-brand-textPrimary hidden xs:block">
                             NP42 | NeuroProfile
                         </span>
                         <span className="ml-[6px] px-1.5 py-0.5 rounded-full bg-brand-ink/10 text-brand-ink text-[10px] font-bold uppercase tracking-tight border border-brand-ink/20 leading-none inline-flex items-center shadow-sm shrink-0">
@@ -178,7 +178,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
 
                             {infoOpen && (
-                                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-52 bg-brand-paper-accent border border-stone-line rounded-2xl shadow-soft py-1.5 z-50">
+                                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-52 bg-brand-bgCard border border-stone-line rounded-2xl shadow-soft py-1.5 z-50">
                                     {infoLinks.map(link => (
                                         <Link
                                             key={link.path}
@@ -187,7 +187,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider transition-colors ${
                                                 pathname === link.path
                                                     ? 'text-brand-ink bg-brand-ink/5'
-                                                    : 'text-stone-500 hover:text-brand-graphite hover:bg-stone-bg/60'
+                                                    : 'text-stone-500 hover:text-brand-textPrimary hover:bg-stone-bg/60'
                                             }`}
                                         >
                                             <link.icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -247,7 +247,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {/* Theme toggle */}
                     <button
                         onClick={onToggleTheme}
-                        className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-stone-bg text-brand-graphite border border-stone-line hover:border-brand-ink/40 transition-all active:scale-95 group shadow-sm shrink-0"
+                        className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-stone-bg text-brand-textPrimary border border-stone-line hover:border-brand-ink/40 transition-all active:scale-95 group shadow-sm shrink-0"
                         aria-label="Toggle Theme"
                     >
                         {theme === 'light' ? (
@@ -297,16 +297,16 @@ export const Header: React.FC<HeaderProps> = ({
             {mobileMenuOpen && (
                 <div className="fixed inset-0 z-[1000] md:hidden">
                     <div 
-                        className="absolute inset-0 bg-brand-graphite/40 backdrop-blur-sm transition-opacity duration-300" 
+                        className="absolute inset-0 bg-brand-textPrimary/40 backdrop-blur-sm transition-opacity duration-300" 
                         onClick={() => setMobileMenuOpen(false)} 
                     />
-                    <div className="absolute inset-y-0 left-0 w-[85%] max-w-[320px] h-screen bg-brand-paper shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 z-[1001]">
-                        <div className="p-5 border-b border-stone-line flex items-center justify-between bg-brand-paper">
+                    <div className="absolute inset-y-0 left-0 w-[85%] max-w-[320px] h-screen bg-brand-bgMain shadow-2xl flex flex-col animate-in slide-in-from-left duration-300 z-[1001]">
+                        <div className="p-5 border-b border-stone-line flex items-center justify-between bg-brand-bgMain">
                              <div className="flex items-center gap-2">
                                 <div className="bg-brand-ink p-1.5 rounded-lg">
                                     <BrainCircuit className="w-5 h-5 text-white" />
                                 </div>
-                                <span className="font-serif text-lg font-bold text-brand-graphite">NP42 | NeuroProfile</span>
+                                <span className="font-serif text-lg font-bold text-brand-textPrimary">NP42 | NeuroProfile</span>
                                 <span className="ml-2 px-1.5 py-0.5 rounded-full bg-brand-ink/10 text-brand-ink text-[10px] font-bold uppercase tracking-tight border border-brand-ink/20 leading-none inline-flex items-center shadow-sm">
                                     beta V4
                                 </span>
@@ -316,7 +316,7 @@ export const Header: React.FC<HeaderProps> = ({
                             </button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-5 space-y-8 bg-brand-paper">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-8 bg-brand-bgMain">
                             {user && (
                                 <div className="mx-1 px-4 py-3 bg-brand-sage/10 rounded-2xl border border-brand-sage/20 flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -335,7 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             to={link.path}
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={`w-full flex items-center px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${
-                                                link.active ? 'bg-brand-ink/10 text-brand-ink ring-1 ring-brand-ink/20' : 'text-brand-graphite hover:bg-stone-bg'
+                                                link.active ? 'bg-brand-ink/10 text-brand-ink ring-1 ring-brand-ink/20' : 'text-brand-textPrimary hover:bg-stone-bg'
                                             }`}
                                         >
                                             {link.label}
@@ -363,7 +363,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             to={link.path}
                                             onClick={() => setMobileMenuOpen(false)}
                                             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${
-                                                pathname === link.path ? 'bg-brand-ink/10 text-brand-ink ring-1 ring-brand-ink/20' : 'text-brand-graphite hover:bg-stone-bg'
+                                                pathname === link.path ? 'bg-brand-ink/10 text-brand-ink ring-1 ring-brand-ink/20' : 'text-brand-textPrimary hover:bg-stone-bg'
                                             }`}
                                         >
                                             <link.icon className="w-4.5 h-4.5 opacity-70" />
@@ -387,13 +387,13 @@ export const Header: React.FC<HeaderProps> = ({
                                         <Globe className="w-4 h-4 text-stone-400" />
                                         <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{ui.language}</span>
                                     </div>
-                                    <div className="flex gap-1 border border-stone-line/50 p-0.5 rounded-lg bg-brand-paper/50">
+                                    <div className="flex gap-1 border border-stone-line/50 p-0.5 rounded-lg bg-brand-bgMain/50">
                                         {(['uk', 'en', 'ru'] as Language[]).map(lang => (
                                             <button
                                                 key={lang}
                                                 onClick={() => onSetLanguage(lang)}
                                                 className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all ${
-                                                    language === lang ? 'bg-brand-ink text-white shadow-sm' : 'text-stone-500 hover:text-brand-graphite'
+                                                    language === lang ? 'bg-brand-ink text-white shadow-sm' : 'text-stone-500 hover:text-brand-textPrimary'
                                                 }`}
                                             >
                                                 {lang.toUpperCase()}
@@ -409,7 +409,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     </div>
                                     <button
                                         onClick={onToggleTheme}
-                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-paper border border-stone-line text-[10px] font-bold text-brand-graphite uppercase tracking-widest transition-all active:scale-95"
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-bgMain border border-stone-line text-[10px] font-bold text-brand-textPrimary uppercase tracking-widest transition-all active:scale-95"
                                     >
                                         {theme === 'light' ? 'Dark' : 'Light'}
                                     </button>

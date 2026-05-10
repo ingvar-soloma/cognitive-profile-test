@@ -105,6 +105,14 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                         <p className="mt-4 text-[10px] text-muted-foreground/60 dark:text-slate-500 uppercase tracking-widest font-bold font-sans">
                             {ui.earlyAccessCta}
                         </p>
+                        
+                        {/* Scientific Authority Block */}
+                        <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-muted-foreground uppercase tracking-widest hover:opacity-80 transition-opacity">
+                            <span>Based on VVIQ (1973)</span>
+                            <span>PSIQ Multisensory Metrics</span>
+                            <span>MBTI Cognitive Functions</span>
+                            <span>SDAM Memory Framework</span>
+                        </a>
                     </div>
                 </div>
 
@@ -136,6 +144,26 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Curiosity Hook */}
+                        <div className="mt-8 text-left">
+                            <h3 className="text-lg font-bold text-foreground dark:text-white mb-6">
+                                {ui.curiosityTitle}
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-blue-500/5 dark:bg-black/20 p-4 rounded-r-xl border-l-4 border-blue-500">
+                                {[
+                                    ui.curiosityInsight1,
+                                    ui.curiosityInsight2,
+                                    ui.curiosityInsight3,
+                                    ui.curiosityInsight4,
+                                    ui.curiosityInsight5
+                                ].map((insight, idx) => (
+                                    <div key={idx} className="bg-card dark:bg-white/5 p-4 rounded-xl text-sm text-muted-foreground dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5">
+                                        {insight}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -174,6 +202,14 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                         {ui.expressDiagnosticsCta}
                         <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
                     </button>
+
+                    {/* Pricing Node */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '24px' }} className="mx-auto max-w-lg mt-8 relative z-10 bg-black/5 dark:bg-white/5 backdrop-blur-sm">
+                        <span style={{ textDecoration: 'line-through', opacity: 0.5, fontSize: '14px' }} className="text-foreground dark:text-white">{ui.pricingFuturePrice}</span>
+                        <span style={{ fontWeight: 700, fontSize: '24px' }} className="text-blue-500 dark:text-blue-400 mt-2">{ui.pricingBetaOffer}</span>
+                        <a href="/survey/express_demo" style={{ opacity: 0.7, marginTop: '16px', fontSize: '14px', textDecoration: 'underline' }} className="text-foreground dark:text-white hover:opacity-100 transition-opacity">{ui.pricingFallbackCTA}</a>
+                    </div>
+
                     <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30" />
                 </div>
             </div>

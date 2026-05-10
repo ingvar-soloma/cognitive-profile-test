@@ -37,22 +37,22 @@ export const ShareSettingsModal: React.FC<ShareSettingsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8 animate-fade-in backdrop-blur-xl bg-brand-ink/40">
-      <div className="bg-brand-paper shadow-2xl rounded-[3rem] border border-stone-line w-full max-w-lg overflow-hidden flex flex-col animate-scale-in">
+      <div className="bg-brand-bgMain shadow-2xl rounded-[3rem] border border-stone-line w-full max-w-lg overflow-hidden flex flex-col animate-scale-in">
         <div className="p-8 md:p-12 space-y-8">
           <div className="flex flex-col items-center text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-brand-paper-accent flex items-center justify-center border border-stone-line text-brand-ink">
+            <div className="w-16 h-16 rounded-full bg-brand-bgCard flex items-center justify-center border border-stone-line text-brand-ink">
               <ShieldAlert className="w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-2xl font-serif font-bold text-brand-graphite leading-tight tracking-tight">Public Profile Settings</h3>
+              <h3 className="text-2xl font-serif font-bold text-brand-textPrimary leading-tight tracking-tight">Public Profile Settings</h3>
               <p className="text-stone-400 text-sm font-sans mt-2">Control how your cognitive architecture is shared with the world.</p>
             </div>
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 bg-brand-paper-accent/50 rounded-2xl border border-stone-line/50">
+            <div className="flex items-center justify-between p-4 bg-brand-bgCard/50 rounded-2xl border border-stone-line/50">
               <div className="space-y-1">
-                <p className="text-sm font-bold text-brand-graphite">Make Profile Public</p>
+                <p className="text-sm font-bold text-brand-textPrimary">Make Profile Public</p>
                 <p className="text-xs text-stone-400">Allows anyone with the link to see your results.</p>
               </div>
               <button 
@@ -72,7 +72,7 @@ export const ShareSettingsModal: React.FC<ShareSettingsModalProps> = ({
                   onChange={(e) => setUseRealName(e.target.checked)}
                   className="w-4 h-4 rounded border-stone-line text-brand-ink focus:ring-brand-ink"
                 />
-                <label htmlFor="useRealName" className="text-sm text-brand-graphite font-bold">Show my real name</label>
+                <label htmlFor="useRealName" className="text-sm text-brand-textPrimary font-bold">Show my real name</label>
               </div>
               
               {!useRealName && (
@@ -83,7 +83,7 @@ export const ShareSettingsModal: React.FC<ShareSettingsModalProps> = ({
                      value={nickname}
                      onChange={(e) => setNickname(e.target.value)}
                      placeholder="Anonymous"
-                     className="w-full px-4 py-3 bg-brand-paper-accent rounded-xl border border-stone-line focus:ring-1 focus:ring-brand-ink outline-none text-sm"
+                     className="w-full px-4 py-3 bg-brand-bgCard rounded-xl border border-stone-line focus:ring-1 focus:ring-brand-ink outline-none text-sm"
                    />
                 </div>
               )}
@@ -96,13 +96,13 @@ export const ShareSettingsModal: React.FC<ShareSettingsModalProps> = ({
                   type="text" 
                   readOnly 
                   value={`${window.location.origin}/results/${shareId || userId}?ref=${publicId || userId}`}
-                  className="flex-1 px-4 py-3 bg-brand-paper-accent/30 rounded-xl border border-stone-line text-xs font-mono text-stone-500 overflow-hidden text-ellipsis"
+                  className="flex-1 px-4 py-3 bg-brand-bgCard/30 rounded-xl border border-stone-line text-xs font-mono text-stone-500 overflow-hidden text-ellipsis"
                 />
                 <button 
                   onClick={() => {
                     window.navigator.clipboard.writeText(`${window.location.origin}/results/${shareId || userId}?ref=${publicId || userId}`);
                   }}
-                  className="px-4 py-3 bg-brand-paper border border-stone-line rounded-xl text-brand-ink hover:bg-brand-paper-accent transition-colors"
+                  className="px-4 py-3 bg-brand-bgMain border border-stone-line rounded-xl text-brand-ink hover:bg-brand-bgCard transition-colors"
                 >
                   <Download className="w-4 h-4 rotate-[-90deg]" />
                 </button>

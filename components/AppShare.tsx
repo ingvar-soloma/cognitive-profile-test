@@ -46,9 +46,9 @@ export const AppShare: React.FC<AppShareProps> = ({
   };
 
   return (
-    <div className="mb-20 p-8 md:p-12 bg-brand-paper-accent/30 backdrop-blur-sm rounded-[2.5rem] border border-stone-line/50 flex flex-col md:flex-row items-center justify-between gap-8 group relative overflow-hidden">
+    <div className="mb-20 p-8 md:p-12 bg-brand-bgCard/30 backdrop-blur-sm rounded-[2.5rem] border border-stone-line/50 flex flex-col md:flex-row items-center justify-between gap-8 group relative overflow-hidden">
       <div className="text-center md:text-left relative z-10">
-        <h3 className="text-xl md:text-2xl font-serif font-bold text-brand-graphite mb-2">
+        <h3 className="text-xl md:text-2xl font-serif font-bold text-brand-textPrimary mb-2">
           {isPublicView ? (publicNickname || 'Anonymous') : ui.shareProfile}
         </h3>
         <p className="text-stone-400 text-sm font-sans max-w-sm">
@@ -61,7 +61,7 @@ export const AppShare: React.FC<AppShareProps> = ({
           <div className="flex flex-wrap justify-center gap-2">
             <button 
               onClick={onShowSettings}
-              className="flex items-center gap-2 px-6 py-3 bg-brand-paper border border-stone-line text-brand-graphite rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:border-brand-clay hover:text-brand-clay transition-all duration-300"
+              className="flex items-center gap-2 px-6 py-3 bg-brand-bgMain border border-stone-line text-brand-textPrimary rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:border-brand-clay hover:text-brand-clay transition-all duration-300"
             >
               <Settings className="w-4 h-4" />
               {ui.editProfileSettings}
@@ -70,7 +70,7 @@ export const AppShare: React.FC<AppShareProps> = ({
               href={shareUrl()}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-6 py-3 bg-brand-paper border border-stone-line text-brand-graphite rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:border-brand-ink hover:text-brand-ink transition-all duration-300"
+              className="flex items-center gap-2 px-6 py-3 bg-brand-bgMain border border-stone-line text-brand-textPrimary rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:border-brand-ink hover:text-brand-ink transition-all duration-300"
             >
               <Eye className="w-4 h-4" />
               {ui.previewPublic}

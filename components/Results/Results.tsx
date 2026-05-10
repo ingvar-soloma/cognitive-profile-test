@@ -56,7 +56,7 @@ export const BadgeIcon = ({ badge, size = "md" }: { badge: Badge, size?: "sm" | 
   return (
     <div className="relative inline-block">
       <div
-        className={`${sizeClasses[size]} rounded-full bg-brand-paper-accent border border-stone-line flex items-center justify-center cursor-pointer hover:bg-brand-ink hover:border-brand-ink transition-all duration-300 shadow-sm`}
+        className={`${sizeClasses[size]} rounded-full bg-brand-bgCard border border-stone-line flex items-center justify-center cursor-pointer hover:bg-brand-ink hover:border-brand-ink transition-all duration-300 shadow-sm`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
@@ -64,7 +64,7 @@ export const BadgeIcon = ({ badge, size = "md" }: { badge: Badge, size?: "sm" | 
       </div>
 
       {showTooltip && badge.description && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-brand-paper-accent border border-stone-line rounded-2xl shadow-xl z-[100] animate-fade-in text-center pointer-events-none">
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-48 p-4 bg-brand-bgCard border border-stone-line rounded-2xl shadow-xl z-[100] animate-fade-in text-center pointer-events-none">
           <div className="font-bold text-[10px] text-brand-ink uppercase tracking-[0.15em] mb-1">{badge.name}</div>
           <p className="text-[10px] text-stone-500 font-sans leading-relaxed">{badge.description}</p>
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-stone-line"></div>
@@ -666,7 +666,7 @@ export const Results: React.FC<ResultsProps> = ({
 
   return (
     <div className="animate-fade-in text-left">
-      <div className="bg-brand-paper-accent/40 backdrop-blur-xl rounded-[2.5rem] border border-stone-line shadow-soft overflow-hidden mb-12">
+      <div className="bg-brand-bgCard/40 backdrop-blur-xl rounded-[2.5rem] border border-stone-line shadow-soft overflow-hidden mb-12">
         <div className="bg-gradient-to-br from-brand-ink to-[#4A3B6D] p-10 md:p-14 text-white text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-clay/10 rounded-full blur-3xl -ml-32 -mb-32"></div>
@@ -690,7 +690,7 @@ export const Results: React.FC<ResultsProps> = ({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setShowShareModal(true)}
-                          className={`px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest border transition-all flex items-center gap-1.5 ${isPublic ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-brand-paper/10 border-white/20 text-brand-paper/40'}`}
+                          className={`px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest border transition-all flex items-center gap-1.5 ${isPublic ? 'bg-green-500/10 border-green-500/30 text-green-300' : 'bg-brand-bgMain/10 border-white/20 text-brand-paper/40'}`}
                         >
                           <div className={`w-1.5 h-1.5 rounded-full ${isPublic ? 'bg-green-400 animate-pulse' : 'bg-white/40'}`}></div>
                           {isPublic ? ui.publicProfile : ui.privateProfile}
@@ -713,7 +713,7 @@ export const Results: React.FC<ResultsProps> = ({
             <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight leading-tight">
               {currentSurvey?.title[lang] || ui.resultsTitle}
             </h2>
-            <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-brand-paper-accent/10 backdrop-blur-md rounded-full border border-brand-paper-accent/20">
+            <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-brand-bgCard/10 backdrop-blur-md rounded-full border border-brand-paper-accent/20">
               <span className="text-xs font-bold tracking-[0.2em] uppercase">{getProfileDescription()}</span>
             </div>
           </div>
@@ -731,7 +731,7 @@ export const Results: React.FC<ResultsProps> = ({
                     <Sparkles className="w-3 h-3" />
                     {isPublicView ? ui.cognitiveAssessment : ui.readyForAnalysis}
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite mb-2">
+                  <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-textPrimary mb-2">
                     {isPublicView ? ui.visitorCtaTitle : ui.demoCtaTitle}
                   </h3>
                   <p className="text-stone-500 text-base max-w-xl font-sans leading-relaxed">
@@ -757,11 +757,11 @@ export const Results: React.FC<ResultsProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center">
                   <BrainCircuit className="w-6 h-6 text-brand-ink" />
                 </div>
-                <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.aiAnalysisTitle}</h3>
+                <h3 className="text-2xl md:text-3xl font-serif font-bold text-brand-textPrimary tracking-tight">{ui.aiAnalysisTitle}</h3>
  
                 {/* Version Switcher - Only for owner/admin, never on public view */}
                 {!isPublicView && (effectiveVersions && effectiveVersions.length > 1) && (
-                  <div className="flex items-center gap-2 ml-4 p-1 bg-brand-paper-accent/50 rounded-lg border border-stone-line/50">
+                  <div className="flex items-center gap-2 ml-4 p-1 bg-brand-bgCard/50 rounded-lg border border-stone-line/50">
                     {effectiveVersions.map((_, idx) => (
                       <button
                         key={idx}
@@ -799,19 +799,19 @@ export const Results: React.FC<ResultsProps> = ({
             </div>
 
             {(isSaving && !geminiRecs) ? (
-              <div className="bg-brand-paper-accent/50 backdrop-blur-sm p-10 rounded-[2rem] border border-stone-line flex flex-col items-center gap-6 text-center shadow-sm">
+              <div className="bg-brand-bgCard/50 backdrop-blur-sm p-10 rounded-[2rem] border border-stone-line flex flex-col items-center gap-6 text-center shadow-sm">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full border-4 border-brand-ink/10 border-t-brand-ink animate-spin"></div>
                   <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-brand-ink/40" />
                 </div>
                 <div className="space-y-2">
-                  <p className="font-serif text-xl font-bold text-brand-graphite">{ui.synthesizingInsights}</p>
+                  <p className="font-serif text-xl font-bold text-brand-textPrimary">{ui.synthesizingInsights}</p>
                   <p className="text-stone-400 text-sm font-sans">{ui.connectingNodes}</p>
                 </div>
               </div>
             ) : (analysisError || geminiRecs || (effectiveVersions && effectiveVersions.length > 0) || (isAnalyzing && geminiRecs)) ? (
               <div className="relative transition-all duration-700">
-                <div className={`bg-brand-paper-accent/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-graphite prose prose-stone dark:prose-invert max-w-none font-sans 
+                <div className={`bg-brand-bgCard/80 backdrop-blur-md p-6 md:p-10 rounded-[2rem] border border-stone-line shadow-sm text-brand-textPrimary prose prose-stone dark:prose-invert max-w-none font-sans 
                   prose-headings:font-serif prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-brand-ink dark:prose-headings:text-brand-clay
                   prose-p:leading-relaxed prose-strong:text-brand-ink dark:prose-strong:text-brand-clay prose-strong:font-bold
                   prose-ul:list-disc prose-li:marker:text-brand-clay dark:prose-li:marker:text-brand-ink
@@ -889,7 +889,7 @@ export const Results: React.FC<ResultsProps> = ({
                         <MessageSquare className="w-8 h-8 text-red-500" />
                       </div>
                       <div className="space-y-2">
-                        <h4 className="text-xl font-serif font-bold text-brand-graphite">{ui.errorFound || 'Validation Error'}</h4>
+                        <h4 className="text-xl font-serif font-bold text-brand-textPrimary">{ui.errorFound || 'Validation Error'}</h4>
                         <p className="text-stone-500 text-sm font-sans">{analysisError || geminiRecs}</p>
                       </div>
                       <button
@@ -917,7 +917,7 @@ export const Results: React.FC<ResultsProps> = ({
                             <Sparkles className="w-6 h-6 text-brand-ink" />
                         </div>
                         <div>
-                            <h4 className="text-lg font-serif font-bold text-brand-graphite leading-tight">{ui.navRecommendations}</h4>
+                            <h4 className="text-lg font-serif font-bold text-brand-textPrimary leading-tight">{ui.navRecommendations}</h4>
                             <p className="text-stone-400 text-xs font-sans mt-0.5">Explore cognitive tools tailored to your mind</p>
                         </div>
                       </div>
@@ -933,7 +933,7 @@ export const Results: React.FC<ResultsProps> = ({
                 </div>
               </div>
             ) : (isAdmin) ? (
-              <div className="bg-brand-paper-accent/50 backdrop-blur-sm p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
+              <div className="bg-brand-bgCard/50 backdrop-blur-sm p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-paper-accent/0 via-brand-paper-accent/0 to-brand-ink/[0.05] pointer-events-none"></div>
                 <div className="flex justify-center relative z-10 transition-transform group-hover:scale-110 duration-700">
                   <div className="w-20 h-20 rounded-full bg-brand-ink/10 shadow-soft flex items-center justify-center border border-brand-ink/20">
@@ -941,7 +941,7 @@ export const Results: React.FC<ResultsProps> = ({
                   </div>
                 </div>
                 <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">Generate Admin AI Analysis</h4>
+                  <h4 className="text-3xl font-serif text-brand-textPrimary font-bold tracking-tight">Generate Admin AI Analysis</h4>
                   <p className="text-stone-500 text-lg leading-relaxed font-sans">
                     As an administrator, you can force AI analysis for this test result even if it's disabled globally or for the user.
                   </p>
@@ -961,7 +961,7 @@ export const Results: React.FC<ResultsProps> = ({
             ) : isPublicView ? (
               null
             ) : (
-              <div className="bg-brand-paper/50 backdrop-blur-md p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
+              <div className="bg-brand-bgMain/50 backdrop-blur-md p-12 md:p-16 rounded-[2.5rem] border-2 border-dashed border-stone-line text-center space-y-8 shadow-card relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-brand-paper-accent/0 via-brand-paper-accent/0 to-brand-ink/[0.02] pointer-events-none"></div>
                 {analysisError && (
                   <div className="relative z-20 p-6 bg-red-50/80 border border-red-200 rounded-3xl text-center flex flex-col items-center animate-fade-in mb-8">
@@ -972,12 +972,12 @@ export const Results: React.FC<ResultsProps> = ({
                   </div>
                 )}
                 <div className="flex justify-center relative z-10 transition-transform group-hover:scale-110 duration-700">
-                  <div className="w-20 h-20 rounded-full bg-brand-paper-accent shadow-soft flex items-center justify-center border border-stone-line">
+                  <div className="w-20 h-20 rounded-full bg-brand-bgCard shadow-soft flex items-center justify-center border border-stone-line">
                     <Sparkles className="w-10 h-10 text-brand-ink" />
                   </div>
                 </div>
                 <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-                  <h4 className="text-3xl font-serif text-brand-graphite font-bold tracking-tight">
+                  <h4 className="text-3xl font-serif text-brand-textPrimary font-bold tracking-tight">
                     {ui.readyForAnalysis || 'Ready for Analysis'}
                   </h4>
                   <p className="text-stone-500 text-lg leading-relaxed font-sans">
@@ -986,7 +986,7 @@ export const Results: React.FC<ResultsProps> = ({
                   <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <button
                       onClick={() => navigate(`/survey/${targetSurveyId}`)}
-                      className="h-14 px-8 bg-brand-paper border border-stone-line text-brand-ink rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-paper-accent transition-all flex items-center gap-3"
+                      className="h-14 px-8 bg-brand-bgMain border border-stone-line text-brand-ink rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-brand-bgCard transition-all flex items-center gap-3"
                     >
                       <ArrowLeft className="w-4 h-4" />
                       {ui.editAnswers}
@@ -1084,7 +1084,7 @@ export const Results: React.FC<ResultsProps> = ({
                   {radarData.map((item) => (
                     <div key={item.key} className="group">
                       <div className="flex items-center justify-between mb-3">
-                        <span className="text-brand-graphite font-bold text-[13px] uppercase tracking-wider">{item.subject}</span>
+                        <span className="text-brand-textPrimary font-bold text-[13px] uppercase tracking-wider">{item.subject}</span>
                         <div className="flex items-center gap-2">
                           <span className="font-serif font-bold text-brand-ink text-xl">{item.A}</span>
                           <span className="text-stone-400 text-[10px] font-bold">/ 5.0</span>
@@ -1108,7 +1108,7 @@ export const Results: React.FC<ResultsProps> = ({
                 <div className="w-10 h-10 rounded-xl bg-stone-bg border border-stone-line flex items-center justify-center">
                   <MessageSquare className="w-5 h-5 text-stone-400" />
                 </div>
-                <h3 className="text-3xl font-serif font-bold text-brand-graphite tracking-tight">{ui.notesTitle}</h3>
+                <h3 className="text-3xl font-serif font-bold text-brand-textPrimary tracking-tight">{ui.notesTitle}</h3>
               </div>
 
               {textAnswers.length === 0 ? (
@@ -1126,10 +1126,10 @@ export const Results: React.FC<ResultsProps> = ({
                     if (q?.type === QuestionType.TEXT && !ans.value && !ans.note) return null;
 
                     return (
-                      <div key={ans.questionId} className="bg-brand-paper-accent/60 backdrop-blur-sm p-6 rounded-[2rem] border border-stone-line shadow-sm hover:shadow-md transition-shadow flex flex-col gap-6">
+                      <div key={ans.questionId} className="bg-brand-bgCard/60 backdrop-blur-sm p-6 rounded-[2rem] border border-stone-line shadow-sm hover:shadow-md transition-shadow flex flex-col gap-6">
                         <div className="space-y-1">
                           <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{q?.subCategory?.en || 'Perspective'}</div>
-                          <p className="font-serif font-bold text-brand-graphite leading-tight text-lg">{q?.text[lang]}</p>
+                          <p className="font-serif font-bold text-brand-textPrimary leading-tight text-lg">{q?.text[lang]}</p>
                         </div>
 
                         {isDrawing && (
@@ -1162,7 +1162,7 @@ export const Results: React.FC<ResultsProps> = ({
             </div>
           )}
 
-          <div className="mt-20 p-10 bg-brand-paper/50 backdrop-blur-sm rounded-[2rem] border border-brand-clay/10 text-[11px] text-stone-400 leading-relaxed max-w-4xl mx-auto shadow-sm">
+          <div className="mt-20 p-10 bg-brand-bgMain/50 backdrop-blur-sm rounded-[2rem] border border-brand-clay/10 text-[11px] text-stone-400 leading-relaxed max-w-4xl mx-auto shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <ShieldAlert className="w-4 h-4 text-brand-clay" />
               <h5 className="font-bold uppercase tracking-[0.2em] text-[10px] text-brand-clay">{ui.disclaimerTitle}</h5>
@@ -1190,7 +1190,7 @@ export const Results: React.FC<ResultsProps> = ({
           </button>
 
           {showActions && (
-            <div className="p-12 md:p-20 flex flex-wrap justify-center gap-8 animate-fade-in border-t border-stone-line bg-brand-paper-accent/40 sticky bottom-0">
+            <div className="p-12 md:p-20 flex flex-wrap justify-center gap-8 animate-fade-in border-t border-stone-line bg-brand-bgCard/40 sticky bottom-0">
               <button onClick={() => downloadFile('json')} className="btn-secondary group flex items-center gap-3">
                 <FileJson className="w-4 h-4 text-brand-ink group-hover:scale-110 transition-transform" />
                 <span>{ui.downloadJson}</span>
@@ -1220,7 +1220,7 @@ export const Results: React.FC<ResultsProps> = ({
                 <ShieldAlert className="w-6 h-6 text-brand-clay" />
               </div>
               <div className="text-center md:text-left">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-graphite mb-1">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-brand-textPrimary mb-1">
                   {ui.disclaimerTitle}
                 </h4>
                 <p className="text-[11px] text-stone-500 leading-relaxed font-sans max-w-3xl">

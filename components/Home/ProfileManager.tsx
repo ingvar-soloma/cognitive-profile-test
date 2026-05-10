@@ -123,7 +123,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
         <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center border border-brand-ink/10 text-brand-ink">
           <UserCircle className="w-4 h-4" />
         </div>
-        <h3 className="font-serif text-lg font-bold text-brand-graphite tracking-tight">{ui.manageProfiles}</h3>
+        <h3 className="font-serif text-lg font-bold text-brand-textPrimary tracking-tight">{ui.manageProfiles}</h3>
       </div>
 
       <div className="p-4">
@@ -134,7 +134,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                 key={profile.id}
                 className={`flex items-center justify-between p-4 rounded-xl transition-all border ${activeProfileId === profile.id
                     ? 'bg-brand-ink/5 border-brand-ink/20 shadow-sm'
-                    : 'bg-brand-paper-accent/50 border-stone-line hover:border-brand-ink/20 hover:bg-brand-paper-accent'
+                    : 'bg-brand-bgCard/50 border-stone-line hover:border-brand-ink/20 hover:bg-brand-bgCard'
                   }`}
               >
                 <div
@@ -160,12 +160,12 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                           onKeyDown={(e) => handleEditKeyDown(e, profile.id)}
                           onBlur={() => handleSaveEdit(profile.id)}
                           autoFocus
-                          className="w-full bg-brand-paper-accent border border-brand-ink/50 rounded-lg px-3 py-1.5 text-sm font-bold text-brand-graphite focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
+                          className="w-full bg-brand-bgCard border border-brand-ink/50 rounded-lg px-3 py-1.5 text-sm font-bold text-brand-textPrimary focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
                         />
                       </div>
                     ) : (
                       <div
-                        className="font-bold text-brand-graphite text-left cursor-pointer hover:text-brand-ink flex flex-wrap items-center gap-x-2 outline-none focus-visible:underline group"
+                        className="font-bold text-brand-textPrimary text-left cursor-pointer hover:text-brand-ink flex flex-wrap items-center gap-x-2 outline-none focus-visible:underline group"
                         onClick={(e) => handleStartEdit(e, profile.id, profile.name)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
@@ -250,9 +250,9 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
       {/* Download Modal */}
       {showDownloadModal && (
         <div className="fixed inset-0 bg-brand-graphite/40 backdrop-blur-sm flex items-center justify-center z-50 p-6 animate-fade-in transition-all">
-          <div className="bg-brand-paper-accent rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden border border-stone-line">
+          <div className="bg-brand-bgCard rounded-[2.5rem] shadow-2xl max-w-lg w-full overflow-hidden border border-stone-line">
             <div className="p-8 border-b border-stone-line flex justify-between items-center">
-              <h3 className="font-serif text-2xl font-bold text-brand-graphite tracking-tight">{ui.selectTestToDownload}</h3>
+              <h3 className="font-serif text-2xl font-bold text-brand-textPrimary tracking-tight">{ui.selectTestToDownload}</h3>
               <button
                 onClick={() => setShowDownloadModal(false)}
                 className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-stone-bg text-stone-400 transition-colors text-2xl"
@@ -267,7 +267,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
                   onClick={() => handleDownloadConfirm(survey.id)}
                   className="w-full text-left p-5 rounded-2xl border border-stone-line hover:bg-brand-ink/5 hover:border-brand-ink/20 transition-all group"
                 >
-                  <div className="font-serif text-lg font-bold text-brand-graphite group-hover:text-brand-ink transition-colors">{survey.title[lang]}</div>
+                  <div className="font-serif text-lg font-bold text-brand-textPrimary group-hover:text-brand-ink transition-colors">{survey.title[lang]}</div>
                   <div className="text-sm text-stone-500 mt-1 line-clamp-1 font-sans">{survey.description?.[lang]}</div>
                 </button>
               ))}
@@ -275,7 +275,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             <div className="p-6 border-t border-stone-line bg-stone-bg/30 text-right">
               <button
                 onClick={() => setShowDownloadModal(false)}
-                className="px-8 py-3 text-brand-graphite font-bold text-xs uppercase tracking-widest hover:bg-stone-bg rounded-xl transition-colors"
+                className="px-8 py-3 text-brand-textPrimary font-bold text-xs uppercase tracking-widest hover:bg-stone-bg rounded-xl transition-colors"
               >
                 {ui.close}
               </button>

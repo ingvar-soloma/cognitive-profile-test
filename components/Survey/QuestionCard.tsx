@@ -36,7 +36,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
   return (
     <div
       id={`question-${question.id}`}
-      className={`bg-brand-paper-accent rounded-[2rem] border p-6 md:p-8 mb-6 md:mb-8 transition-all hover:shadow-card relative
+      className={`bg-brand-bgCard rounded-[2rem] border p-6 md:p-8 mb-6 md:mb-8 transition-all hover:shadow-card relative
         ${isUnanswered
           ? 'border-brand-clay/30 bg-brand-clay/[0.02] ring-1 ring-brand-clay/10'
           : 'border-stone-line'}
@@ -52,7 +52,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           <span className="font-bold text-[9px] uppercase tracking-[0.1em] block">{question.subCategory || 'Question'}</span>
         </div>
         <div className="flex-1">
-          <h3 className="text-2xl font-serif font-bold text-brand-graphite leading-snug tracking-tight">{question.text}</h3>
+          <h3 className="text-2xl font-serif font-bold text-brand-textPrimary leading-snug tracking-tight">{question.text}</h3>
           {question.hint && (
             <div className="flex items-start gap-2 mt-4 text-sm text-stone-400 bg-stone-bg/50 p-3 rounded-2xl border border-stone-line italic">
               <Lightbulb className="w-4 h-4 text-brand-clay flex-shrink-0 mt-0.5" />
@@ -140,7 +140,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
                     onChange={() => handleValueChange(opt.value)}
                     className="sr-only"
                   />
-                  <span className={`ml-4 text-sm font-bold ${answer?.value === opt.value ? 'text-brand-ink' : 'text-brand-graphite'}`}>{opt.label}</span>
+                  <span className={`ml-4 text-sm font-bold ${answer?.value === opt.value ? 'text-brand-ink' : 'text-brand-textPrimary'}`}>{opt.label}</span>
                   {answer?.value === opt.value && <CheckCircle2 className="w-5 h-5 ml-auto text-brand-sage" />}
                 </label>
               ))}
@@ -150,7 +150,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
         {/* Universal Text Area for elaboration */}
         {/* Universal Text Area for elaboration */}
-        <div className="bg-brand-paper p-6 rounded-[1.5rem] border border-stone-line shadow-sm">
+        <div className="bg-brand-bgMain p-6 rounded-[1.5rem] border border-stone-line shadow-sm">
           <label className="flex items-center gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">
             <MessageSquare className="w-3 h-3" />
             {question.type === QuestionType.TEXT ? ui.yourAnswer : ui.optionalComment}
@@ -161,7 +161,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               onChange={handleNoteChange}
               placeholder={question.placeholder || ""}
               maxLength={300}
-              className="w-full min-h-[100px] p-4 text-sm text-brand-graphite bg-brand-paper-accent border border-stone-line rounded-2xl focus:ring-2 focus:ring-brand-ink/20 focus:border-brand-ink/30 outline-none transition-all resize-y placeholder-stone-400"
+              className="w-full min-h-[100px] p-4 text-sm text-brand-textPrimary bg-brand-bgCard border border-stone-line rounded-2xl focus:ring-2 focus:ring-brand-ink/20 focus:border-brand-ink/30 outline-none transition-all resize-y placeholder-stone-400"
             />
             <div className="absolute bottom-3 right-4 text-[10px] text-stone-400 font-bold pointer-events-none">
               {(answer?.note || '').length} / 300

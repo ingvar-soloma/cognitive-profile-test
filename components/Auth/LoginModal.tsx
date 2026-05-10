@@ -37,7 +37,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             }}
         >
             <DialogContent 
-                className="max-w-md p-0 overflow-hidden sm:rounded-2xl border-none bg-brand-paper-accent text-brand-graphite shadow-2xl"
+                className="max-w-md p-0 overflow-hidden sm:rounded-2xl border-none bg-brand-bgCard text-brand-textPrimary shadow-2xl"
                 showCloseButton={canClose}
                 onPointerDownOutside={(e) => {
                     if (!canClose) e.preventDefault();
@@ -52,7 +52,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     </div>
 
                     <DialogHeader className="items-center">
-                        <DialogTitle className="text-2xl font-bold text-brand-graphite mb-3">
+                        <DialogTitle className="text-2xl font-bold text-brand-textPrimary mb-3">
                             {title || ui.loginModalTitle}
                         </DialogTitle>
                         <DialogDescription className="text-stone-500 mb-8 leading-relaxed text-center">

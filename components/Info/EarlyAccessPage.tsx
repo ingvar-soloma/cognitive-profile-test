@@ -39,12 +39,20 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
             if (response.ok) {
                 setIsSuccess(true);
                 toast.success(ui.earlyAccessSuccess);
+                // Redirect to demo after a short delay
+                setTimeout(() => {
+                    navigate('/survey/express_demo');
+                }, 2000);
             } else {
                 throw new Error('Failed to register');
             }
         } catch (error) {
             console.error('Registration error:', error);
             toast.error(ui.subscribeError);
+            // Even if API fails, let them try the demo
+            setTimeout(() => {
+                navigate('/survey/express_demo');
+            }, 1000);
         } finally {
             setIsSubmitting(false);
         }
@@ -58,8 +66,8 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                 <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-[120px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
             </div>
 
-            <div className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-32">
-                <div className="text-center space-y-8 mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="relative z-10 max-w-5xl mx-auto px-6 pt-24 pb-32 text-center">
+                <div className="space-y-8 mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 rounded-full text-[10px] font-bold tracking-[0.2em] uppercase text-indigo-400 dark:text-indigo-300 shadow-sm mx-auto">
                         <Zap className="w-3 h-3 text-indigo-500" />
                         Next Gen Neurotech
@@ -73,38 +81,53 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                         {ui.earlyAccessSubtitle}
                     </p>
 
-                    <div className="max-w-md mx-auto relative group">
+                    <div className="max-w-2xl mx-auto relative group">
                         {!isSuccess ? (
-                            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 p-2 bg-card dark:bg-white/5 rounded-[2.5rem] shadow-2xl focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-500">
-                                <div className="flex-1 flex items-center px-6">
-                                    <Mail className="w-5 h-5 text-muted-foreground dark:text-slate-400 mr-3" />
-                                    <input
-                                        type="email"
-                                        placeholder={ui.subscribePlaceholder}
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-transparent outline-none py-4 text-base font-medium placeholder:text-muted-foreground/50 dark:text-white"
-                                        required
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                                >
-                                    {isSubmitting ? '...' : ui.subscribeButton}
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </button>
-                            </form>
+                            <div className="space-y-6">
+                                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 p-2 bg-card dark:bg-white/5 rounded-[2.5rem] shadow-2xl focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-500">
+                                    <div className="flex-1 flex items-center px-6">
+                                        <Mail className="w-5 h-5 text-muted-foreground dark:text-slate-400 mr-3" />
+                                        <input
+                                            type="email"
+                                            placeholder={ui.subscribePlaceholder}
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full bg-transparent outline-none py-4 text-base font-medium placeholder:text-muted-foreground/50 dark:text-white"
+                                            required
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? '...' : ui.expressDiagnosticsCta}
+                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </form>
+                                <p className="text-sm font-bold text-indigo-400/80 uppercase tracking-widest animate-pulse">
+                                    {ui.earlyAccessCta}
+                                </p>
+                            </div>
                         ) : (
-                            <div className="p-8 bg-indigo-600/10 border border-indigo-600/30 rounded-[2.5rem] flex items-center justify-center gap-4 animate-in zoom-in-95 duration-500">
-                                <CheckCircle className="w-8 h-8 text-indigo-500" />
-                                <span className="text-lg font-bold text-indigo-400">{ui.earlyAccessSuccess}</span>
+                            <div className="p-8 bg-indigo-600/10 border border-indigo-600/30 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 animate-in zoom-in-95 duration-500">
+                                <div className="flex items-center gap-4">
+                                    <CheckCircle className="w-8 h-8 text-indigo-500" />
+                                    <span className="text-lg font-bold text-indigo-400">{ui.earlyAccessSuccess}</span>
+                                </div>
+                                <div className="w-full h-1 bg-indigo-500/20 rounded-full mt-4 overflow-hidden">
+                                    <div className="h-full bg-indigo-500 animate-[progress_2s_ease-in-out_forwards]" />
+                                </div>
                             </div>
                         )}
-                        <p className="mt-4 text-[10px] text-muted-foreground/60 dark:text-slate-500 uppercase tracking-widest font-bold font-sans">
-                            {ui.earlyAccessCta}
-                        </p>
+                        
+                        {/* Scientific Authority Block */}
+                        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 opacity-40 grayscale mt-12 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            <span>Based on VVIQ (1973)</span>
+                            <span>PSIQ Multisensory Metrics</span>
+                            <span>MBTI Cognitive Functions</span>
+                            <span>SDAM Memory Framework</span>
+                        </div>
                     </div>
                 </div>
 
@@ -138,6 +161,26 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Curiosity Hook */}
+                        <div className="mt-8 text-left">
+                            <h3 className="text-lg font-bold text-foreground dark:text-white mb-6">
+                                {ui.curiosityTitle}
+                            </h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderLeft: '3px solid #6366f1' }} className="rounded-r-xl">
+                                {[
+                                    ui.curiosityInsight1,
+                                    ui.curiosityInsight2,
+                                    ui.curiosityInsight3,
+                                    ui.curiosityInsight4,
+                                    ui.curiosityInsight5
+                                ].map((insight, idx) => (
+                                    <div key={idx} className="bg-card dark:bg-white/5 p-4 rounded-xl text-sm text-muted-foreground dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5">
+                                        {insight}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="relative lg:pl-12 animate-in fade-in slide-in-from-right-8 duration-1000">
@@ -161,29 +204,49 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                     </div>
                 </div>
 
-                {/* Free Demo Promo */}
-                <div className="bg-card dark:bg-white/5 rounded-[3rem] p-10 md:p-20 text-center space-y-8 relative overflow-hidden group">
+                {/* Free Demo Promo - Dominating CTA Block */}
+                <div className="bg-indigo-600 rounded-[3rem] p-10 md:p-20 text-center space-y-10 relative overflow-hidden group shadow-[0_32px_64px_-16px_rgba(79,70,229,0.4)]">
                     <div className="absolute top-0 right-0 p-8">
-                        <Zap className="w-12 h-12 text-indigo-500/10 rotate-12" />
+                        <Zap className="w-16 h-16 text-white/10 rotate-12" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 p-8">
+                        <Brain className="w-24 h-24 text-white/5 -rotate-12" />
                     </div>
 
-                    <h3 className="text-3xl md:text-5xl font-black tracking-tight leading-tight text-foreground dark:text-white">
-                        {ui.tryExpressFree}
-                    </h3>
+                    <div className="relative z-10 space-y-4">
+                        <h3 className="text-4xl md:text-6xl font-black tracking-tight leading-tight text-white">
+                            {ui.tryExpressFree}
+                        </h3>
+                        <p className="text-indigo-100 text-xl max-w-2xl mx-auto font-medium">
+                            {ui.demoCtaDesc}
+                        </p>
+                    </div>
 
-                    <p className="text-muted-foreground dark:text-slate-300 text-lg max-w-xl mx-auto">
-                        {ui.demoCtaDesc}
-                    </p>
+                    <div className="relative z-10 flex flex-col items-center gap-8">
+                        <button
+                            onClick={() => navigate('/survey/express_demo')}
+                            className="inline-flex items-center gap-6 px-16 py-8 bg-white text-indigo-600 rounded-[3rem] font-black text-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl group"
+                        >
+                            {ui.expressDiagnosticsCta}
+                            <ArrowRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
+                        </button>
 
-                    <button
-                        onClick={() => navigate('/survey/express_demo')}
-                        className="inline-flex items-center gap-4 px-12 py-6 bg-foreground dark:bg-white text-background dark:text-black rounded-[2.5rem] font-black text-xl hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(0,0,0,0.3)] group"
-                    >
-                        {ui.expressDiagnosticsCta}
-                        <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
-                    </button>
+                        {/* Pricing Node - High Contrast */}
+                        <div className="flex flex-col items-center p-8 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 max-w-md w-full">
+                            <span className="text-white/60 line-through text-sm font-bold tracking-widest uppercase">
+                                {ui.pricingFuturePrice}
+                            </span>
+                            <span className="text-white text-3xl font-black mt-2 tracking-tight">
+                                {ui.pricingBetaOffer}
+                            </span>
+                            <div className="mt-6 flex items-center gap-2 text-indigo-100 text-sm font-bold uppercase tracking-wider">
+                                <Sparkles className="w-4 h-4 text-amber-300" />
+                                Lifetime Beta License included
+                            </div>
+                        </div>
+                    </div>
 
-                    <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-30" />
+                    <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-white/40 to-transparent" />
                 </div>
             </div>
         </div>

@@ -90,7 +90,7 @@ export const Survey: React.FC<SurveyProps> = ({
         <span className="text-brand-ink/60 dark:text-brand-ink font-bold uppercase tracking-[0.2em] text-[10px] mb-2 block">
           {ui.part} {currentCategoryIndex + 1} {ui.of} {totalCategories}
         </span>
-        <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-graphite mb-3 tracking-tight">{activeCategory.title}</h2>
+        <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-textPrimary mb-3 tracking-tight">{activeCategory.title}</h2>
         <p className="text-stone-500 text-base md:text-lg leading-relaxed">{activeCategory.description}</p>
       </div>
 
@@ -123,7 +123,7 @@ export const Survey: React.FC<SurveyProps> = ({
           onClick={onPrevCategory}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${currentCategoryIndex === 0
             ? 'text-stone-300 cursor-not-allowed opacity-50'
-            : 'text-stone-500 hover:bg-stone-bg hover:text-brand-graphite'
+            : 'text-stone-500 hover:bg-stone-bg hover:text-brand-textPrimary'
             }`}
           disabled={currentCategoryIndex === 0}
         >

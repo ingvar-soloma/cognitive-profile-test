@@ -141,7 +141,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                         <History className="w-8 h-8" />
                     </div>
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite tracking-tight leading-tight mb-2">
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary tracking-tight leading-tight mb-2">
                             {isAdmin ? ui.systemDatabase : ui.navResults}
                         </h1>
                         <p className="text-stone-500 font-sans">
@@ -158,7 +158,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                             placeholder={ui.searchUsersPlaceholder}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10 pr-4 py-2 w-full bg-brand-paper border border-stone-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
+                            className="pl-10 pr-4 py-2 w-full bg-brand-bgMain border border-stone-line rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-ink/20"
                         />
                     </div>
                 )}
@@ -182,7 +182,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                                         </div>
                                     )}
                                     <div>
-                                        <h3 className="font-bold text-brand-graphite leading-tight">{userGroup.name}</h3>
+                                        <h3 className="font-bold text-brand-textPrimary leading-tight">{userGroup.name}</h3>
                                         <div className="flex items-center gap-2 text-[10px] text-stone-400 font-mono">
                                             <span>ID: {userGroup.userId}</span>
                                             {userGroup.username && (
@@ -191,7 +191,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                                         </div>
                                     </div>
                                 </div>
-                                <span className="px-3 py-1 bg-brand-paper rounded-full text-[10px] uppercase font-bold text-stone-400 tracking-wider shadow-sm ring-1 ring-stone-line/50">
+                                <span className="px-3 py-1 bg-brand-bgMain rounded-full text-[10px] uppercase font-bold text-stone-400 tracking-wider shadow-sm ring-1 ring-stone-line/50">
                                     {userGroup.tests.length} {ui.testsFound}
                                 </span>
                             </div>
@@ -201,14 +201,14 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                                     <button
                                         key={test.id}
                                         onClick={() => handleView({ isLocal: false, fullData: test.fullData })}
-                                        className="flex items-center justify-between p-4 bg-brand-paper-accent/40 border border-stone-line rounded-2xl hover:bg-brand-paper-accent hover:shadow-sm hover:border-brand-ink/20 transition-all text-left group"
+                                        className="flex items-center justify-between p-4 bg-brand-bgCard/40 border border-stone-line rounded-2xl hover:bg-brand-bgCard hover:shadow-sm hover:border-brand-ink/20 transition-all text-left group"
                                     >
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 bg-brand-ink/5 rounded-xl flex items-center justify-center text-brand-ink group-hover:bg-brand-ink group-hover:text-white transition-colors duration-300">
                                                 <BarChart2 className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <div className="text-sm font-bold text-brand-graphite">{test.subtitle}</div>
+                                                <div className="text-sm font-bold text-brand-textPrimary">{test.subtitle}</div>
                                                 <div className="text-[10px] text-stone-400 uppercase font-bold tracking-widest mt-0.5">
                                                     {test.answerCount} {ui.answersLabel} • {new Date(test.date).toLocaleString(language === 'uk' ? 'uk-UA' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' })}
                                                 </div>
@@ -244,14 +244,14 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                             <button
                                 key={item.id}
                                 onClick={() => handleView(item)}
-                                className="flex items-center justify-between p-6 bg-brand-paper-accent border border-stone-line rounded-[2rem] shadow-card hover:shadow-soft hover:border-brand-ink/30 transition-all text-left group"
+                                className="flex items-center justify-between p-6 bg-brand-bgCard border border-stone-line rounded-[2rem] shadow-card hover:shadow-soft hover:border-brand-ink/30 transition-all text-left group"
                             >
                                 <div className="flex items-center gap-5">
                                     <div className="w-12 h-12 bg-brand-ink/5 border border-brand-ink/10 rounded-2xl flex items-center justify-center text-brand-ink group-hover:scale-105 group-hover:bg-brand-ink group-hover:text-white transition-all duration-300 shadow-sm">
                                         <BarChart2 className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h3 className="font-serif font-bold text-brand-graphite text-xl md:text-2xl tracking-tight mb-0.5">
+                                        <h3 className="font-serif font-bold text-brand-textPrimary text-xl md:text-2xl tracking-tight mb-0.5">
                                             {item.title}
                                         </h3>
                                         <div className="flex items-center gap-3 text-xs text-stone-400 font-sans">
@@ -265,7 +265,7 @@ export const DashboardResults: React.FC<DashboardResultsProps> = ({ profiles, on
                                 <div className="flex items-center gap-6">
                                     <div className="hidden lg:flex flex-col items-end">
                                         <span className="text-[10px] uppercase font-bold text-stone-300 tracking-widest mb-1">{ui.dateLabel}</span>
-                                        <span className="text-sm font-bold text-brand-graphite">
+                                        <span className="text-sm font-bold text-brand-textPrimary">
                                             {new Date(item.date).toLocaleDateString(language === 'uk' ? 'uk-UA' : 'en-US', { dateStyle: 'medium' })}
                                         </span>
                                     </div>

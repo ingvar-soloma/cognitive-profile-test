@@ -30,13 +30,13 @@ export const PricingPage: React.FC<PricingPageProps> = ({ ui, language, onStartS
                     <span className="text-xs font-bold uppercase tracking-widest">{ui.back || 'Back'}</span>
                 </button>
             </div>
-            
-            <Pricing 
+
+            <Pricing
                 ui={ui}
                 language={language}
                 onStartFree={() => { navigate('/'); setTimeout(onStartSurvey, 100); }}
                 onStartPro={() => { navigate('/'); setTimeout(onStartSurvey, 100); }}
-                onStartBusiness={() => window.location.href = "mailto:ingvar.soloma@gmail.com"} 
+                onStartBusiness={() => window.location.href = "mailto:ingvar.soloma@gmail.com"}
             />
         </div>
     );

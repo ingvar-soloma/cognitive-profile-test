@@ -158,7 +158,7 @@ const FAQ_DATA: Record<Language, FaqItem[]> = {
 const FaqAccordion: React.FC<{ item: FaqItem; index: number }> = ({ item, index }) => {
     const [open, setOpen] = useState(false);
     return (
-        <div className="border border-stone-line rounded-2xl overflow-hidden bg-brand-paper-accent shadow-sm">
+        <div className="border border-stone-line rounded-2xl overflow-hidden bg-brand-bgCard shadow-sm">
             <button
                 onClick={() => setOpen((p) => !p)}
                 className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-stone-bg/50 transition-colors"
@@ -168,7 +168,7 @@ const FaqAccordion: React.FC<{ item: FaqItem; index: number }> = ({ item, index 
                     <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest pt-0.5 min-w-[1.5rem]">
                         {String(index + 1).padStart(2, '0')}
                     </span>
-                    <span className="text-sm font-semibold text-brand-graphite leading-snug font-sans">{item.q}</span>
+                    <span className="text-sm font-semibold text-brand-textPrimary leading-snug font-sans">{item.q}</span>
                 </div>
                 <ChevronDown
                     className={`w-4 h-4 text-stone-400 flex-shrink-0 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
@@ -207,7 +207,7 @@ export const FaqPage: React.FC<FaqPageProps> = ({ ui, language }) => {
                     <HelpCircle className="w-3 h-3" />
                     FAQ
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-4 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-4 tracking-tight">
                     {ui.faqTitle}
                 </h1>
                 <p className="text-stone-500 text-base leading-relaxed max-w-xl font-sans">

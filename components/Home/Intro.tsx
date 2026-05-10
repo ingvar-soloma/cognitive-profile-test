@@ -86,7 +86,7 @@ export const Intro: React.FC<IntroProps> = ({
                     <Sparkles className="w-3 h-3 text-brand-clay" />
                     {ui.cognitiveAssessment}
                 </div>
-                <h1 className="text-4xl md:text-6xl font-serif font-bold text-brand-graphite leading-[1.1] mb-6 tracking-tight">
+                <h1 className="text-4xl md:text-6xl font-serif font-bold text-brand-textPrimary leading-[1.1] mb-6 tracking-tight">
                     {ui.heroTitle}
                 </h1>
                 <p className="text-lg md:text-xl text-stone-500 leading-relaxed max-w-2xl font-sans">
@@ -125,13 +125,13 @@ export const Intro: React.FC<IntroProps> = ({
                                         )}
                                         <div
                                             onClick={() => !isTestDisabled && onSetActiveSurveyId(survey.id)}
-                                            className={`relative bg-brand-paper-accent border rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:shadow-md transition-all cursor-pointer ${isActive ? 'border-brand-ink/30 ring-1 ring-brand-ink/10' : 'border-stone-line hover:border-stone-line/80'
+                                            className={`relative bg-brand-bgCard border rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:shadow-md transition-all cursor-pointer ${isActive ? 'border-brand-ink/30 ring-1 ring-brand-ink/10' : 'border-stone-line hover:border-stone-line/80'
                                                 } ${isTestDisabled ? 'opacity-40 grayscale cursor-not-allowed border-dashed' : ''}`}
                                         >
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-3 mb-2">
                                                     {survey.id === 'express_demo' ? <Zap className="w-5 h-5 text-brand-clay" /> : <BrainCircuit className="w-5 h-5 text-brand-ink" />}
-                                                    <h3 className={`text-xl font-bold font-serif ${isActive ? 'text-brand-ink' : 'text-brand-graphite'}`}>
+                                                    <h3 className={`text-xl font-bold font-serif ${isActive ? 'text-brand-ink' : 'text-brand-textPrimary'}`}>
                                                         {survey.title[language]}
                                                     </h3>
                                                     {isCompleted ? (
@@ -179,7 +179,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); !isTestDisabled && checkConsentAndProceed('start', survey.id); }}
                                                     disabled={isTestDisabled}
-                                                    className={`shrink-0 h-10 px-6 ${isActive ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-brand-graphite'} rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 ${isTestDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    className={`shrink-0 h-10 px-6 ${isActive ? 'bg-brand-ink text-white shadow-soft' : 'bg-stone-bg text-brand-textPrimary'} rounded-xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2 ${isTestDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                 >
                                                     {isActive ? ui.start : ui.start || 'Start'} <ChevronRight className="w-4 h-4" />
                                                 </button>
@@ -188,7 +188,7 @@ export const Intro: React.FC<IntroProps> = ({
                                                     {!hasRecommendation && (
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); checkConsentAndProceed('start', survey.id); }}
-                                                            className="h-10 px-4 bg-stone-bg text-brand-graphite rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-stone-100 transition-all flex items-center justify-center gap-2"
+                                                            className="h-10 px-4 bg-stone-bg text-brand-textPrimary rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-stone-100 transition-all flex items-center justify-center gap-2"
                                                             title={ui.editAnswers}
                                                         >
                                                             <Pencil className="w-4 h-4" />
@@ -214,11 +214,11 @@ export const Intro: React.FC<IntroProps> = ({
                                                 return (
                                                     <div
                                                         key={child.id}
-                                                        className="bg-brand-paper-accent/60 border border-stone-line rounded-xl p-4 shadow-sm flex items-center justify-between group relative select-none"
+                                                        className="bg-brand-bgCard/60 border border-stone-line rounded-xl p-4 shadow-sm flex items-center justify-between group relative select-none"
                                                     >
                                                         <div className="absolute -left-6 top-1/2 w-6 h-px bg-stone-line"></div>
                                                         <div>
-                                                            <h4 className="text-sm font-bold text-brand-graphite">{child.title[language].replace('↳ ', '')}</h4>
+                                                            <h4 className="text-sm font-bold text-brand-textPrimary">{child.title[language].replace('↳ ', '')}</h4>
                                                             <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider">{ui.navTests} {ui.sectionLabel}</p>
                                                         </div>
                                                         <div className="flex items-center gap-4">
@@ -253,12 +253,12 @@ export const Intro: React.FC<IntroProps> = ({
                     </div>
                 </div>
                 <div className="lg:col-span-4">
-                    <div className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-6 shadow-card sticky top-24 transition-colors">
+                    <div className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-6 shadow-card sticky top-24 transition-colors">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="w-8 h-8 rounded-full bg-stone-bg flex items-center justify-center border border-stone-line">
                                 <BarChart3 className="w-4 h-4 text-brand-ink" />
                             </div>
-                            <h3 className="font-serif text-lg font-bold text-brand-graphite tracking-tight">{ui.whyExploreTitle}</h3>
+                            <h3 className="font-serif text-lg font-bold text-brand-textPrimary tracking-tight">{ui.whyExploreTitle}</h3>
                         </div>
 
                         <div className="space-y-6 mb-8">
@@ -313,7 +313,7 @@ export const Intro: React.FC<IntroProps> = ({
                     <p className="text-stone-500 leading-relaxed font-sans">{ui.disclaimer}</p>
                 </div>
                 <div>
-                    <h5 className="font-bold text-brand-graphite uppercase tracking-[0.2em] mb-4 text-[9px]">{ui.gdprTitle}</h5>
+                    <h5 className="font-bold text-brand-textPrimary uppercase tracking-[0.2em] mb-4 text-[9px]">{ui.gdprTitle}</h5>
                     <p className="text-stone-500 leading-relaxed font-sans mb-3">{ui.gdprText}</p>
                     <a 
                         href="/privacy" 
@@ -324,7 +324,7 @@ export const Intro: React.FC<IntroProps> = ({
                     </a>
                 </div>
                 <div>
-                    <h5 className="font-bold text-brand-graphite uppercase tracking-[0.2em] mb-4 text-[9px]">{ui.contactTitle}</h5>
+                    <h5 className="font-bold text-brand-textPrimary uppercase tracking-[0.2em] mb-4 text-[9px]">{ui.contactTitle}</h5>
                     <div className="flex flex-col gap-2 font-bold">
                         <a href="mailto:ingvar.soloma@gmail.com" className="text-brand-ink hover:text-brand-clay transition-colors">ingvar.soloma@gmail.com</a>
                         <a href="https://t.me/ingvar_soloma" target="_blank" rel="noopener noreferrer" className="text-brand-ink hover:text-brand-clay transition-colors flex items-center gap-1">
@@ -343,7 +343,7 @@ const InfoItem: React.FC<{ letter: string, color: string, title: string, desc: s
             {letter}
         </div>
         <div>
-            <h4 className="text-sm font-bold text-brand-graphite mb-1.5 leading-tight">{title}</h4>
+            <h4 className="text-sm font-bold text-brand-textPrimary mb-1.5 leading-tight">{title}</h4>
             <p className="text-xs text-stone-500 leading-relaxed">{desc}</p>
         </div>
     </div>

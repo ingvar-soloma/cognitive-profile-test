@@ -32,13 +32,13 @@ export const RefundPolicy: React.FC<RefundPolicyProps> = ({ ui, language }) => {
                     <Ban className="w-3 h-3" />
                     Refund Policy
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-6">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-6">
                     {ui.refundPolicy || 'Refund Policy'}
                 </h1>
             </header>
 
             <div className="grid grid-cols-1 gap-8 mb-16">
-                <section className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-8 shadow-sm">
+                <section className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-8 shadow-sm">
                     <p className="text-sm text-stone-500 leading-relaxed">
                         Due to the immediate access and digital nature of the AI Cognitive Profile Test, all sales are final. We do not offer refunds once the test results have been generated and accessed by the user. If you experience technical issues preventing you from completing the test, please contact ingvar.soloma@gmail.com within 14 days of purchase.
                     </p>

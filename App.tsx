@@ -819,7 +819,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-brand-paper text-brand-graphite pb-20 font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-brand-bgMain text-brand-textPrimary pb-20 font-sans transition-colors duration-300">
       <Header
         appState={appState}
         ui={ui}
@@ -1216,7 +1216,7 @@ const ResultsWrapper: React.FC<any> = ({
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-8">
         <ShieldAlert className="w-12 h-12 text-brand-clay mb-4" />
-        <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-2">{ui.noRecordsFound}</h2>
+        <h2 className="text-2xl font-serif font-bold text-brand-textPrimary mb-2">{ui.noRecordsFound}</h2>
         <button onClick={() => navigate('/')} className="btn-primary px-8 mt-4">{ui.goHome}</button>
       </div>
     );
@@ -1224,7 +1224,7 @@ const ResultsWrapper: React.FC<any> = ({
 
   if (errorStatus === 403) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-8 bg-brand-paper">
+      <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-8 bg-brand-bgMain">
         <div className="max-w-xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
           <div className="flex justify-center">
             <div className="w-20 h-20 rounded-full bg-stone-bg shadow-soft flex items-center justify-center border border-stone-line">
@@ -1233,13 +1233,13 @@ const ResultsWrapper: React.FC<any> = ({
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-3xl font-serif font-bold text-brand-graphite">{ui.privateProfileTitle}</h2>
+            <h2 className="text-3xl font-serif font-bold text-brand-textPrimary">{ui.privateProfileTitle}</h2>
             <p className="text-stone-500 text-lg leading-relaxed">
               {ui.privateProfileDesc}
             </p>
           </div>
 
-          <div className="p-8 bg-brand-paper-accent/40 rounded-[2.5rem] border border-stone-line/50 space-y-6">
+          <div className="p-8 bg-brand-bgCard/40 rounded-[2.5rem] border border-stone-line/50 space-y-6">
             <p className="text-brand-ink text-sm font-medium leading-relaxed">
               {ui.privateProfileCTA}
             </p>

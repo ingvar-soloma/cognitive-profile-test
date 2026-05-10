@@ -44,10 +44,10 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
             />
 
             {/* Modal */}
-            <div className="relative bg-brand-paper dark:bg-stone-bg rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in border border-stone-line">
+            <div className="relative bg-brand-bgMain dark:bg-stone-bg rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in border border-stone-line">
                 <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 text-stone-300 hover:text-brand-graphite transition-colors p-1"
+                    className="absolute top-6 right-6 text-stone-300 hover:text-brand-textPrimary transition-colors p-1"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -57,7 +57,7 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                         <BrainCircuit className="w-10 h-10" />
                     </div>
 
-                    <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-3 tracking-tight">
+                    <h2 className="text-2xl font-serif font-bold text-brand-textPrimary mb-3 tracking-tight">
                         {ui.finishLanguageTitle}
                     </h2>
 
@@ -78,7 +78,7 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                                         language === lang.code
                                             ? 'bg-brand-ink text-white border-brand-ink shadow-soft'
-                                            : 'bg-stone-bg text-brand-graphite border-stone-line hover:bg-stone-100'
+                                            : 'bg-stone-bg text-brand-textPrimary border-stone-line hover:bg-stone-100'
                                     }`}
                                 >
                                     {lang.label}
@@ -97,7 +97,7 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                                 className={`px-4 py-3 rounded-xl text-[11px] font-bold transition-all border flex flex-col items-center gap-1 ${
                                     tone === 'professional'
                                         ? 'bg-brand-ink text-white border-brand-ink shadow-soft'
-                                        : 'bg-stone-bg text-brand-graphite border-stone-line hover:bg-stone-100'
+                                        : 'bg-stone-bg text-brand-textPrimary border-stone-line hover:bg-stone-100'
                                 }`}
                             >
                                 <Shield className="w-4 h-4 mb-1" />
@@ -108,7 +108,7 @@ export const FinishConfirmationModal: React.FC<FinishConfirmationModalProps> = (
                                 className={`px-4 py-3 rounded-xl text-[11px] font-bold transition-all border flex flex-col items-center gap-1 ${
                                     tone === 'friendly'
                                         ? 'bg-brand-ink text-white border-brand-ink shadow-soft'
-                                        : 'bg-stone-bg text-brand-graphite border-stone-line hover:bg-stone-100'
+                                        : 'bg-stone-bg text-brand-textPrimary border-stone-line hover:bg-stone-100'
                                 }`}
                             >
                                 <Heart className="w-4 h-4 mb-1" />

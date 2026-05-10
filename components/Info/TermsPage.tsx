@@ -56,11 +56,11 @@ export const TermsPage: React.FC<TermsPageProps> = ({ ui }) => {
             </button>
 
             <header className="mb-12">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-ink/5 text-brand-graphite rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-brand-ink/10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-ink/5 text-brand-textPrimary rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-brand-ink/10">
                     <FileText className="w-3 h-3" />
                     Legal
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-4 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-4 tracking-tight">
                     {ui.termsTitle}
                 </h1>
                 <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-2xl p-6 mb-8">
@@ -80,21 +80,21 @@ export const TermsPage: React.FC<TermsPageProps> = ({ ui }) => {
                 {sections.map((s, i) => (
                     <section
                         key={s.title}
-                        className="flex gap-5 bg-brand-paper-accent border border-stone-line rounded-2xl p-7 shadow-sm"
+                        className="flex gap-5 bg-brand-bgCard border border-stone-line rounded-2xl p-7 shadow-sm"
                     >
                         <div className={`w-11 h-11 rounded-2xl border flex-shrink-0 flex items-center justify-center ${s.accent}`}>
                             <s.icon className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-base font-serif font-bold text-brand-graphite mb-2">{s.title}</h2>
+                            <h2 className="text-base font-serif font-bold text-brand-textPrimary mb-2">{s.title}</h2>
                             <p className="text-sm text-stone-500 leading-relaxed font-sans">{s.desc}</p>
                         </div>
                     </section>
                 ))}
             </div>
 
-            <div className="mb-14 p-8 bg-brand-paper-accent border border-stone-line rounded-[2rem] text-sm text-stone-500 leading-relaxed font-sans space-y-4">
-                <h2 className="text-base font-serif font-bold text-brand-graphite">Additional Information</h2>
+            <div className="mb-14 p-8 bg-brand-bgCard border border-stone-line rounded-[2rem] text-sm text-stone-500 leading-relaxed font-sans space-y-4">
+                <h2 className="text-base font-serif font-bold text-brand-textPrimary">Additional Information</h2>
                 <p>
                     By using this service, you acknowledge that the Cognitive Profile Assessment is a research-oriented tool. The data provided is for the purpose of self-exploration and understanding neurodiversity. We are committed to transparency and will provide updates on how AI models interpret these results.
                 </p>

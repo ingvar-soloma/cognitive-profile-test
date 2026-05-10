@@ -2,38 +2,39 @@
 export default {
     content: [
         "./index.html",
-        "./App.tsx",
-        "./index.tsx",
-        "./components/**/*.{js,ts,jsx,tsx}",
-        "./services/**/*.{js,ts,jsx,tsx}",
-        "./constants.ts",
-        "./translations.ts",
-        "./types.ts",
+        "./src/**/*.{js,ts,jsx,tsx}",
     ],
     theme: {
         extend: {
             colors: {
                 brand: {
-                    // Base colors
-                    paper: '#F9F8F6',     // Warm white for page background
-                    graphite: '#2D2C2A',  // Soft black for main text
+                    // Base Backgrounds
+                    bgMain: 'var(--color-brand-bgMain)',
+                    bgCard: 'var(--color-brand-bgCard)',
+                    bgCardHover: 'var(--color-brand-bgCardHover)',
 
-                    // Accent colors
-                    ink: '#5E4B8B',       // Ink purple (Primary)
-                    inkHover: '#4A3B70',  // Darker ink for hover states
-                    clay: '#E87A5D',      // Terracotta (Secondary/Micro-accents)
-                    sage: '#4A7C59',      // Sage green (Success/Completed)
+                    // Typography
+                    textPrimary: 'var(--color-brand-textPrimary)',
+                    textSecondary: 'var(--color-brand-textSecondary)',
+
+                    // Accents
+                    accentPurple: 'var(--color-brand-accentPurple)',
+                    accentPurpleHover: 'var(--color-brand-accentPurpleHover)',
+                    accentBlue: 'var(--color-brand-accentBlue)',
+
+                    // Utility
+                    borderGlow: 'var(--color-brand-borderGlow)',
+                    divider: 'var(--color-brand-divider)',
                 }
             },
             fontFamily: {
-                // Our custom fonts
-                sans: ['Manrope', 'system-ui', 'sans-serif'],
-                serif: ['Playfair Display', 'Georgia', 'serif'],
+                // Видалено Serif. Tech SaaS використовує виключно Sans-serif.
+                sans: ['Inter', 'Manrope', 'system-ui', 'sans-serif'],
+                display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'], // Для заголовків (H1-H3)
             },
             boxShadow: {
-                // Soft shadows for an elegant magazine feel
-                'soft': '0 4px 20px -2px rgba(45, 44, 42, 0.05)',
-                'card': '0 2px 10px -1px rgba(45, 44, 42, 0.03), 0 1px 3px -1px rgba(45, 44, 42, 0.05)',
+                'card': 'var(--shadow-card)',
+                'glow': 'var(--shadow-glow)',
             }
         },
     },

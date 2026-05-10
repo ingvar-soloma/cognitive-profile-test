@@ -101,7 +101,7 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ ui, language, on
                     <Zap className="w-3 h-3" />
                     NeuroProfile
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-4 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-4 tracking-tight">
                     {ui.howItWorksTitle}
                 </h1>
                 <p className="text-stone-500 text-base leading-relaxed max-w-xl font-sans">
@@ -118,17 +118,17 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ ui, language, on
                     {STEPS.map((step, i) => (
                         <div key={i} className="relative">
                             {/* Step number circle */}
-                            <div className="absolute -left-14 top-4 w-10 h-10 rounded-full bg-brand-paper-accent border-2 border-stone-line flex items-center justify-center z-10">
-                                <span className="text-xs font-bold text-brand-graphite">{i + 1}</span>
+                            <div className="absolute -left-14 top-4 w-10 h-10 rounded-full bg-brand-bgCard border-2 border-stone-line flex items-center justify-center z-10">
+                                <span className="text-xs font-bold text-brand-textPrimary">{i + 1}</span>
                             </div>
 
-                            <div className="bg-brand-paper-accent border border-stone-line rounded-2xl p-6 shadow-sm hover:shadow-soft transition-shadow">
+                            <div className="bg-brand-bgCard border border-stone-line rounded-2xl p-6 shadow-sm hover:shadow-soft transition-shadow">
                                 <div className="flex gap-4">
                                     <div className={`w-10 h-10 rounded-xl border flex-shrink-0 flex items-center justify-center ${step.color}`}>
                                         <step.icon className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-serif font-bold text-brand-graphite mb-1.5">
+                                        <h3 className="text-base font-serif font-bold text-brand-textPrimary mb-1.5">
                                             {getTitle(step)}
                                         </h3>
                                         <p className="text-sm text-stone-500 leading-relaxed font-sans">
@@ -143,8 +143,8 @@ export const HowItWorksPage: React.FC<HowItWorksPageProps> = ({ ui, language, on
             </div>
 
             {/* Technical Detail section to increase word count */}
-            <section className="mt-16 bg-brand-paper-accent/50 rounded-[2.5rem] p-8 border border-stone-line/50">
-                <h2 className="text-2xl font-serif font-bold text-brand-graphite mb-6 tracking-tight">
+            <section className="mt-16 bg-brand-bgCard/50 rounded-[2.5rem] p-8 border border-stone-line/50">
+                <h2 className="text-2xl font-serif font-bold text-brand-textPrimary mb-6 tracking-tight">
                     {language === 'uk' ? 'Методологія дослідження' : language === 'ru' ? 'Методология исследования' : 'Research Methodology'}
                 </h2>
                 <div className="space-y-4 text-sm text-stone-500 leading-relaxed font-sans">

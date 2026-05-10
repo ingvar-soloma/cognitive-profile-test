@@ -33,10 +33,10 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return this.props.fallback || (
-        <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-brand-paper dark:bg-brand-graphite">
+        <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-brand-bgMain dark:bg-brand-graphite">
           <div className="p-6 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-2xl max-w-md shadow-lg transition-colors">
             <h2 className="text-2xl font-bold text-red-700 dark:text-red-400 mb-2">Something went wrong</h2>
-            <p className="text-brand-graphite dark:text-gray-300 mb-6 font-medium">
+            <p className="text-brand-textPrimary dark:text-gray-300 mb-6 font-medium">
               An unexpected error occurred. We've been notified and are looking into it.
             </p>
             <button

@@ -23,7 +23,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
 
     const facts = [
         {
-            icon: EyeOff,
+            icon: Eye,
             title: ui.aboutWhatIsAphantasia,
             desc: ui.aboutWhatIsAphantasiaDesc,
             color: 'bg-brand-ink/5 text-brand-ink border-brand-ink/10',
@@ -53,9 +53,9 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
     ];
 
     const spectrumItems = [
-        { label: ui.aphantasiaLabel, pct: 0, color: 'bg-brand-ink', textColor: 'text-brand-graphite' },
+        { label: ui.aphantasiaLabel, pct: 0, color: 'bg-brand-ink', textColor: 'text-brand-textPrimary' },
         { label: ui.vagueLabel, pct: 33, color: 'bg-stone-400', textColor: 'text-stone-500' },
-        { label: ui.profilePhantasia.split('.')[0], pct: 60, color: 'bg-purple-400', textColor: 'text-purple-600' },
+        { label: ui.phantasiaLabel, pct: 60, color: 'bg-purple-400', textColor: 'text-purple-600' },
         { label: ui.hyperphantasiaLabel, pct: 100, color: 'bg-brand-clay', textColor: 'text-brand-clay' },
     ];
 
@@ -75,7 +75,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
                     <Brain className="w-3 h-3" />
                     NeuroProfile
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-6 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-6 tracking-tight">
                     {ui.aboutTitle}
                 </h1>
                 <p className="text-lg text-stone-500 leading-relaxed max-w-2xl">
@@ -84,7 +84,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
             </header>
 
             {/* Spectrum visual */}
-            <section className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-8 mb-10 shadow-sm">
+            <section className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-8 mb-10 shadow-sm">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-stone-400 mb-6">{ui.aboutSpectrum}</h2>
                 <div className="relative h-3 bg-gradient-to-r from-brand-ink via-stone-300 via-purple-400 to-brand-clay rounded-full mb-8" />
                 <div className="flex justify-between gap-2 text-center">
@@ -103,12 +103,12 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
                 {facts.map((f) => (
                     <div
                         key={f.title}
-                        className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-7 shadow-sm flex flex-col gap-4 hover:shadow-soft transition-shadow"
+                        className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-7 shadow-sm flex flex-col gap-4 hover:shadow-soft transition-shadow"
                     >
                         <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${f.color}`}>
                             <f.icon className="w-5 h-5" />
                         </div>
-                        <h3 className="text-base font-serif font-bold text-brand-graphite">{f.title}</h3>
+                        <h3 className="text-base font-serif font-bold text-brand-textPrimary">{f.title}</h3>
                         <p className="text-sm text-stone-500 leading-relaxed font-sans">{f.desc}</p>
                     </div>
                 ))}
@@ -117,7 +117,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
             {/* CTA */}
             <section className="py-8">
                 <div className="mx-auto text-center">
-                    <div className="relative bg-brand-ink dark:bg-brand-paper-accent border border-brand-ink/20 dark:border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-xl">
+                    <div className="relative bg-brand-ink dark:bg-brand-bgCard border border-brand-ink/20 dark:border-white/10 rounded-[2.5rem] p-12 overflow-hidden shadow-xl">
                         <FloatingOrb className="w-64 h-64 bg-brand-clay -top-16 -right-16 opacity-30 dark:opacity-20" />
                         <FloatingOrb className="w-48 h-48 bg-white/20 -bottom-12 -left-12 opacity-15 dark:opacity-10" />
                         <div className="relative z-10">
@@ -130,7 +130,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
                             </p>
                             <button
                                 onClick={onStartSurvey}
-                                className="inline-flex items-center gap-3 px-10 py-4 bg-white text-brand-ink rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-stone-200 dark:hover:bg-brand-paper transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                                className="inline-flex items-center gap-3 px-10 py-4 bg-white text-brand-ink rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-stone-200 dark:hover:bg-brand-bgMain transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
                             >
                                 {ui.start}
                                 <ChevronRight className="w-5 h-5" />

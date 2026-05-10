@@ -69,7 +69,7 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
             <div className="w-10 h-10 rounded-xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center text-brand-ink">
               <Award className="w-6 h-6" />
             </div>
-            <h3 className="text-2xl font-serif font-bold text-brand-graphite">Badge Definitions</h3>
+            <h3 className="text-2xl font-serif font-bold text-brand-textPrimary">Badge Definitions</h3>
           </div>
           <button 
             onClick={() => setEditingBadge({ code: '', name: '', icon: '🏆', is_active: true, is_secret: false })}
@@ -82,7 +82,7 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {badges.map(badge => (
-            <div key={badge.id} className="bg-brand-paper-accent border border-stone-line rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+            <div key={badge.id} className="bg-brand-bgCard border border-stone-line rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
                <div className="absolute top-0 right-0 p-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => setEditingBadge(badge)} className="p-2 hover:bg-brand-ink/5 rounded-lg text-stone-400 hover:text-brand-ink transition-colors">
                     <Edit2 className="w-4 h-4" />
@@ -93,11 +93,11 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
                </div>
                
                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-paper-accent border border-stone-line flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform duration-500">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-bgCard border border-stone-line flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform duration-500">
                     {badge.icon || "🏆"}
                   </div>
                   <div>
-                    <h4 className="font-bold text-brand-graphite leading-tight">{badge.name}</h4>
+                    <h4 className="font-bold text-brand-textPrimary leading-tight">{badge.name}</h4>
                     <span className="text-[10px] text-stone-400 font-mono">CODE: {badge.code}</span>
                   </div>
                </div>
@@ -124,12 +124,12 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
       </section>
 
       {/* Assignment Interface */}
-      <section className="bg-brand-paper-accent/30 rounded-[2rem] border border-stone-line p-8 md:p-10">
+      <section className="bg-brand-bgCard/30 rounded-[2rem] border border-stone-line p-8 md:p-10">
         <div className="flex items-center gap-4 mb-8">
           <div className="w-10 h-10 rounded-xl bg-brand-clay/5 border border-brand-clay/10 flex items-center justify-center text-brand-clay">
             <UserPlus className="w-6 h-6" />
           </div>
-          <h3 className="text-2xl font-serif font-bold text-brand-graphite">Assign Badge to User</h3>
+          <h3 className="text-2xl font-serif font-bold text-brand-textPrimary">Assign Badge to User</h3>
         </div>
         
         <div className="flex flex-col md:flex-row gap-4 items-end">
@@ -140,7 +140,7 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
               placeholder="e.g. 12345678" 
               value={assigningToUserId}
               onChange={(e) => setAssigningToUserId(e.target.value)}
-              className="w-full px-5 py-3 bg-brand-paper-accent border border-stone-line rounded-xl text-sm focus:ring-2 focus:ring-brand-ink/20 outline-none transition-all"
+              className="w-full px-5 py-3 bg-brand-bgCard border border-stone-line rounded-xl text-sm focus:ring-2 focus:ring-brand-ink/20 outline-none transition-all"
             />
           </div>
           <div className="flex-1 space-y-2">
@@ -148,7 +148,7 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
             <select 
               value={assigningToBadgeId || ''} 
               onChange={(e) => setAssigningToBadgeId(Number(e.target.value))}
-              className="w-full px-5 py-3 bg-brand-paper-accent border border-stone-line rounded-xl text-sm focus:ring-2 focus:ring-brand-ink/20 outline-none transition-all appearance-none"
+              className="w-full px-5 py-3 bg-brand-bgCard border border-stone-line rounded-xl text-sm focus:ring-2 focus:ring-brand-ink/20 outline-none transition-all appearance-none"
             >
               <option value="">Select a badge...</option>
               {badges.filter(b => b.is_active).map(b => (
@@ -170,7 +170,7 @@ export const BadgeManager: React.FC<BadgeManagerProps> = ({ ui, lang }) => {
       {editingBadge && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8 animate-fade-in">
           <div className="absolute inset-0 bg-brand-ink/40 backdrop-blur-sm" onClick={() => setEditingBadge(null)}></div>
-          <div className="bg-brand-paper-accent rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-white/10">
+          <div className="bg-brand-bgCard rounded-[2.5rem] w-full max-w-lg shadow-2xl relative z-10 overflow-hidden border border-white/10">
              <div className="bg-brand-ink p-8 text-white">
                 <h4 className="text-2xl font-serif font-bold">{editingBadge.id ? 'Edit Badge' : 'New Badge'}</h4>
                 <p className="text-white/60 text-xs mt-1 uppercase tracking-widest font-bold">Configure badge properties</p>

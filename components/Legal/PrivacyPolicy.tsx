@@ -32,11 +32,11 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) =>
             </button>
 
             <header className="mb-12">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-sage/10 text-brand-sage rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-brand-sage/20">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-sage/10 text-brand-textPrimary rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-brand-sage/20">
                     <Shield className="w-3 h-3" />
                     Security & Trust
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-6">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-6">
                     {ui.privacyPolicy}
                 </h1>
                 <p className="text-lg text-stone-500 leading-relaxed max-w-2xl">
@@ -47,11 +47,11 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) =>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-                <section className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-8 shadow-sm">
+                <section className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-8 shadow-sm">
                     <div className="w-12 h-12 rounded-2xl bg-brand-ink/5 flex items-center justify-center mb-6 border border-brand-ink/10">
                         <Database className="w-6 h-6 text-brand-ink" />
                     </div>
-                    <h2 className="text-xl font-bold text-brand-graphite mb-4 font-serif">{ui.dataUsage}</h2>
+                    <h2 className="text-xl font-bold text-brand-textPrimary mb-4 font-serif">{ui.dataUsage}</h2>
                     <p className="text-sm text-stone-500 leading-relaxed mb-6">
                         {language === 'uk' ? 'Ми зберігаємо результати ваших тестів та AI-аналіз для того, щоб ви могли повернутися до них у будь-який час та відстежувати зміни у вашому когнітивному профілі.' :
                             language === 'ru' ? 'Мы сохраняем результаты ваших тестов и AI-анализ для того, чтобы вы могли вернуться к ним в любое время и отслеживать изменения в вашем когнитивном профиле.' :
@@ -61,7 +61,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) =>
                         <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-400">{ui.dataFromGoogle}</h3>
                         <ul className="space-y-2">
                             {['user_id', 'username', 'first_name', 'last_name', 'photo_url'].map(field => (
-                                <li key={field} className="flex items-center gap-2 text-xs font-mono bg-stone-bg/50 px-3 py-2 rounded-lg border border-stone-line/50 text-brand-graphite">
+                                <li key={field} className="flex items-center gap-2 text-xs font-mono bg-stone-bg/50 px-3 py-2 rounded-lg border border-stone-line/50 text-brand-textPrimary">
                                     <div className="w-1.5 h-1.5 rounded-full bg-brand-ink/30" />
                                     {field}
                                 </li>
@@ -70,11 +70,11 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) =>
                     </div>
                 </section>
 
-                <section className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-8 shadow-sm">
+                <section className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-8 shadow-sm">
                     <div className="w-12 h-12 rounded-2xl bg-brand-clay/5 flex items-center justify-center mb-6 border border-brand-clay/10">
                         <Trash2 className="w-6 h-6 text-brand-clay" />
                     </div>
-                    <h2 className="text-xl font-bold text-brand-graphite mb-4 font-serif">{ui.deleteData}</h2>
+                    <h2 className="text-xl font-bold text-brand-textPrimary mb-4 font-serif">{ui.deleteData}</h2>
                     <p className="text-sm text-stone-500 leading-relaxed mb-6">
                         {ui.deleteDataDesc}
                     </p>
@@ -89,7 +89,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) =>
             </div>
 
             <div className="bg-brand-sage/5 border border-brand-sage/20 rounded-[2rem] p-8 mb-16 shadow-sm">
-                <h3 className="text-xl font-bold text-brand-graphite mb-4 font-serif">
+                <h3 className="text-xl font-bold text-brand-textPrimary mb-4 font-serif">
                     Data Processing for Machine Learning Purposes
                 </h3>
                 <p className="text-sm text-stone-600 leading-relaxed max-w-3xl">
@@ -100,18 +100,18 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ ui, language }) =>
             </div>
 
             <div className="prose prose-stone max-w-none text-stone-500 text-sm leading-relaxed">
-                <h3 className="text-brand-graphite font-serif text-lg mb-4">{ui.principles}</h3>
+                <h3 className="text-brand-textPrimary font-serif text-lg mb-4">{ui.principles}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div>
-                        <h4 className="font-bold text-brand-graphite text-xs uppercase tracking-wider mb-2">{ui.anonymity}</h4>
+                        <h4 className="font-bold text-brand-textPrimary text-xs uppercase tracking-wider mb-2">{ui.anonymity}</h4>
                         <p>{ui.anonymityDesc}</p>
                     </div>
                     <div>
-                        <h4 className="font-bold text-brand-graphite text-xs uppercase tracking-wider mb-2">{ui.security}</h4>
+                        <h4 className="font-bold text-brand-textPrimary text-xs uppercase tracking-wider mb-2">{ui.security}</h4>
                         <p>{ui.securityDesc}</p>
                     </div>
                     <div>
-                        <h4 className="font-bold text-brand-graphite text-xs uppercase tracking-wider mb-2">{ui.transparency}</h4>
+                        <h4 className="font-bold text-brand-textPrimary text-xs uppercase tracking-wider mb-2">{ui.transparency}</h4>
                         <p>{ui.transparencyDesc}</p>
                     </div>
                 </div>

@@ -59,7 +59,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
   return (
     <div className="space-y-8 animate-fade-in">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-brand-paper-accent/30 border border-stone-line p-1 h-auto rounded-2xl mb-8">
+        <TabsList className="bg-brand-bgCard/30 border border-stone-line p-1 h-auto rounded-2xl mb-8">
           <TabsTrigger 
             value="records" 
             className="px-8 py-2.5 rounded-xl data-active:bg-brand-ink data-active:text-white uppercase text-[10px] font-bold tracking-widest transition-all gap-2"
@@ -122,7 +122,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                   </TableHeader>
                   <TableBody>
                     {results.map((res) => (
-                      <TableRow key={(res.user_id) + res.created_at + res.test_type} className="hover:bg-brand-paper-accent/30 transition-all group border-stone-line/30">
+                      <TableRow key={(res.user_id) + res.created_at + res.test_type} className="hover:bg-brand-bgCard/30 transition-all group border-stone-line/30">
                         <TableCell className="px-8 py-6">
                           <div className="flex items-center gap-4">
                             {res.photo_url ? (
@@ -136,7 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                               </div>
                             )}
                             <div>
-                              <div className="font-serif font-bold text-brand-graphite text-lg leading-none mb-1.5">
+                              <div className="font-serif font-bold text-brand-textPrimary text-lg leading-none mb-1.5">
                                 {res.first_name} {res.last_name || ''}
                               </div>
                               <div className="flex items-center gap-2 flex-wrap">
@@ -164,7 +164,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                         </TableCell>
                         <TableCell className="px-8 py-6">
                           <div className="inline-flex flex-col">
-                            <span className="text-xs font-bold text-brand-graphite mb-1">
+                            <span className="text-xs font-bold text-brand-textPrimary mb-1">
                               {res.test_type === 'full_aphantasia_profile' ? ui.fullCognitiveProfile : ui.expressDiagnostics}
                             </span>
                             <Badge variant="secondary" className="text-[9px] uppercase tracking-widest text-stone-400 font-bold bg-stone-bg rounded-full px-2 py-0.5 w-fit border border-stone-line/50">
@@ -174,7 +174,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                         </TableCell>
                         <TableCell className="px-8 py-6">
                           <div className="flex flex-col text-xs">
-                            <span className="text-brand-graphite font-bold">
+                            <span className="text-brand-textPrimary font-bold">
                                 {new Date(res.created_at).toLocaleDateString(lang === 'uk' ? 'uk-UA' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                             <span className="text-[10px] text-stone-400 font-medium">
@@ -188,7 +188,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                               variant="link"
                               size="sm"
                               onClick={() => onViewResult(res)}
-                              className="p-0 h-auto text-brand-ink font-bold text-[10px] uppercase tracking-[0.2em] hover:text-brand-graphite transition-all group/btn"
+                              className="p-0 h-auto text-brand-ink font-bold text-[10px] uppercase tracking-[0.2em] hover:text-brand-textPrimary transition-all group/btn"
                             >
                               {ui.details}
                               <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center group-hover/btn:bg-brand-ink group-hover/btn:text-white transition-all ml-2">

@@ -35,7 +35,7 @@ interface Article {
 // Articles are fetched from the database via /api/news
 
 const ArticleSkeleton: React.FC = () => (
-    <div className="bg-brand-paper-accent border border-stone-line rounded-[2rem] p-7 shadow-sm flex flex-col gap-4 animate-pulse-subtle">
+    <div className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-7 shadow-sm flex flex-col gap-4 animate-pulse-subtle">
         <div className="flex items-center justify-between gap-3">
             <div className="h-4 w-20 bg-stone-100 rounded-full"></div>
             <div className="h-4 w-12 bg-stone-100 rounded-full"></div>
@@ -65,7 +65,7 @@ const ArticleCard: React.FC<{ article: Article; language: Language; onClick: () 
     return (
         <article
             onClick={onClick}
-            className="group bg-brand-paper-accent border border-stone-line rounded-[2rem] p-7 shadow-sm hover:shadow-soft hover:border-brand-ink/20 transition-all cursor-pointer flex flex-col gap-4"
+            className="group bg-brand-bgCard border border-stone-line rounded-[2rem] p-7 shadow-sm hover:shadow-soft hover:border-brand-ink/20 transition-all cursor-pointer flex flex-col gap-4"
         >
             <div className="flex items-center justify-between gap-3">
                 <span className={`text-[9px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${article.tag_color}`}>
@@ -84,7 +84,7 @@ const ArticleCard: React.FC<{ article: Article; language: Language; onClick: () 
 
             <div>
                 <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold mb-2">{dateStr}</p>
-                <h2 className="text-lg font-serif font-bold text-brand-graphite leading-snug mb-2 group-hover:text-brand-ink transition-colors line-clamp-2">
+                <h2 className="text-lg font-serif font-bold text-brand-textPrimary leading-snug mb-2 group-hover:text-brand-ink transition-colors line-clamp-2">
                     {title}
                 </h2>
                 <p className="text-sm text-stone-500 leading-relaxed font-sans line-clamp-2">{excerpt}</p>
@@ -153,7 +153,7 @@ const ArticleView: React.FC<{ article: Article; language: Language; ui: UIString
                             title={ui.copyLink}
                             className="p-1.5 rounded-lg bg-stone-bg border border-stone-line hover:border-brand-ink/40 transition-colors"
                          >
-                            <Mail className="w-3 h-3 text-brand-graphite" />
+                            <Mail className="w-3 h-3 text-brand-textPrimary" />
                          </button>
                          <a 
                             href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`}
@@ -173,7 +173,7 @@ const ArticleView: React.FC<{ article: Article; language: Language; ui: UIString
                          </a>
                     </div>
                 </div>
-                <h1 className="text-3xl md:text-4xl font-serif font-bold text-brand-graphite leading-tight tracking-tight">
+                <h1 className="text-3xl md:text-4xl font-serif font-bold text-brand-textPrimary leading-tight tracking-tight">
                     {title}
                 </h1>
             </header>
@@ -259,11 +259,11 @@ export const NewsPage: React.FC<NewsPageProps> = ({ ui, language, userEmail }) =
             </button>
 
             <header className="mb-12">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-ink/5 text-brand-graphite rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-brand-ink/10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-ink/5 text-brand-textPrimary rounded-full text-[9px] font-bold tracking-[0.2em] uppercase mb-6 border border-brand-ink/10">
                     <BookOpen className="w-3 h-3" />
                     NeuroProfile
                 </div>
-                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-graphite leading-tight mb-3 tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-3 tracking-tight">
                     {window.location.pathname.includes('blog') ? ui.navBlog : ui.navNews}
                 </h1>
                 <p className="text-stone-500 text-base leading-relaxed max-w-xl font-sans">
@@ -282,7 +282,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({ ui, language, userEmail }) =
                         className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
                             !selectedTag 
                                 ? 'bg-brand-ink text-white shadow-sm ring-1 ring-brand-ink/20' 
-                                : 'bg-stone-bg/50 text-stone-400 hover:text-brand-graphite border border-stone-line/50'
+                                : 'bg-stone-bg/50 text-stone-400 hover:text-brand-textPrimary border border-stone-line/50'
                         }`}
                     >
                         {language === 'uk' ? 'Всі' : language === 'ru' ? 'Все' : 'All'}
@@ -294,7 +294,7 @@ export const NewsPage: React.FC<NewsPageProps> = ({ ui, language, userEmail }) =
                             className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
                                 selectedTag === tag 
                                     ? 'bg-brand-ink text-white shadow-sm ring-1 ring-brand-ink/20' 
-                                    : 'bg-stone-bg/50 text-stone-400 hover:text-brand-graphite border border-stone-line/50'
+                                    : 'bg-stone-bg/50 text-stone-400 hover:text-brand-textPrimary border border-stone-line/50'
                             }`}
                         >
                             {tag}
@@ -328,13 +328,13 @@ export const NewsPage: React.FC<NewsPageProps> = ({ ui, language, userEmail }) =
             </div>
 
             {/* Newsletter subscribe block */}
-            <div className="mt-12 bg-brand-paper-accent border border-stone-line rounded-[2rem] p-8 shadow-sm">
+            <div className="mt-12 bg-brand-bgCard border border-stone-line rounded-[2rem] p-8 shadow-sm">
                 <div className="flex items-start gap-4 mb-6">
                     <div className="w-11 h-11 rounded-2xl bg-brand-ink/5 border border-brand-ink/10 flex items-center justify-center flex-shrink-0">
                         <Mail className="w-5 h-5 text-brand-ink" />
                     </div>
                     <div>
-                        <h2 className="text-base font-serif font-bold text-brand-graphite mb-1">{ui.subscribeTitle}</h2>
+                        <h2 className="text-base font-serif font-bold text-brand-textPrimary mb-1">{ui.subscribeTitle}</h2>
                         <p className="text-sm text-stone-500 font-sans">{ui.subscribeSubtitle}</p>
                     </div>
                 </div>
