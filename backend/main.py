@@ -1138,8 +1138,10 @@ async def get_results(request: Request, q: Optional[str] = None, target_user_id:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
-        payload = jwt.decode(token, auth_secret, algorithms=["HS256"])
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"], options={"require": ["exp"]})
         user_id = payload.get("id")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid session")
 
@@ -1253,8 +1255,10 @@ async def get_online_stats(request: Request, conn: asyncpg.Connection = Depends(
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
-        payload = jwt.decode(token, auth_secret, algorithms=["HS256"])
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"], options={"require": ["exp"]})
         user_id = payload.get("id")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid session")
 
@@ -1311,8 +1315,10 @@ async def get_subscribers(request: Request):
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
-        payload = jwt.decode(token, auth_secret, algorithms=["HS256"])
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"], options={"require": ["exp"]})
         user_id = payload.get("id")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid session")
 

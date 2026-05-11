@@ -100,7 +100,8 @@ async def exchange_google_code(req: GoogleExchangeRequest, response: Response, c
             "last_name": last_name,
             "username": username,
             "photo_url": photo_url,
-            "auth_date": int(time.time())
+            "auth_date": int(time.time()),
+            "exp": int(time.time()) + 30 * 24 * 3600
         }
         
         token = jwt.encode(auth_data, auth_secret, algorithm="HS256")
