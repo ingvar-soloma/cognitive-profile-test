@@ -1073,6 +1073,16 @@ async def get_my_result(request: Request, conn: asyncpg.Connection = Depends(get
     # Reconstruct the expected response structure
     data = {
         "user_id": user_id,
+        "user": {
+            "id": user_id,
+            "first_name": user_row['first_name'],
+            "last_name": user_row['last_name'],
+            "photo_url": user_row['photo_url'],
+            "is_public": user_row['is_public'],
+            "public_nickname": user_row['public_nickname'],
+            "credits": user_row.get('credits', 0),
+            "referral_count": user_row.get('referral_count', 0),
+        },
         "first_name": user_row['first_name'],
         "last_name": user_row['last_name'],
         "photo_url": user_row['photo_url'],
