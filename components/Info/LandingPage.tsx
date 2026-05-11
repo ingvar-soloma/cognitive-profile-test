@@ -8,13 +8,14 @@ import { PrivacyPolicy } from '../Legal/PrivacyPolicy';
 interface LandingPageProps {
     ui: UIStrings;
     onStartSurvey: () => void;
+    user: any;
 }
 
 const FloatingOrb: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`absolute rounded-full blur-3xl pointer-events-none animate-pulse-slow opacity-50 dark:opacity-40 ${className}`} />
 );
 
-export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey, user }) => {
     const navigate = useNavigate();
     const heroRef = useRef<HTMLDivElement>(null);
     const [isLockedReport] = React.useState(true);
@@ -246,40 +247,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                     </div>
 
                     {/* Lead Capture Form */}
-                    <div className="my-24 mx-auto max-w-5xl bg-[#5E4B8B] text-white rounded-[2.5rem] p-10 md:p-16 shadow-2xl text-center relative overflow-hidden group">
-                        <FloatingOrb className="w-96 h-96 bg-purple-400/20 -top-20 -right-20 opacity-60 dark:opacity-60" />
-                        <FloatingOrb className="w-64 h-64 bg-brand-clay/20 -bottom-20 -left-20 opacity-40 dark:opacity-40" />
-                        
-                        <div className="relative z-10 max-w-xl mx-auto">
-                            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6 tracking-tight">
-                                {ui.leadFormTitle}
-                            </h2>
-                            <p className="text-base text-stone-300 mb-10 leading-relaxed font-sans">
-                                {ui.leadFormSubtitle}
-                            </p>
+                    {!user && (
+                        <div className="my-24 mx-auto max-w-5xl bg-[#5E4B8B] text-white rounded-[2.5rem] p-10 md:p-16 shadow-2xl text-center relative overflow-hidden group">
+                            <FloatingOrb className="w-96 h-96 bg-purple-400/20 -top-20 -right-20 opacity-60 dark:opacity-60" />
+                            <FloatingOrb className="w-64 h-64 bg-brand-clay/20 -bottom-20 -left-20 opacity-40 dark:opacity-40" />
                             
-                            <form onSubmit={handleLeadSubmit} className="flex flex-col sm:flex-row gap-4">
-                                <div className="flex-1 relative">
-                                    <input
-                                        type="email"
-                                        required
-                                        value={email}
-                                        onChange={e => setEmail(e.target.value)}
-                                        placeholder={ui.leadFormEmailPlaceholder}
-                                        className="w-full bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-sm text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
-                                    />
-                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={leadStatus === 'loading' || leadStatus === 'success'}
-                                    className="px-10 py-4 bg-white text-[#5E4B8B] rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-stone-100 hover:scale-[1.03] active:scale-95 transition-all shadow-xl disabled:opacity-50"
-                                >
-                                    {leadStatus === 'success' ? '✓' : ui.leadFormButton}
-                                </button>
-                            </form>
+                            <div className="relative z-10 max-w-xl mx-auto">
+                                <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6 tracking-tight">
+                                    {ui.leadFormTitle}
+                                </h2>
+                                <p className="text-base text-stone-300 mb-10 leading-relaxed font-sans">
+                                    {ui.leadFormSubtitle}
+                                </p>
+                                
+                                <form onSubmit={handleLeadSubmit} className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-1 relative">
+                                        <input
+                                            type="email"
+                                            required
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            placeholder={ui.leadFormEmailPlaceholder}
+                                            className="w-full bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-sm text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
+                                        />
+                                        <Mail className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={leadStatus === 'loading' || leadStatus === 'success'}
+                                        className="px-10 py-4 bg-white text-[#5E4B8B] rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-stone-100 hover:scale-[1.03] active:scale-95 transition-all shadow-xl disabled:opacity-50"
+                                    >
+                                        {leadStatus === 'success' ? '✓' : ui.leadFormButton}
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="mt-24 text-left bg-brand-bgCard/50 dark:bg-black/10 rounded-[3rem] p-10 md:p-16 relative overflow-hidden border border-stone-line/30">
                         {isLockedReport && (

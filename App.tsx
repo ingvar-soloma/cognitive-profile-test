@@ -91,12 +91,15 @@ const App: React.FC = () => {
   
   const { isEnabled, loading: flagsLoading } = useFeatureFlags();
 
-  // Unified Source Tracker for lead attribution (from ?s=f, ?s=t, etc.) and referrals (?ref=user_id)
+  // Unified Source Tracker for lead attribution (from ?s=f, ?s=t, etc.), referrals (?ref=user_id),
+  // campaigns (?c=beta_v5), and intent (?i=gift)
   useEffect(() => {
     const s = searchParams.get('s');
     const ref = searchParams.get('ref');
+    const c = searchParams.get('c');
+    const i = searchParams.get('i');
 
-    if (s || ref) {
+    if (s || ref || c || i) {
       const newParams = new URLSearchParams(searchParams);
 
       if (s) {
@@ -112,6 +115,16 @@ const App: React.FC = () => {
       if (ref) {
         localStorage.setItem('referred_by', ref);
         newParams.delete('ref');
+      }
+
+      if (c) {
+        localStorage.setItem('lead_campaign', c);
+        newParams.delete('c');
+      }
+
+      if (i) {
+        localStorage.setItem('lead_intent', i);
+        newParams.delete('i');
       }
 
       // Clean URL after capturing to avoid scaring users
@@ -840,11 +853,11 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={
           !user ? (
-            <LandingPage ui={ui} onStartSurvey={() => handleStartSurvey()} />
+            <LandingPage ui={ui} onStartSurvey={() => handleStartSurvey()} user={user} />
           ) : null
         } />
         <Route path="/landing" element={
-          <LandingPage ui={ui} onStartSurvey={() => handleStartSurvey()} />
+          <LandingPage ui={ui} onStartSurvey={() => handleStartSurvey()} user={user} />
         } />
         <Route path="*" element={null} />
       </Routes>
@@ -1010,9 +1023,9 @@ const App: React.FC = () => {
             />
           } />
 
-          <Route path="/early-access" element={<EarlyAccessPage ui={ui} />} />
-          <Route path="/b2b" element={<B2bDashboardPage ui={ui} />} />
-          <Route path="/compatibility" element={<CognitiveCompatibilityPage ui={ui} />} />
+          <Route path="/early-access" element={<EarlyAccessPage ui={ui} user={user} />} />
+          <Route path="/b2b" element={<B2bDashboardPage ui={ui} user={user} />} />
+          <Route path="/compatibility" element={<CognitiveCompatibilityPage ui={ui} user={user} />} />
 
           <Route path="/pricing" element={<PricingPage ui={ui} language={language} onStartSurvey={() => handleStartSurvey()} />} />
 

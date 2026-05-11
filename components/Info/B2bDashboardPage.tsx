@@ -7,9 +7,10 @@ import toast from 'react-hot-toast';
 
 interface B2bDashboardPageProps {
     ui: UIStrings;
+    user: any;
 }
 
-export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
+export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui, user }) => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,11 +30,19 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
         }
 
         setIsSubmitting(true);
+        const campaign = localStorage.getItem('lead_campaign') || undefined;
+        const intent = localStorage.getItem('lead_intent') || undefined;
+
         try {
             const response = await fetch(`${(window as any).API_BASE_URL || ''}/api/early-access`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, source: 'b2b-dashboard-landing' }),
+                body: JSON.stringify({ 
+                    email, 
+                    source: 'b2b-dashboard-landing',
+                    campaign,
+                    intent
+                }),
             });
 
             if (response.ok) {
@@ -74,45 +83,47 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                     </p>
 
                     <div className="max-w-md mx-auto relative group">
-                        {!isSuccess ? (
-                            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 p-2 bg-card dark:bg-white/5 rounded-[2.5rem] shadow-2xl focus-within:ring-4 focus-within:ring-blue-500/10 transition-all duration-500">
-                                <div className="flex-1 flex items-center px-6">
-                                    <Mail className="w-5 h-5 text-muted-foreground dark:text-slate-400 mr-3" />
-                                    <input
-                                        type="email"
-                                        placeholder={ui.subscribePlaceholder}
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full bg-transparent outline-none py-4 text-base font-medium placeholder:text-muted-foreground/50 dark:text-white"
-                                        required
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                                >
-                                    {isSubmitting ? '...' : ui.subscribeButton}
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                </button>
-                            </form>
-                        ) : (
+                        {(user || isSuccess) ? (
                             <div className="p-8 bg-blue-600/10 rounded-[2.5rem] flex items-center justify-center gap-4 animate-in zoom-in-95 duration-500">
                                 <CheckCircle className="w-8 h-8 text-blue-500" />
                                 <span className="text-lg font-bold text-blue-400">{ui.b2bSuccess}</span>
                             </div>
-                        )}
-                        <p className="mt-4 text-[10px] text-muted-foreground/60 dark:text-slate-500 uppercase tracking-widest font-bold font-sans">
-                            {ui.earlyAccessCta}
-                        </p>
+                        ) : (
+                            <>
+                                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 p-2 bg-card dark:bg-white/5 rounded-[2.5rem] shadow-2xl focus-within:ring-4 focus-within:ring-blue-500/10 transition-all duration-500">
+                                    <div className="flex-1 flex items-center px-6">
+                                        <Mail className="w-5 h-5 text-muted-foreground dark:text-slate-400 mr-3" />
+                                        <input
+                                            type="email"
+                                            placeholder={ui.subscribePlaceholder}
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            className="w-full bg-transparent outline-none py-4 text-base font-medium placeholder:text-muted-foreground/50 dark:text-white"
+                                            required
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? '...' : ui.subscribeButton}
+                                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                </form>
+                                <p className="mt-4 text-[10px] text-muted-foreground/60 dark:text-slate-500 uppercase tracking-widest font-bold font-sans text-center">
+                                    {ui.earlyAccessCta}
+                                </p>
 
-                        {/* Scientific Authority Block */}
-                        <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-muted-foreground uppercase tracking-widest hover:opacity-80 transition-opacity">
-                            <span>Based on VVIQ (1973)</span>
-                            {/* <span>PSIQ Multisensory Metrics</span> */}
-                            {/* <span>MBTI Cognitive Functions</span> */}
-                            <span>SDAM Memory Framework</span>
-                        </a>
+                                {/* Scientific Authority Block */}
+                                <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-muted-foreground uppercase tracking-widest hover:opacity-80 transition-opacity">
+                                    <span>Based on VVIQ (1973)</span>
+                                    {/* <span>PSIQ Multisensory Metrics</span> */}
+                                    {/* <span>MBTI Cognitive Functions</span> */}
+                                    <span>SDAM Memory Framework</span>
+                                </a>
+                            </>
+                        )}
                     </div>
                 </div>
 

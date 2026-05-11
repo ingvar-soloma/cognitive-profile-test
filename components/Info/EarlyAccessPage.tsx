@@ -8,9 +8,10 @@ import toast from 'react-hot-toast';
 
 interface EarlyAccessPageProps {
     ui: UIStrings;
+    user: any;
 }
 
-export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
+export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui, user }) => {
     const navigate = useNavigate();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -55,8 +56,29 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                         {ui.earlyAccessSubtitle}
                     </p>
 
-                    <div className="max-w-2xl mx-auto relative group">
-                        {!isSuccess ? (
+                    {(user || isSuccess) ? (
+                        <div className="max-w-2xl mx-auto p-8 bg-indigo-600/10 border border-indigo-600/30 rounded-[2.5rem] flex flex-col items-center justify-center gap-6 animate-in zoom-in-95 duration-500">
+                             <div className="flex items-center gap-4">
+                                <CheckCircle className="w-8 h-8 text-indigo-500" />
+                                <span className="text-lg font-bold text-indigo-400">{ui.earlyAccessSuccess}</span>
+                            </div>
+                            
+                            {isSuccess ? (
+                                <div className="w-full h-1 bg-indigo-500/20 rounded-full mt-4 overflow-hidden">
+                                    <div className="h-full bg-indigo-500 animate-[progress_2s_ease-in-out_forwards]" />
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleNavigateToDemo}
+                                    className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
+                                >
+                                    {ui.expressDiagnosticsCta}
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="max-w-2xl mx-auto relative group">
                             <div className="space-y-8 flex flex-col items-center">
                                 <div className="w-full max-w-md space-y-4">
                                     <div className="w-full flex justify-center">
@@ -66,10 +88,17 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                                                 setIsSubmitting(true);
                                                 try {
                                                     const apiUrl = import.meta.env.VITE_API_URL || '';
+                                                    const campaign = localStorage.getItem('lead_campaign') || undefined;
+                                                    const intent = localStorage.getItem('lead_intent') || undefined;
                                                     const response = await fetch(`${apiUrl}/api/auth/google/exchange`, {
                                                         method: 'POST',
                                                         headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ credential: credentialResponse.credential })
+                                                        body: JSON.stringify({ 
+                                                            credential: credentialResponse.credential,
+                                                            source: 'early-access-landing',
+                                                            campaign,
+                                                            intent
+                                                        })
                                                     });
 
                                                     if (!response.ok) throw new Error('Auth failed');
@@ -107,26 +136,16 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="p-8 bg-indigo-600/10 border border-indigo-600/30 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 animate-in zoom-in-95 duration-500">
-                                <div className="flex items-center gap-4">
-                                    <CheckCircle className="w-8 h-8 text-indigo-500" />
-                                    <span className="text-lg font-bold text-indigo-400">{ui.earlyAccessSuccess}</span>
-                                </div>
-                                <div className="w-full h-1 bg-indigo-500/20 rounded-full mt-4 overflow-hidden">
-                                    <div className="h-full bg-indigo-500 animate-[progress_2s_ease-in-out_forwards]" />
-                                </div>
-                            </div>
-                        )}
 
-                        {/* Scientific Authority Block */}
-                        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 opacity-40 grayscale mt-12 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                            <span>Based on VVIQ (1973)</span>
-                            {/* <span>PSIQ Multisensory Metrics</span> */}
-                            {/* <span>MBTI Cognitive Functions</span> */}
-                            <span>SDAM Memory Framework</span>
+                            {/* Scientific Authority Block */}
+                            <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 opacity-40 grayscale mt-12 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                <span>Based on VVIQ (1973)</span>
+                                {/* <span>PSIQ Multisensory Metrics</span> */}
+                                {/* <span>MBTI Cognitive Functions</span> */}
+                                <span>SDAM Memory Framework</span>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Concept Grid */}

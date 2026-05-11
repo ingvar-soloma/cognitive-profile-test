@@ -49,11 +49,17 @@ async def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_login TIMESTAMP,
                     last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    credits INTEGER DEFAULT 300
+                    credits INTEGER DEFAULT 300,
+                    source VARCHAR(255),
+                    campaign VARCHAR(255),
+                    intent VARCHAR(255)
                 )
             ''')
             
             # Migrations
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS source VARCHAR(255)")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS campaign VARCHAR(255)")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS intent VARCHAR(255)")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN DEFAULT FALSE")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS public_nickname VARCHAR(255)")
@@ -211,9 +217,14 @@ async def init_db():
                 CREATE TABLE IF NOT EXISTS lead_emails (
                     email VARCHAR(255) PRIMARY KEY,
                     source VARCHAR(255),
+                    campaign VARCHAR(255),
+                    intent VARCHAR(255),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
+            # Migrations for lead_emails
+            await conn.execute("ALTER TABLE lead_emails ADD COLUMN IF NOT EXISTS campaign VARCHAR(255)")
+            await conn.execute("ALTER TABLE lead_emails ADD COLUMN IF NOT EXISTS intent VARCHAR(255)")
 
             logger.info("Async PostgreSQL Database initialized correctly")
             await seed_badges(conn)

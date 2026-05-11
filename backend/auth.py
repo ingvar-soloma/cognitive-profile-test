@@ -18,6 +18,9 @@ router = APIRouter()
 class GoogleExchangeRequest(BaseModel):
     credential: str
     guest_id: str | None = None
+    source: str | None = "direct"
+    campaign: str | None = None
+    intent: str | None = None
 
 @router.post("/auth/guest")
 async def create_guest_session(conn: asyncpg.Connection = Depends(get_db)):
@@ -64,9 +67,10 @@ async def exchange_google_code(req: GoogleExchangeRequest, response: Response, c
             guest = await conn.fetchrow("SELECT * FROM aphantasia_users WHERE id = $1 AND is_guest = TRUE", req.guest_id)
             if guest and not user:
                 # Upgrade guest to this Google user
-                await conn.execute('''UPDATE aphantasia_users SET id = $1, email = $2, first_name = $3, last_name = $4, photo_url = $5, is_guest = FALSE, last_login = CURRENT_TIMESTAMP
+                await conn.execute('''UPDATE aphantasia_users SET id = $1, email = $2, first_name = $3, last_name = $4, photo_url = $5, is_guest = FALSE, last_login = CURRENT_TIMESTAMP,
+                                      source = $7, campaign = $8, intent = $9
                                       WHERE id = $6''',
-                                   user_id, username, first_name, last_name, photo_url, req.guest_id)
+                                   user_id, username, first_name, last_name, photo_url, req.guest_id, req.source, req.campaign, req.intent)
                 
                 # Attempt to rename guest file if it exists
                 DATA_DIR = os.getenv("DATA_DIR", "/app/data/results")
@@ -78,17 +82,18 @@ async def exchange_google_code(req: GoogleExchangeRequest, response: Response, c
                 user = True # Effectively created/upgraded
         
         if not user:
-            await conn.execute('''INSERT INTO aphantasia_users (id, email, first_name, last_name, photo_url, is_guest, last_login)
-                                  VALUES ($1, $2, $3, $4, $5, FALSE, CURRENT_TIMESTAMP)''',
-                               user_id, username, first_name, last_name, photo_url)
+            await conn.execute('''INSERT INTO aphantasia_users (id, email, first_name, last_name, photo_url, is_guest, last_login, source, campaign, intent)
+                                  VALUES ($1, $2, $3, $4, $5, FALSE, CURRENT_TIMESTAMP, $6, $7, $8)''',
+                               user_id, username, first_name, last_name, photo_url, req.source, req.campaign, req.intent)
             await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment) 
                                   VALUES ($1, 300, 'registration_bonus', 'Initial google registration')''', user_id)
         elif not req.guest_id or user:
             # Update detail
             if isinstance(user, asyncpg.Record):
-                 await conn.execute('''UPDATE aphantasia_users SET email = $1, first_name = $2, last_name = $3, photo_url = $4, is_guest = FALSE, last_login = CURRENT_TIMESTAMP
+                 await conn.execute('''UPDATE aphantasia_users SET email = $1, first_name = $2, last_name = $3, photo_url = $4, is_guest = FALSE, last_login = CURRENT_TIMESTAMP,
+                                  source = $6, campaign = $7, intent = $8
                                   WHERE id = $5''',
-                               username, first_name, last_name, photo_url, user_id)
+                               username, first_name, last_name, photo_url, user_id, req.source, req.campaign, req.intent)
 
         auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
         

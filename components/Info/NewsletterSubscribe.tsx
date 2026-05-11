@@ -47,12 +47,19 @@ export const NewsletterSubscribe: React.FC<NewsletterSubscribeProps> = ({
         setErrorMsg('');
 
         const finalSource = localStorage.getItem('lead_source') || source;
+        const campaign = localStorage.getItem('lead_campaign') || undefined;
+        const intent = localStorage.getItem('lead_intent') || undefined;
 
         try {
             const res = await fetch(`${API_BASE_URL}/api/subscribe`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.trim().toLowerCase(), source: finalSource }),
+                body: JSON.stringify({ 
+                    email: email.trim().toLowerCase(), 
+                    source: finalSource,
+                    campaign,
+                    intent
+                }),
             });
 
             if (res.ok) {

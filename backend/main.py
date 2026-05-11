@@ -138,7 +138,9 @@ class InteractionEvent(BaseModel):
 
 class EarlyAccessLead(BaseModel):
     email: str
-    source: Optional[str] = "web"
+    source: str = "web"
+    campaign: Optional[str] = None
+    intent: Optional[str] = None
 
 from auth import router as auth_router
 
@@ -1307,6 +1309,8 @@ async def subscribe_newsletter(request: Request, background_tasks: BackgroundTas
 
     email = str(body.get("email", "")).strip().lower()
     source = str(body.get("source", "website"))
+    campaign = body.get("campaign")
+    intent = body.get("intent")
 
     if not email or not re.match(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$', email):
         raise HTTPException(status_code=422, detail="Invalid email")
@@ -1320,11 +1324,25 @@ async def subscribe_newsletter(request: Request, background_tasks: BackgroundTas
     if any(s.get("email") == email for s in subscribers):
         return {"status": "already_subscribed"}
 
-    subscribers.append({"email": email, "source": source, "subscribed_at": datetime.now(timezone.utc).isoformat()})
+    new_subscriber = {
+        "email": email, 
+        "source": source, 
+        "campaign": campaign,
+        "intent": intent,
+        "subscribed_at": datetime.now(timezone.utc).isoformat()
+    }
+    subscribers.append(new_subscriber)
     async with aiofiles.open(subscribers_path, mode="w", encoding="utf-8") as f:
         await f.write(json.dumps(subscribers, ensure_ascii=False, indent=2))
 
-    background_tasks.add_task(send_telegram_notification, f"📧 <b>New Subscriber</b>\n<b>Email:</b> {email}\n<b>Source:</b> {source}")
+    # Build notification message
+    notif_msg = f"📧 <b>New Subscriber</b>\n<b>Email:</b> {email}\n<b>Source:</b> {source}"
+    if campaign:
+        notif_msg += f"\n<b>Campaign:</b> {campaign}"
+    if intent:
+        notif_msg += f"\n<b>Intent:</b> {intent}"
+
+    background_tasks.add_task(send_telegram_notification, notif_msg)
     return {"status": "subscribed"}
 
 @app.get("/api/subscribers")
@@ -1553,14 +1571,29 @@ async def track_interaction(event: InteractionEvent, conn: asyncpg.Connection = 
         return {"status": "ignored"}
 
 @app.post("/api/early-access")
-async def register_early_access(lead: EarlyAccessLead, conn: asyncpg.Connection = Depends(get_db)):
+async def register_early_access(lead: EarlyAccessLead, background_tasks: BackgroundTasks, conn: asyncpg.Connection = Depends(get_db)):
     """Registers a user's interest for early access to the product."""
     try:
         await conn.execute("""
-            INSERT INTO lead_emails (email, source)
-            VALUES ($1, $2)
-            ON CONFLICT (email) DO UPDATE SET created_at = CURRENT_TIMESTAMP
-        """, lead.email, lead.source)
+            INSERT INTO lead_emails (email, source, campaign, intent)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (email) DO UPDATE SET 
+                created_at = CURRENT_TIMESTAMP,
+                source = EXCLUDED.source,
+                campaign = EXCLUDED.campaign,
+                intent = EXCLUDED.intent
+        """, lead.email, lead.source, lead.campaign, lead.intent)
+
+        if bot and TELEGRAM_GROUP_ID:
+            msg = (
+                f"🚀 <b>New Early Access Lead</b>\n\n"
+                f"<b>Email:</b> <code>{html.escape(lead.email)}</code>\n"
+                f"<b>Source:</b> {html.escape(lead.source or 'early-access')}\n"
+                f"<b>Campaign:</b> {html.escape(lead.campaign or 'N/A')}\n"
+                f"<b>Intent:</b> {html.escape(lead.intent or 'N/A')}"
+            )
+            background_tasks.add_task(send_telegram_notification, msg)
+
         return {"status": "success", "message": "Email registered successfully"}
     except Exception as e:
         logger.error(f"Failed to register lead: {e}")
