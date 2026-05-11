@@ -82,9 +82,9 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
                                             onError={() => {
                                                 toast.error(ui.subscribeError);
                                             }}
-                                            useOneTap
+                                            useOneTap={false}
                                             shape="pill"
-                                            width="100%"
+                                            width="320"
                                         />
                                     </div>
 
