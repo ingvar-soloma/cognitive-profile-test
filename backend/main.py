@@ -1132,7 +1132,17 @@ async def set_default_analysis(data: SetDefaultAnalysis, conn: asyncpg.Connectio
     return {"status": "success", "message": f"Version {data.version_index + 1} set as default", "current_version_index": data.version_index}
 
 @app.get("/api/results")
-async def get_results(user_id: str, hash: str, q: Optional[str] = None, target_user_id: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):
+async def get_results(request: Request, q: Optional[str] = None, target_user_id: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"])
+        user_id = payload.get("id")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid session")
+
     if user_id not in ADMIN_USER_IDS:
         raise HTTPException(status_code=403, detail="Not authorized")
 
@@ -1236,8 +1246,18 @@ async def admin_deposit(target_user_id: str, data: DepositRequest, conn: asyncpg
     return {"status": "success"}
 
 @app.get("/api/admin/online-stats")
-async def get_online_stats(user_id: str, hash: str, conn: asyncpg.Connection = Depends(get_db)):
+async def get_online_stats(request: Request, conn: asyncpg.Connection = Depends(get_db)):
     """Fetch online user count for admins."""
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"])
+        user_id = payload.get("id")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid session")
+
     if user_id not in ADMIN_USER_IDS:
         raise HTTPException(status_code=403, detail="Not authorized")
         
@@ -1285,7 +1305,17 @@ async def subscribe_newsletter(request: Request, background_tasks: BackgroundTas
     return {"status": "subscribed"}
 
 @app.get("/api/subscribers")
-async def get_subscribers(user_id: str, hash: str):
+async def get_subscribers(request: Request):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"])
+        user_id = payload.get("id")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid session")
+
     if user_id not in ADMIN_USER_IDS:
         raise HTTPException(status_code=403, detail="Not authorized")
     subscribers_path = os.path.join(DATA_DIR, "subscribers.json")
