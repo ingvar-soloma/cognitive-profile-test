@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Brain, Sparkles, ChevronRight, Eye, EyeOff, BarChart2, ArrowRight, Shield, Zap, Users, ShieldAlert, Mail } from 'lucide-react';
+import { Brain, Sparkles, ChevronRight, Eye, EyeOff, BarChart2, ArrowRight, Shield, Zap, Users as UsersIcon, ShieldAlert, Mail } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
@@ -11,7 +11,7 @@ interface LandingPageProps {
 }
 
 const FloatingOrb: React.FC<{ className?: string }> = ({ className }) => (
-    <div className={`absolute rounded-full blur-3xl pointer-events-none animate-pulse-slow opacity-25 dark:opacity-10 ${className}`} />
+    <div className={`absolute rounded-full blur-3xl pointer-events-none animate-pulse-slow opacity-50 dark:opacity-40 ${className}`} />
 );
 
 export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) => {
@@ -19,7 +19,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
     const heroRef = useRef<HTMLDivElement>(null);
     const [isLockedReport] = React.useState(true);
     const [email, setEmail] = React.useState('');
-    const [leadStatus, setLeadStatus] = React.useState<'idle'|'loading'|'success'|'error'>('idle');
+    const [leadStatus, setLeadStatus] = React.useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
     const handleLeadSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -113,7 +113,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
             >
                 <FloatingOrb className="w-[500px] h-[500px] bg-purple-400 -top-32 -right-40" />
                 <FloatingOrb className="w-[400px] h-[400px] bg-brand-clay -bottom-20 -left-32" />
-                <FloatingOrb className="w-[300px] h-[300px] bg-blue-400 dark:bg-blue-950/30 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <FloatingOrb className="w-[300px] h-[300px] bg-blue-400 dark:bg-blue-500/20 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
                 <div className="relative z-10 max-w-3xl mx-auto">
                     {/* Label */}
@@ -128,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                             {ui.heroTitle}
                         </h1>
 
-                        <p className="text-base sm:text-lg text-stone-500 leading-relaxed max-w-xl mx-auto mb-10 font-sans">
+                        <p className="text-base sm:text-lg text-stone-500 dark:text-stone-400 leading-relaxed max-w-xl mx-auto mb-10 font-sans">
                             {ui.heroSubtitle}
                         </p>
                     </div>
@@ -151,10 +151,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                     </div>
 
                     {/* Scientific Authority Block */}
-                    <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-stone-500 uppercase tracking-widest">
+                    <a href="/science" className="flex flex-row flex-wrap justify-center gap-8 opacity-40 grayscale mt-6 text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest hover:opacity-80 transition-opacity">
                         <span>Based on VVIQ (1973)</span>
-                        <span>PSIQ Multisensory Metrics</span>
-                        <span>MBTI Cognitive Functions</span>
+                        {/* <span>PSIQ Multisensory Metrics</span> */}
+                        {/* <span>MBTI Cognitive Functions</span> */}
                         <span>SDAM Memory Framework</span>
                     </a>
 
@@ -162,7 +162,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                     <div className="flex items-center justify-center gap-6 mt-12 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
                         <span className="flex items-center gap-1.5"><Shield className="w-3 h-3" />{ui.security}</span>
                         <span className="w-px h-3 bg-stone-line" />
-                        <span className="flex items-center gap-1.5"><Users className="w-3 h-3" />{ui.anonymity}</span>
+                        <span className="flex items-center gap-1.5"><UsersIcon className="w-3 h-3" />{ui.anonymity}</span>
                         <span className="w-px h-3 bg-stone-line" />
                         <span className="flex items-center gap-1.5"><Zap className="w-3 h-3 text-amber-500" />Free</span>
                     </div>
@@ -171,7 +171,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
 
             {/* ── SPECTRUM ─────────────────────────────── */}
             <section className="py-16 px-4">
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-5xl mx-auto">
                     <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-stone-400 text-center mb-8">
                         {ui.aboutSpectrum ?? 'The Spectrum'}
                     </p>
@@ -184,8 +184,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                 <div className={`w-12 h-12 rounded-xl ${p.chip} flex items-center justify-center mx-auto mb-4`}>
                                     <p.icon className={`w-5 h-5 ${p.color}`} />
                                 </div>
-                                <div className="text-2xl font-serif font-bold text-brand-textPrimary mb-1">{p.pct}</div>
-                                <div className="text-xs text-stone-500 font-sans">{p.label}</div>
+                                <div className="text-2xl font-serif font-bold text-brand-textPrimary dark:text-white mb-1">{p.pct}</div>
+                                <div className="text-xs text-stone-500 dark:text-stone-400 font-sans">{p.label}</div>
                             </div>
                         ))}
                     </div>
@@ -199,7 +199,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                         <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-textPrimary mb-3 tracking-tight">
                             {ui.marketingTitle}
                         </h2>
-                        <p className="text-stone-500 text-sm max-w-lg mx-auto font-sans">{ui.whyTakeTest}</p>
+                        <p className="text-stone-500 dark:text-stone-400 text-sm max-w-lg mx-auto font-sans">{ui.whyTakeTest}</p>
                     </div>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {features.map((f) => (
@@ -210,18 +210,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                 <div className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center`}>
                                     <f.icon className={`w-5 h-5 ${f.color}`} />
                                 </div>
-                                <h3 className="text-sm font-serif font-bold text-brand-textPrimary leading-snug">{f.title}</h3>
-                                <p className="text-xs text-stone-500 leading-relaxed font-sans">{f.desc}</p>
+                                <h3 className="text-sm font-serif font-bold text-brand-textPrimary dark:text-white leading-snug">{f.title}</h3>
+                                <p className="text-xs text-stone-500 dark:text-slate-400 leading-relaxed font-sans">{f.desc}</p>
                             </div>
                         ))}
                     </div>
 
-                    {/* Curiosity Hook */}
-                    <div className="mt-16 mb-8 text-left">
-                        <h3 className="text-lg font-serif font-bold text-brand-textPrimary mb-6">
+                    <div className="mt-20 mb-12 text-left">
+                        <h3 className="text-xl font-serif font-bold text-brand-textPrimary mb-8 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-brand-ink/5 flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-brand-ink" />
+                            </div>
                             {ui.curiosityTitle}
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-stone-100/50 dark:bg-black/20 p-4 rounded-2xl border-l-4 border-brand-ink/50">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {[
                                 ui.curiosityInsight1,
                                 ui.curiosityInsight2,
@@ -229,55 +231,71 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                 ui.curiosityInsight4,
                                 ui.curiosityInsight5
                             ].map((insight, idx) => (
-                                <div key={idx} className="bg-brand-bgCard p-4 rounded-xl text-sm text-stone-600 shadow-sm border border-black/5">
-                                    {insight}
+                                <div 
+                                    key={idx} 
+                                    className={`bg-brand-bgCard p-6 rounded-2xl text-sm text-stone-600 dark:text-slate-300 shadow-sm border border-stone-line/50 hover:shadow-soft hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between ${idx === 4 ? 'md:col-span-2 lg:col-span-1' : ''}`}
+                                >
+                                    <p className="leading-relaxed">{insight}</p>
+                                    <div className="mt-4 pt-4 border-t border-stone-line/30 flex items-center justify-between opacity-40">
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-stone-500 dark:text-slate-400">Cognitive Trait</span>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-ink" />
+                                    </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {/* Lead Capture Form */}
-                    <div className="my-16 mx-auto max-w-2xl bg-brand-ink text-white rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
-                        <FloatingOrb className="w-64 h-64 bg-purple-500/20 -top-16 -right-16 opacity-50" />
-                        <h2 className="text-2xl md:text-3xl font-serif font-bold mb-4 relative z-10">
-                            {ui.leadFormTitle}
-                        </h2>
-                        <p className="text-sm text-stone-300 mb-8 max-w-md mx-auto relative z-10">
-                            {ui.leadFormSubtitle}
-                        </p>
-                        <form onSubmit={handleLeadSubmit} className="relative z-10 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-                            <input 
-                                type="email" 
-                                required 
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder={ui.leadFormEmailPlaceholder}
-                                className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder-stone-400 focus:outline-none focus:border-white/50 transition-colors"
-                            />
-                            <button 
-                                type="submit" 
-                                disabled={leadStatus === 'loading' || leadStatus === 'success'}
-                                className="px-6 py-3 bg-white text-brand-ink rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-stone-200 transition-colors disabled:opacity-50"
-                            >
-                                {leadStatus === 'success' ? '✓' : ui.leadFormButton}
-                            </button>
-                        </form>
+                    <div className="my-24 mx-auto max-w-5xl bg-[#5E4B8B] text-white rounded-[2.5rem] p-10 md:p-16 shadow-2xl text-center relative overflow-hidden group">
+                        <FloatingOrb className="w-96 h-96 bg-purple-400/20 -top-20 -right-20 opacity-60 dark:opacity-60" />
+                        <FloatingOrb className="w-64 h-64 bg-brand-clay/20 -bottom-20 -left-20 opacity-40 dark:opacity-40" />
+                        
+                        <div className="relative z-10 max-w-xl mx-auto">
+                            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6 tracking-tight">
+                                {ui.leadFormTitle}
+                            </h2>
+                            <p className="text-base text-stone-300 mb-10 leading-relaxed font-sans">
+                                {ui.leadFormSubtitle}
+                            </p>
+                            
+                            <form onSubmit={handleLeadSubmit} className="flex flex-col sm:flex-row gap-4">
+                                <div className="flex-1 relative">
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        placeholder={ui.leadFormEmailPlaceholder}
+                                        className="w-full bg-white/10 border border-white/20 rounded-2xl px-6 py-4 text-sm text-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
+                                    />
+                                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={leadStatus === 'loading' || leadStatus === 'success'}
+                                    className="px-10 py-4 bg-white text-[#5E4B8B] rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-stone-100 hover:scale-[1.03] active:scale-95 transition-all shadow-xl disabled:opacity-50"
+                                >
+                                    {leadStatus === 'success' ? '✓' : ui.leadFormButton}
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
-                    {/* Locked Report Preview */}
-                    <div className="mt-16 text-left bg-white/5 dark:bg-black/5 rounded-[2.5rem] p-8 relative overflow-hidden">
+                    <div className="mt-24 text-left bg-brand-bgCard/50 dark:bg-black/10 rounded-[3rem] p-10 md:p-16 relative overflow-hidden border border-stone-line/30">
                         {isLockedReport && (
-                            <div className="absolute inset-0 z-20 backdrop-blur-md bg-white/30 dark:bg-black/30 flex flex-col items-center justify-center">
-                                <div className="bg-brand-bgCard p-4 rounded-full shadow-sm mb-4 border border-stone-line">
-                                    <EyeOff className="w-8 h-8 text-stone-400" />
+                            <div className="absolute inset-0 z-20 backdrop-blur-xl bg-white/40 dark:bg-black/60 flex flex-col items-center justify-center p-6">
+                                <div className="w-20 h-20 bg-brand-ink text-white rounded-full flex items-center justify-center shadow-2xl mb-6 animate-pulse-slow">
+                                    <EyeOff className="w-8 h-8" />
                                 </div>
-                                <p className="font-bold uppercase tracking-widest text-sm text-brand-textPrimary">{ui.lockedReportLabel}</p>
+                                <p className="font-black uppercase tracking-[0.3em] text-xs md:text-sm text-brand-ink dark:text-white text-center drop-shadow-sm">
+                                    {ui.lockedReportLabel}
+                                </p>
                             </div>
                         )}
                         <div className={`grid md:grid-cols-2 gap-12 ${isLockedReport ? 'opacity-30 blur-sm pointer-events-none select-none' : ''}`}>
                             <div className="space-y-4">
                                 <h3 className="text-xl font-serif font-bold text-brand-textPrimary">{ui.sectionCareer}</h3>
-                                <p className="text-sm text-stone-500 leading-relaxed">
+                                <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed">
                                     {ui.sectionCareerDesc}
                                     <br /><br />
                                     [Personalized career insights based on cognitive profile...]
@@ -285,7 +303,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                             </div>
                             <div className="space-y-4">
                                 <h3 className="text-xl font-serif font-bold text-brand-textPrimary">{ui.sectionRelationships}</h3>
-                                <p className="text-sm text-stone-500 leading-relaxed">
+                                <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed">
                                     {ui.sectionRelationshipsDesc}
                                     <br /><br />
                                     [Team dynamics and communication adaptation guidelines...]
@@ -298,12 +316,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
 
             {/* ── PRICING TEASER ─────────────────────────────── */}
             <section className="py-16 px-4 bg-brand-bgCard/30 border-t border-stone-line/30">
-                <div className="max-w-4xl mx-auto text-center space-y-6">
+                <div className="max-w-5xl mx-auto text-center space-y-6">
                     <h2 className="text-2xl md:text-3xl font-serif font-bold text-brand-textPrimary">
                         {ui.pricingTitle || "Access your full profile"}
                     </h2>
-                    <p className="text-stone-500 max-w-xl mx-auto">
-                        We offer a flexible Free Tier for research contributions, and a Pro Tier for detailed self-exploration.
+                    <p className="text-stone-500 dark:text-stone-400 max-w-xl mx-auto">
+                        {ui.pricingDesc}
                     </p>
                     {/* Pricing Node */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '24px' }} className="mx-auto max-w-lg bg-black/5 dark:bg-white/5">
@@ -316,7 +334,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
 
             {/* ── FOOTER / DISCLAIMER ────────────────────── */}
             <footer className="py-20 px-8 bg-stone-50/50 dark:bg-black/20 border-t border-stone-line/30">
-                <div className="max-w-4xl mx-auto space-y-12">
+                <div className="max-w-5xl mx-auto space-y-12">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <div className="space-y-6">
                             <div className="flex items-center gap-3">
@@ -327,7 +345,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                     {ui.disclaimerTitle}
                                 </h4>
                             </div>
-                            <p className="text-xs text-stone-500 leading-relaxed font-sans max-w-sm">
+                            <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed font-sans max-w-sm">
                                 {ui.disclaimer}
                             </p>
                             <p className="text-[10px] text-amber-600/80 dark:text-amber-400/60 leading-relaxed font-sans max-w-sm font-medium">
@@ -344,7 +362,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ ui, onStartSurvey }) =
                                 </h4>
                             </div>
                             <div className="space-y-2">
-                                <p className="text-xs text-stone-500 font-sans">
+                                <p className="text-xs text-stone-500 dark:text-stone-400 font-sans">
                                     {ui.contactText}
                                 </p>
                                 <div className="flex gap-4 pt-2">

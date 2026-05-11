@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Brain, Eye, EyeOff, Sparkles, ChevronRight, Microscope, Users } from 'lucide-react';
+import { ArrowLeft, Brain, Eye, EyeOff, Sparkles, ChevronRight, Microscope, Users as UsersIcon } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
@@ -37,7 +37,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
             accent: 'bg-purple-500',
         },
         {
-            icon: Users,
+            icon: UsersIcon,
             title: ui.aboutHowCommon,
             desc: ui.aboutHowCommonDesc,
             color: 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/10 dark:text-emerald-300 dark:border-emerald-800/20',
@@ -78,20 +78,20 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
                 <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-textPrimary leading-tight mb-6 tracking-tight">
                     {ui.aboutTitle}
                 </h1>
-                <p className="text-lg text-stone-500 leading-relaxed max-w-2xl">
+                <p className="text-lg text-stone-500 dark:text-stone-400 leading-relaxed max-w-2xl">
                     {ui.aboutSubtitle}
                 </p>
             </header>
 
             {/* Spectrum visual */}
-            <section className="bg-brand-bgCard border border-stone-line rounded-[2rem] p-8 mb-10 shadow-sm">
+            <section className="bg-brand-bgCard border border-stone-line dark:border-stone-line/20 rounded-[2rem] p-8 mb-10 shadow-sm">
                 <h2 className="text-sm font-bold uppercase tracking-widest text-stone-400 mb-6">{ui.aboutSpectrum}</h2>
-                <div className="relative h-3 bg-gradient-to-r from-brand-ink via-stone-300 via-purple-400 to-brand-clay rounded-full mb-8" />
+                <div className="relative h-3 bg-gradient-to-r from-brand-ink via-stone-300 dark:via-stone-700 via-purple-400 to-brand-clay rounded-full mb-8" />
                 <div className="flex justify-between gap-2 text-center">
                     {spectrumItems.map((s) => (
                         <div key={s.label} className="flex-1">
                             <div className={`w-2.5 h-2.5 rounded-full ${s.color} mx-auto mb-2`} />
-                            <span className={`text-[10px] font-bold ${s.textColor} leading-tight block`}>{s.label}</span>
+                            <span className={`text-[10px] font-bold ${s.textColor} dark:text-slate-300 leading-tight block`}>{s.label}</span>
                         </div>
                     ))}
                 </div>
@@ -108,8 +108,8 @@ export const AboutPage: React.FC<AboutPageProps> = ({ ui, onStartSurvey }) => {
                         <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${f.color}`}>
                             <f.icon className="w-5 h-5" />
                         </div>
-                        <h3 className="text-base font-serif font-bold text-brand-textPrimary">{f.title}</h3>
-                        <p className="text-sm text-stone-500 leading-relaxed font-sans">{f.desc}</p>
+                        <h3 className="text-base font-serif font-bold text-brand-textPrimary dark:text-white">{f.title}</h3>
+                        <p className="text-sm text-stone-500 dark:text-slate-400 leading-relaxed font-sans">{f.desc}</p>
                     </div>
                 ))}
             </div>

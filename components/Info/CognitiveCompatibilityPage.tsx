@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, ArrowRight, Heart, CheckCircle, ChevronRight, Brain, Users, Sparkles } from 'lucide-react';
+import { Mail, ArrowRight, Heart, CheckCircle, ChevronRight, Brain, Users as UsersIcon, Sparkles } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
@@ -105,12 +105,12 @@ export const CognitiveCompatibilityPage: React.FC<CognitiveCompatibilityPageProp
                         <p className="mt-4 text-[10px] text-muted-foreground/60 dark:text-slate-500 uppercase tracking-widest font-bold font-sans">
                             {ui.earlyAccessCta}
                         </p>
-                        
+
                         {/* Scientific Authority Block */}
                         <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-muted-foreground uppercase tracking-widest hover:opacity-80 transition-opacity">
                             <span>Based on VVIQ (1973)</span>
-                            <span>PSIQ Multisensory Metrics</span>
-                            <span>MBTI Cognitive Functions</span>
+                            {/* <span>PSIQ Multisensory Metrics</span> */}
+                            {/* <span>MBTI Cognitive Functions</span> */}
                             <span>SDAM Memory Framework</span>
                         </a>
                     </div>
@@ -130,7 +130,7 @@ export const CognitiveCompatibilityPage: React.FC<CognitiveCompatibilityPageProp
                         </div>
                         <div className="grid gap-4">
                             {[
-                                { icon: Users, title: ui.compatibilityF1Title, desc: ui.compatibilityF1Desc },
+                                { icon: UsersIcon, title: ui.compatibilityF1Title, desc: ui.compatibilityF1Desc },
                                 { icon: Sparkles, title: ui.compatibilityF2Title, desc: ui.compatibilityF2Desc },
                                 { icon: Brain, title: ui.compatibilityF3Title, desc: ui.compatibilityF3Desc }
                             ].map((item, i) => (
@@ -146,12 +146,14 @@ export const CognitiveCompatibilityPage: React.FC<CognitiveCompatibilityPageProp
                             ))}
                         </div>
 
-                        {/* Curiosity Hook */}
-                        <div className="mt-8 text-left">
-                            <h3 className="text-lg font-bold text-foreground dark:text-white mb-6">
+                        <div className="mt-20 mb-12 text-left">
+                            <h3 className="text-xl font-serif font-bold text-foreground dark:text-white mb-8 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-purple-500/5 dark:bg-white/5 flex items-center justify-center">
+                                    <Sparkles className="w-4 h-4 text-purple-500" />
+                                </div>
                                 {ui.curiosityTitle}
                             </h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderLeft: '3px solid #a855f7' }} className="rounded-r-xl">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                 {[
                                     ui.curiosityInsight1,
                                     ui.curiosityInsight2,
@@ -159,8 +161,15 @@ export const CognitiveCompatibilityPage: React.FC<CognitiveCompatibilityPageProp
                                     ui.curiosityInsight4,
                                     ui.curiosityInsight5
                                 ].map((insight, idx) => (
-                                    <div key={idx} className="bg-card dark:bg-white/5 p-4 rounded-xl text-sm text-muted-foreground dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5">
-                                        {insight}
+                                    <div 
+                                        key={idx} 
+                                        className={`bg-card dark:bg-white/5 p-6 rounded-2xl text-sm text-muted-foreground dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5 hover:shadow-soft hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between ${idx === 4 ? 'md:col-span-2 lg:col-span-1' : ''}`}
+                                    >
+                                        <p className="leading-relaxed">{insight}</p>
+                                        <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between opacity-40">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground dark:text-slate-400">Cognitive Trait</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -171,7 +180,7 @@ export const CognitiveCompatibilityPage: React.FC<CognitiveCompatibilityPageProp
                         <div className="relative aspect-square rounded-[3rem] overflow-hidden shadow-2xl group bg-muted/20 dark:bg-white/5">
                             <div className="absolute inset-0 bg-purple-600/20 group-hover:bg-purple-600/10 transition-colors duration-700" />
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                                <Users className="w-32 h-32 text-purple-500/30 animate-pulse" />
+                                <UsersIcon className="w-32 h-32 text-purple-500/30 animate-pulse" />
                                 <Heart className="w-16 h-16 text-pink-500/30" />
                             </div>
                             {/* Decorative mock UI */}
@@ -208,10 +217,10 @@ export const CognitiveCompatibilityPage: React.FC<CognitiveCompatibilityPageProp
                     </button>
 
                     {/* Pricing Node */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '24px' }} className="mx-auto max-w-lg mt-8 relative z-10 bg-black/5 dark:bg-white/5 backdrop-blur-sm">
-                        <span style={{ textDecoration: 'line-through', opacity: 0.5, fontSize: '14px' }} className="text-foreground dark:text-white">{ui.pricingFuturePrice}</span>
-                        <span style={{ fontWeight: 700, fontSize: '24px' }} className="text-purple-500 dark:text-purple-400 mt-2">{ui.pricingBetaOffer}</span>
-                        <a href="/survey/express_demo" style={{ opacity: 0.7, marginTop: '16px', fontSize: '14px', textDecoration: 'underline' }} className="text-foreground dark:text-white hover:opacity-100 transition-opacity">{ui.pricingFallbackCTA}</a>
+                    <div className="mx-auto max-w-lg mt-8 relative z-10 bg-black/5 dark:bg-white/5 backdrop-blur-sm flex flex-col items-center border border-white/10 rounded-xl p-6">
+                        <span className="line-through opacity-50 text-sm text-foreground dark:text-white">{ui.pricingFuturePrice}</span>
+                        <span className="font-bold text-2xl text-purple-500 dark:text-purple-400 mt-2">{ui.pricingBetaOffer}</span>
+                        <a href="/survey/express_demo" className="opacity-70 mt-4 text-sm underline text-foreground dark:text-white hover:opacity-100 transition-opacity">{ui.pricingFallbackCTA}</a>
                     </div>
 
                     <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-30" />

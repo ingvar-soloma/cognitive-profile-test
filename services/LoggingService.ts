@@ -84,7 +84,9 @@ class LoggingService {
    */
   public setupGlobalHandlers(): void {
     window.onerror = (message, source, lineno, colno, error) => {
-      this.logError(error || String(message), 'window.onerror');
+      const errorMsg = error ? (error.stack || error.message) : String(message);
+      const details = `[window.onerror] ${errorMsg}\nSource: ${source}\nLine: ${lineno}\nColumn: ${colno}`;
+      this.logError(details, 'window.onerror');
       return false; // Let browser handle it as well
     };
 

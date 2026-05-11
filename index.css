@@ -72,7 +72,7 @@
 
 @layer base {
   body {
-    @apply antialiased transition-colors duration-300 bg-background text-foreground;
+    @apply antialiased bg-background text-foreground;
     margin: 0;
   }
 
@@ -146,23 +146,42 @@ textarea::-webkit-scrollbar-thumb:hover {
   animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes pulse-extra-slow {
+@keyframes pulse-slow {
 
   0%,
   100% {
-    opacity: 0.25;
+    opacity: 0.50;
     transform: scale(1);
   }
 
   50% {
-    opacity: 0.12;
+    opacity: 0.22;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes pulse-extra-slow {
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.22;
     transform: scale(1.05);
   }
 }
 
 .animate-pulse-slow {
-  animation: pulse-extra-slow 12s ease-in-out infinite;
+  animation: pulse-extra-slow 10s ease-in-out infinite;
 }
+
+.animate-pulse-extra-slow {
+  animation: pulse-extra-slow 15s ease-in-out infinite;
+}
+
 
 @keyframes progress {
   from {

@@ -421,6 +421,9 @@ export interface UIStrings {
   earlyAccessConcept: string;
   earlyAccessCta: string;
   earlyAccessSuccess: string;
+  earlyAccessOneClickAuth: string;
+  earlyAccessBetaBooking: string;
+  earlyAccessGoogleCta: string;
   tryExpressFree: string;
   expressDiagnosticsCta: string;
   earlyAccessF1Title: string;

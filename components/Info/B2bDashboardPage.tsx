@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, ArrowRight, Briefcase, BarChart, Users, CheckCircle, ChevronRight, Brain } from 'lucide-react';
+import { Mail, ArrowRight, Briefcase, BarChart, Users as UsersIcon, CheckCircle, ChevronRight, Brain, Sparkles } from 'lucide-react';
 import { UIStrings } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
@@ -105,12 +105,12 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                         <p className="mt-4 text-[10px] text-muted-foreground/60 dark:text-slate-500 uppercase tracking-widest font-bold font-sans">
                             {ui.earlyAccessCta}
                         </p>
-                        
+
                         {/* Scientific Authority Block */}
                         <a href="/science" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', gap: '32px', opacity: 0.4, filter: 'grayscale(100%)', marginTop: '24px' }} className="flex-wrap text-xs font-bold text-muted-foreground uppercase tracking-widest hover:opacity-80 transition-opacity">
                             <span>Based on VVIQ (1973)</span>
-                            <span>PSIQ Multisensory Metrics</span>
-                            <span>MBTI Cognitive Functions</span>
+                            {/* <span>PSIQ Multisensory Metrics</span> */}
+                            {/* <span>MBTI Cognitive Functions</span> */}
                             <span>SDAM Memory Framework</span>
                         </a>
                     </div>
@@ -130,7 +130,7 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                         </div>
                         <div className="grid gap-4">
                             {[
-                                { icon: Users, title: ui.b2bF1Title, desc: ui.b2bF1Desc },
+                                { icon: UsersIcon, title: ui.b2bF1Title, desc: ui.b2bF1Desc },
                                 { icon: BarChart, title: ui.b2bF2Title, desc: ui.b2bF2Desc },
                                 { icon: Brain, title: ui.b2bF3Title, desc: ui.b2bF3Desc }
                             ].map((item, i) => (
@@ -146,12 +146,14 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                             ))}
                         </div>
 
-                        {/* Curiosity Hook */}
-                        <div className="mt-8 text-left">
-                            <h3 className="text-lg font-bold text-foreground dark:text-white mb-6">
+                        <div className="mt-20 mb-12 text-left">
+                            <h3 className="text-xl font-serif font-bold text-foreground dark:text-white mb-8 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-500/5 dark:bg-white/5 flex items-center justify-center">
+                                    <Sparkles className="w-4 h-4 text-blue-500" />
+                                </div>
                                 {ui.curiosityTitle}
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 bg-blue-500/5 dark:bg-black/20 p-4 rounded-r-xl border-l-4 border-blue-500">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                 {[
                                     ui.curiosityInsight1,
                                     ui.curiosityInsight2,
@@ -159,8 +161,15 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                                     ui.curiosityInsight4,
                                     ui.curiosityInsight5
                                 ].map((insight, idx) => (
-                                    <div key={idx} className="bg-card dark:bg-white/5 p-4 rounded-xl text-sm text-muted-foreground dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5">
-                                        {insight}
+                                    <div 
+                                        key={idx} 
+                                        className={`bg-card dark:bg-white/5 p-6 rounded-2xl text-sm text-muted-foreground dark:text-slate-300 shadow-sm border border-black/5 dark:border-white/5 hover:shadow-soft hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between ${idx === 4 ? 'md:col-span-2 lg:col-span-1' : ''}`}
+                                    >
+                                        <p className="leading-relaxed">{insight}</p>
+                                        <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5 flex items-center justify-between opacity-40">
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground dark:text-slate-400">Cognitive Trait</span>
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -172,7 +181,7 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                             <div className="absolute inset-0 bg-blue-600/20 group-hover:bg-blue-600/10 transition-colors duration-700" />
                             <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
                                 <BarChart className="w-32 h-32 text-blue-500/30 animate-pulse" />
-                                <Users className="w-16 h-16 text-emerald-500/30" />
+                                <UsersIcon className="w-16 h-16 text-emerald-500/30" />
                             </div>
                             {/* Decorative mock UI */}
                             <div className="absolute inset-8 rounded-2xl flex flex-col p-6 space-y-4 backdrop-blur-md bg-foreground/5 dark:bg-white/5">
@@ -204,10 +213,10 @@ export const B2bDashboardPage: React.FC<B2bDashboardPageProps> = ({ ui }) => {
                     </button>
 
                     {/* Pricing Node */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '24px' }} className="mx-auto max-w-lg mt-8 relative z-10 bg-black/5 dark:bg-white/5 backdrop-blur-sm">
-                        <span style={{ textDecoration: 'line-through', opacity: 0.5, fontSize: '14px' }} className="text-foreground dark:text-white">{ui.pricingFuturePrice}</span>
-                        <span style={{ fontWeight: 700, fontSize: '24px' }} className="text-blue-500 dark:text-blue-400 mt-2">{ui.pricingBetaOffer}</span>
-                        <a href="/survey/express_demo" style={{ opacity: 0.7, marginTop: '16px', fontSize: '14px', textDecoration: 'underline' }} className="text-foreground dark:text-white hover:opacity-100 transition-opacity">{ui.pricingFallbackCTA}</a>
+                    <div className="mx-auto max-w-lg mt-8 relative z-10 bg-black/5 dark:bg-white/5 backdrop-blur-sm flex flex-col items-center border border-white/10 rounded-xl p-6">
+                        <span className="line-through opacity-50 text-sm text-foreground dark:text-white">{ui.pricingFuturePrice}</span>
+                        <span className="font-bold text-2xl text-blue-500 dark:text-blue-400 mt-2">{ui.pricingBetaOffer}</span>
+                        <a href="/survey/express_demo" className="opacity-70 mt-4 text-sm underline text-foreground dark:text-white hover:opacity-100 transition-opacity">{ui.pricingFallbackCTA}</a>
                     </div>
 
                     <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-30" />
