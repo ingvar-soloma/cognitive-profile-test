@@ -15,6 +15,15 @@ export const EarlyAccessPage: React.FC<EarlyAccessPageProps> = ({ ui }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
+    React.useEffect(() => {
+        if (isSuccess) {
+            const timer = setTimeout(() => {
+                navigate('/survey/express_demo');
+            }, 2200);
+            return () => clearTimeout(timer);
+        }
+    }, [isSuccess, navigate]);
+
     useSeoMetadata({
         title: ui.earlyAccessTitle,
         description: ui.earlyAccessSubtitle,
