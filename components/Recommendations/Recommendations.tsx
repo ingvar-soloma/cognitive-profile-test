@@ -521,7 +521,7 @@ ${ctx.analysisText}
     };
 
     return (
-        <div className="min-h-screen text-foreground p-6 md:p-12 font-sans selection:bg-indigo-500/30 -mx-6 md:-mx-12 -my-24 overflow-x-hidden transition-colors duration-300">
+        <div className="min-h-screen bg-background text-foreground p-6 md:p-12 font-sans selection:bg-indigo-500/30 -mx-6 md:-mx-12 -my-24 overflow-x-hidden transition-colors duration-300">
             <div className="max-w-6xl mx-auto mb-20 animate-fade-in pt-24 text-left">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-6">
                     <div>
@@ -623,11 +623,11 @@ ${ctx.analysisText}
                                                 {card.title}
                                             </h3>
 
-                                            <div className="relative bg-background border border-border rounded-2xl p-5 group-hover:border-border/50 transition-colors h-[120px] overflow-hidden">
+                                            <div className="relative bg-muted/30 border border-border rounded-2xl p-5 group-hover:border-border/50 transition-colors h-[120px] overflow-hidden">
                                                 <p className="text-muted-foreground text-xs font-mono leading-relaxed line-clamp-4">
                                                     {card.template()}
                                                 </p>
-                                                <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] to-transparent opacity-40" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-muted/50 to-transparent opacity-40" />
                                                 <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Terminal className={`w-4 h-4 ${section.iconColor} opacity-50`} />
                                                 </div>
