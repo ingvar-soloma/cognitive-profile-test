@@ -84,28 +84,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
         </TabsList>
 
         <TabsContent value="records">
-          <Card className="p-0 overflow-hidden border-stone-line/50 card-editorial">
+          <Card className="p-0 overflow-hidden border-stone-line/50 card-editorial bg-brand-bgCard">
             <CardContent className="p-0">
-              <div className="bg-brand-ink p-6 md:p-8 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-editorial">
+              <div className="bg-brand-bgCard border-b border-stone-line p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/10">
-                    <Users className="w-6 h-6 text-brand-paper" />
+                  <div className="w-12 h-12 bg-brand-ink/10 rounded-2xl flex items-center justify-center border border-brand-ink/20">
+                    <Users className="w-6 h-6 text-brand-ink" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-serif font-bold tracking-tight">{ui.systemRecords}</h2>
-                    <p className="text-white/60 text-[10px] uppercase tracking-[0.2em] font-bold mt-0.5">
+                    <h2 className="text-2xl font-serif font-bold tracking-tight text-brand-textPrimary">{ui.systemRecords}</h2>
+                    <p className="text-stone-400 text-[10px] uppercase tracking-[0.2em] font-bold mt-0.5">
                        {ui.totalEntriesAnalyzed.replace('{count}', String(results.length))}
                     </p>
                   </div>
                 </div>
                 <div className="relative group w-full md:w-80">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-white transition-colors z-10" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 group-focus-within:text-brand-ink transition-colors z-10" />
                   <Input
                     type="text"
                     placeholder={ui.searchAdminPlaceholder}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-12 pr-5 py-6 bg-white/5 border-white/10 rounded-2xl text-white placeholder:text-white/30 focus-visible:ring-white/20 border-none shadow-none text-sm font-sans"
+                    className="w-full pl-12 pr-5 py-6 bg-stone-bg/50 border-stone-line rounded-2xl text-brand-textPrimary placeholder:text-stone-400 focus-visible:ring-brand-ink/20 transition-all text-sm font-sans"
                   />
                 </div>
               </div>
@@ -113,11 +113,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-stone-bg/50 hover:bg-stone-bg/50 border-stone-line/50">
-                      <TableHead className="px-8 py-5 text-stone-400 text-[10px] uppercase tracking-[0.2em] font-bold h-auto">{ui.userProfile}</TableHead>
-                      <TableHead className="px-8 py-5 text-stone-400 text-[10px] uppercase tracking-[0.2em] font-bold h-auto">{ui.testSpecification}</TableHead>
-                      <TableHead className="px-8 py-5 text-stone-400 text-[10px] uppercase tracking-[0.2em] font-bold h-auto">{ui.timestamp}</TableHead>
-                      <TableHead className="px-8 py-5 text-stone-400 text-[10px] uppercase tracking-[0.2em] font-bold h-auto text-right">{ui.actions}</TableHead>
+                    <TableRow className="bg-stone-bg/30 hover:bg-stone-bg/30 border-stone-line/50 transition-none">
+                      <TableHead className="px-8 py-5 text-brand-textPrimary/60 text-[10px] uppercase tracking-[0.2em] font-bold h-auto border-r border-stone-line/30 last:border-r-0">{ui.userProfile}</TableHead>
+                      <TableHead className="px-8 py-5 text-brand-textPrimary/60 text-[10px] uppercase tracking-[0.2em] font-bold h-auto border-r border-stone-line/30 last:border-r-0">{ui.testSpecification}</TableHead>
+                      <TableHead className="px-8 py-5 text-brand-textPrimary/60 text-[10px] uppercase tracking-[0.2em] font-bold h-auto border-r border-stone-line/30 last:border-r-0">{ui.timestamp}</TableHead>
+                      <TableHead className="px-8 py-5 text-brand-textPrimary/60 text-[10px] uppercase tracking-[0.2em] font-bold h-auto text-right">{ui.actions}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -198,7 +198,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ ui, lang, onView
                             <Button
                               variant="outline"
                               size="xs"
-                              className="px-2 py-1 h-auto bg-brand-sage/10 text-brand-sage border-brand-sage/20 rounded text-[9px] font-bold tracking-widest uppercase hover:bg-brand-sage hover:text-white transition-colors"
+                              className="px-3 py-1.5 h-auto bg-brand-sage/5 text-brand-sage border-brand-sage/20 rounded-lg text-[9px] font-bold tracking-widest uppercase hover:bg-brand-sage hover:text-white transition-all shadow-sm"
                               onClick={async () => {
                                 const amountStr = window.prompt(`Deposit credits for ${res.first_name}:`, "500");
                                 if (!amountStr) return;
