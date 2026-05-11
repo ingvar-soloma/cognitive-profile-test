@@ -1047,10 +1047,19 @@ async def get_user_badges(user_id: str, conn: asyncpg.Connection) -> List[Dict[s
     ''', user_id)
     return [dict(row) for row in rows]
 
-@app.post("/api/me/result")
-async def get_my_result(auth_data: UserAuth, conn: asyncpg.Connection = Depends(get_db)):
-    verify_auth(auth_data)
-    user_id = str(auth_data.id)
+@app.get("/api/me/result")
+async def get_my_result(request: Request, conn: asyncpg.Connection = Depends(get_db)):
+    token = request.cookies.get("auth_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
+        payload = jwt.decode(token, auth_secret, algorithms=["HS256"], options={"require": ["exp"]})
+        user_id = str(payload.get("id"))
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid session")
     
     # 1. Fetch User and all their results from DB
     user_row = await conn.fetchrow("SELECT * FROM aphantasia_users WHERE id = $1", user_id)
