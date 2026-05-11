@@ -178,7 +178,7 @@ export class ProfileService {
           return data;
         }
 
-        console.error('[ProfileService] Load result failed:', response.status, response.statusText);
+        console.log('[ProfileService] No result found (or other error) for current session.', response.status);
         this.loadPromise = null;
         return null;
       } catch (e) {
