@@ -104,6 +104,8 @@ async def exchange_google_code(req: GoogleExchangeRequest, response: Response, c
         }
         
         token = jwt.encode(auth_data, auth_secret, algorithm="HS256")
+        auth_data["hash"] = token
+        auth_data["access_token"] = token
         
         response.set_cookie(
             key="auth_token",
