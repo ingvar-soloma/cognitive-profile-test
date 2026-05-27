@@ -695,7 +695,7 @@ const App: React.FC = () => {
     
     setTimeout(() => {
       if (activeProfileId) {
-        navigate(`/results/${activeProfileId}`);
+        navigate(`/results/${activeProfileId}?surveyId=${activeSurveyId}`);
       } else {
         navigate('/results');
       }
@@ -1222,6 +1222,24 @@ const ResultsWrapper: React.FC<any> = ({
 
   const activeProfile = useMemo(() => profile || publicProfile, [profile, publicProfile]);
 
+  const resolvedSurveyId = useMemo(() => {
+    if (surveyIdFromQuery) return surveyIdFromQuery;
+    if (activeProfile) {
+      const pSurveyId = activeProfile.surveyId;
+      if (pSurveyId && activeProfile.answers[pSurveyId] && Object.keys(activeProfile.answers[pSurveyId]).length > 0) {
+        return pSurveyId;
+      }
+      const keysWithAnswers = Object.keys(activeProfile.answers).filter(
+        key => activeProfile.answers[key] && Object.keys(activeProfile.answers[key]).length > 0
+      );
+      if (keysWithAnswers.length > 0) {
+        return keysWithAnswers[0];
+      }
+      if (pSurveyId) return pSurveyId;
+    }
+    return activeSurveyId;
+  }, [surveyIdFromQuery, activeProfile, activeSurveyId]);
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -1290,7 +1308,7 @@ const ResultsWrapper: React.FC<any> = ({
 
   return (
     <Results
-      key={`${activeProfile.id}_${userIdFromQuery || ''}_${surveyIdFromQuery || ''}`}
+      key={`${activeProfile.id}_${userIdFromQuery || ''}_${resolvedSurveyId}`}
       answers={activeProfile.answers}
       onReset={() => onReset(activeProfile.id)}
       onGoHome={() => navigate('/')}
@@ -1299,7 +1317,7 @@ const ResultsWrapper: React.FC<any> = ({
       filenamePrefix={userIdFromQuery ? `${activeProfile.name || 'user'}_${userIdFromQuery}` : `${activeProfile.name || 'anonymous'}_results`}
       user={user}
       targetUser={activeProfile.targetUser}
-      surveyId={surveyIdFromQuery || activeProfile.surveyId || activeSurveyId}
+      surveyId={resolvedSurveyId}
       initialRecommendations={activeProfile.recommendations || (userIdFromQuery ? {} : backendRecommendations)}
       badges={activeProfile.badges}
       isPublicView={activeProfile.isPublicView}

@@ -1045,8 +1045,8 @@ export const Results: React.FC<ResultsProps> = ({
                 <RadarIcon className="w-3 h-3" />
                 {ui.sensorySignatureMap}
               </div>
-              <div className="w-full h-[350px] md:h-[450px] min-h-[350px]">
-                <ResponsiveContainer width="100%" height="100%" minHeight={350}>
+              <div className="w-full h-[350px] md:h-[450px] min-h-[350px] min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minHeight={350} minWidth={0}>
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                     <PolarGrid stroke="#E5E7EB" strokeWidth={1} />
                     <PolarAngleAxis
