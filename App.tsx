@@ -1028,7 +1028,7 @@ const App: React.FC = () => {
           <Route path="/b2b" element={<B2bDashboardPage ui={ui} user={user} />} />
           <Route path="/compatibility" element={<CognitiveCompatibilityPage ui={ui} user={user} />} />
           
-          {import.meta.env.DEV && (
+          {(import.meta.env.DEV || isAdmin) && (
             <Route path="/admin/carousel-generator" element={<CarouselBuilder />} />
           )}
 

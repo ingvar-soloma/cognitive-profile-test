@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hashlib
 import hmac
 import time
@@ -22,6 +24,7 @@ from datetime import datetime, timezone
 from google import genai
 from telegram import Bot
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
 
@@ -169,6 +172,52 @@ async def pydantic_exception_handler(request: Request, exc: ValidationError):
         },
     )
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code >= 500:
+        try:
+            url = f"{request.url}"
+            method = request.method
+            detail_str = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+            msg = (
+                f"🔥 <b>HTTP Error {exc.status_code}!</b>\n\n"
+                f"<b>Path:</b> <code>{method} {html.escape(url)}</code>\n"
+                f"<b>Detail:</b> <code>{html.escape(detail_str)}</code>"
+            )
+            await send_telegram_notification(msg)
+        except Exception as telegram_err:
+            logger.error(f"Failed to send HTTP exception notification to telegram: {telegram_err}")
+            
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    tb_str = "".join(tb)
+    logger.error(f"Unhandled Exception: {exc}\n{tb_str}")
+    
+    try:
+        url = f"{request.url}"
+        method = request.method
+        tb_truncated = tb_str[:1500] + ("..." if len(tb_str) > 1500 else "")
+        msg = (
+            f"🔥 <b>Unhandled Request Error!</b>\n\n"
+            f"<b>Path:</b> <code>{method} {html.escape(url)}</code>\n"
+            f"<b>Error:</b> <code>{html.escape(type(exc).__name__)}: {html.escape(str(exc))}</code>\n\n"
+            f"<b>Traceback:</b>\n<pre>{html.escape(tb_truncated)}</pre>"
+        )
+        await send_telegram_notification(msg)
+    except Exception as telegram_err:
+        logger.error(f"Failed to send exception notification to telegram: {telegram_err}")
+
+    return JSONResponse(
+        status_code=500,
+        content={"status": "error", "message": "Internal Server Error"},
+    )
+
 app.include_router(auth_router, prefix="/api", tags=["auth"])
 
 app.add_middleware(
@@ -179,10 +228,71 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+async def perform_model_check():
+    model_name = "gemini-3.1-pro-preview"
+    logger.info(f"Performing daily model check for {model_name}...")
+    
+    if not client:
+        msg = f"⚠️ <b>Model Monitoring Alert</b>\n\nGemini client is not initialized (missing GEMINI_API_KEY)."
+        await send_telegram_notification(msg)
+        return
+
+    try:
+        response = await client.aio.models.generate_content(
+            model=model_name,
+            contents="Say 'OK'"
+        )
+        if response and response.text:
+            msg = f"🟢 <b>Model Monitor Status: OK</b>\n\nModel: <code>{model_name}</code> is available and responding successfully."
+            await send_telegram_notification(msg)
+        else:
+            msg = f"🔴 <b>Model Monitor Alert: FAILED</b>\n\nModel: <code>{model_name}</code> returned an empty response."
+            await send_telegram_notification(msg)
+    except Exception as e:
+        logger.error(f"Daily model check failed for {model_name}: {e}")
+        try:
+            tb = traceback.format_exc()
+            tb_truncated = tb[:1500] + ("..." if len(tb) > 1500 else "")
+            msg = f"🔴 <b>Model Monitor Alert: FAILED</b>\n\nModel: <code>{model_name}</code> failed to respond.\n\n<b>Error:</b>\n<code>{html.escape(str(e))}</code>\n\n<b>Traceback:</b>\n<pre>{html.escape(tb_truncated)}</pre>"
+            await send_telegram_notification(msg)
+        except Exception as telegram_err:
+            logger.error(f"Failed to send model check exception to telegram: {telegram_err}")
+
+async def check_models_periodically():
+    await asyncio.sleep(10)
+    while True:
+        try:
+            status_file = os.path.join(DATA_DIR, "monitoring_status.json")
+            last_check_time = None
+            if os.path.exists(status_file):
+                try:
+                    async with aiofiles.open(status_file, "r") as f:
+                        content = await f.read()
+                        data = json.loads(content)
+                        last_check_time = datetime.fromisoformat(data.get("last_check"))
+                except Exception:
+                    pass
+
+            now = datetime.now(timezone.utc)
+            if not last_check_time or (now - last_check_time).total_seconds() >= 86400:
+                await perform_model_check()
+                try:
+                    os.makedirs(os.path.dirname(status_file), exist_ok=True)
+                    async with aiofiles.open(status_file, "w") as f:
+                        await f.write(json.dumps({"last_check": now.isoformat()}))
+                except Exception as save_err:
+                    logger.error(f"Failed to save monitoring status: {save_err}")
+
+        except Exception as err:
+            logger.error(f"Error in daily model checks loop: {err}")
+
+        await asyncio.sleep(3600)
+
 @app.on_event("startup")
 async def startup_event():
     await init_db()
     logger.info(f"Telegram Config: Bot={'SET' if bot else 'MISSING'}, Group={'SET' if TELEGRAM_GROUP_ID else 'MISSING'}")
+    asyncio.create_task(check_models_periodically())
 
 @app.middleware("http")
 async def add_coop_header(request: Request, call_next):
@@ -323,7 +433,7 @@ def migrate_scores(flat_scores: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     test_type = "express_demo" if has_demo else "full_aphantasia_profile"
     return {test_type: flat_scores}
 
-async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", tone: str = "professional", model_name: str = 'gemini-3-flash-preview'):
+async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", tone: str = "professional", model_name: str = 'gemini-3.1-pro-preview'):
     if not client:
         yield "Gemini API key not configured."
         return
@@ -411,8 +521,18 @@ async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str 
 
     except Exception as e:
         logger.error(f"Gemini streaming error: {e}")
-        # Return empty OR a standardized error chunk that the frontend can handle
-        # But we ALREADY validated, so this is likely a Gemini outage or key error
+        try:
+            tb = traceback.format_exc()
+            tb_truncated = tb[:1500] + ("..." if len(tb) > 1500 else "")
+            msg = (
+                f"🔥 <b>Gemini Streaming Error!</b>\n\n"
+                f"<b>Model:</b> <code>{model_name}</code>\n"
+                f"<b>Error:</b> <code>{html.escape(type(e).__name__)}: {html.escape(str(e))}</code>\n\n"
+                f"<b>Traceback:</b>\n<pre>{html.escape(tb_truncated)}</pre>"
+            )
+            await send_telegram_notification(msg)
+        except Exception as telegram_err:
+            logger.error(f"Failed to send Gemini streaming exception to telegram: {telegram_err}")
         return
 
 async def send_telegram_notification(msg: str):
@@ -488,7 +608,7 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
     else:
         # Update existing user settings
         update_fields = ["photo_url = $1"]
-        params = [data.auth_data.photo_url]
+        params: List[Any] = [data.auth_data.photo_url]
         param_idx = 2
         
         if data.auth_data.username:
@@ -895,8 +1015,10 @@ async def get_public_result_page(request: Request, id_or_share_id: str, conn: as
         "badges": await get_user_badges(user_id, conn)
     }
 
-async def post_process_analysis(full_text: str, data: SaveResult, conn: asyncpg.Connection = None):
+async def post_process_analysis(full_text: str, data: SaveResult, conn: Optional[asyncpg.Connection] = None):
     """Background task to handle DB saving and notifications after streaming completes."""
+    user_id = "unknown"
+    test_type = "unknown"
     db_conn = conn
     if not db_conn:
         db_conn = await asyncpg.connect(await get_db_url())
@@ -957,6 +1079,19 @@ async def post_process_analysis(full_text: str, data: SaveResult, conn: asyncpg.
         await send_telegram_notification(msg)
     except Exception as e:
         logger.error(f"Error in background post-processing: {e}")
+        try:
+            tb = traceback.format_exc()
+            tb_truncated = tb[:1500] + ("..." if len(tb) > 1500 else "")
+            msg = (
+                f"🔥 <b>Background Processing Error!</b>\n\n"
+                f"<b>User ID:</b> <code>{user_id}</code>\n"
+                f"<b>Test Type:</b> <code>{test_type}</code>\n"
+                f"<b>Error:</b> <code>{html.escape(type(e).__name__)}: {html.escape(str(e))}</code>\n\n"
+                f"<b>Traceback:</b>\n<pre>{html.escape(tb_truncated)}</pre>"
+            )
+            await send_telegram_notification(msg)
+        except Exception as telegram_err:
+            logger.error(f"Failed to send background task exception to telegram: {telegram_err}")
     finally:
         if not conn and db_conn: # If we created it here
             await db_conn.close()
@@ -1023,7 +1158,7 @@ async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks, co
          return StreamingResponse(iter(["Analysis disabled for this test type"]), media_type="text/event-stream")
          
     # Model Selection
-    model_to_use = 'gemini-3-flash-preview'
+    model_to_use = 'gemini-3.1-pro-preview'
 
     async def event_generator():
         full_text = []
@@ -1181,12 +1316,12 @@ async def get_results(request: Request, q: Optional[str] = None, target_user_id:
             "google_id": user_row["id"], # Often they are the same
             "email": user_row["email"],
             "badges": await get_user_badges(target_user_id, conn),
-            "answers": {},
-            "scores": {},
-            "gemini_recommendations": {},
-            "share_ids": {},
             "created_at": user_row["created_at"].isoformat() if user_row["created_at"] else None
         }
+        data["answers"] = {}
+        data["scores"] = {}
+        data["gemini_recommendations"] = {}
+        data["share_ids"] = {}
 
         for r in results_rows:
             t_type = r["test_type"]
@@ -1230,11 +1365,11 @@ async def get_results(request: Request, q: Optional[str] = None, target_user_id:
                 **dict(r),
                 "user_id": user_id,
                 "email": r["email"],
-                "answers": {},
-                "scores": {},
                 "created_at": r["created_at"].isoformat() if r["created_at"] else None,
                 "badges": await get_user_badges(user_id, conn)
             }
+            users_map[user_id]["answers"] = {}
+            users_map[user_id]["scores"] = {}
             
         if t_type:
              ans = safe_json_load(r["answers"]) or {}
@@ -1244,8 +1379,6 @@ async def get_results(request: Request, q: Optional[str] = None, target_user_id:
              # Also add share_id if needed, but the main thing is answers/scores
 
     return list(users_map.values())
-
-    return results
 
 class DepositRequest(BaseModel):
     auth_data: UserAuth
