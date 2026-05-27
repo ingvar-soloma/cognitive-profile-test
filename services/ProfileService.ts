@@ -69,6 +69,7 @@ export class ProfileService {
         },
         credentials: 'include',
         body: JSON.stringify({
+          auth_data: user,
           test_type: testType,
           answers: profile.answers[testType] || {},
           time_spent: profile.timeSpent ? (profile.timeSpent[testType] || 0) : 0,
@@ -113,6 +114,7 @@ export class ProfileService {
         },
         credentials: 'include',
         body: JSON.stringify({
+          auth_data: user,
           test_type: testType,
           answers: profile.answers[testType] || {},
           scores: scores,
