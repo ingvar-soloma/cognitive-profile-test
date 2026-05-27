@@ -100,11 +100,17 @@ class TestResultsValidator(BaseModel):
     def validate_completeness(self):
         if not self.answers:
             raise ValueError("No answers provided.")
-        for q_id, ans in self.answers.items():
+        has_any_valid = False
+        for q_id in list(self.answers.keys()):
+            ans = self.answers[q_id]
             has_val = ans.value is not None
             has_note = bool(ans.note and ans.note.strip())
             if not has_val and not has_note:
-                raise ValueError(f"Incomplete Data: Question {q_id} is completely empty.")
+                self.answers.pop(q_id, None)
+            else:
+                has_any_valid = True
+        if not has_any_valid:
+            raise ValueError("No answers provided: All answers are empty.")
         return self
 
 class Badge(BaseModel):
@@ -150,9 +156,45 @@ from auth import router as auth_router
 # FastAPI App
 app = FastAPI(title="Aphantasia Test Backend")
 
+def format_validation_errors(errors: Any) -> str:
+    errors_str = ""
+    for err in errors:
+        if isinstance(err, dict):
+            loc_list = err.get("loc", [])
+            msg = err.get("msg", "")
+            type_ = err.get("type", "")
+        else:
+            loc_list = getattr(err, "loc", [])
+            msg = getattr(err, "msg", "")
+            type_ = getattr(err, "type", "")
+        
+        loc = " -> ".join(str(x) for x in loc_list)
+        errors_str += f"• <b>{html.escape(loc)}</b>: {html.escape(str(msg))} (<code>{html.escape(str(type_))}</code>)\n"
+    return errors_str
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.warning(f"Global Validation Error: {exc.errors()}")
+    try:
+        url = f"{request.url}"
+        method = request.method
+        errors_str = format_validation_errors(exc.errors())
+        body_str = ""
+        if hasattr(exc, "body") and exc.body is not None:
+            body_val = str(exc.body)
+            body_truncated = (body_val[:300] + "...") if len(body_val) > 300 else body_val
+            body_str = f"\n<b>Body:</b> <code>{html.escape(body_truncated)}</code>"
+            
+        msg = (
+            f"⚠️ <b>Request Validation Error (400)</b>\n\n"
+            f"<b>Path:</b> <code>{method} {html.escape(url)}</code>\n"
+            f"<b>Errors:</b>\n{errors_str[:1200]}"
+            f"{body_str}"
+        )
+        await send_telegram_notification(msg)
+    except Exception as telegram_err:
+        logger.error(f"Failed to send validation error to telegram: {telegram_err}")
+        
     return JSONResponse(
         status_code=400,
         content={
@@ -164,6 +206,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(ValidationError)
 async def pydantic_exception_handler(request: Request, exc: ValidationError):
     logger.warning(f"Pydantic Validation Error: {exc.errors()}")
+    try:
+        url = f"{request.url}"
+        method = request.method
+        errors_str = format_validation_errors(exc.errors())
+        msg = (
+            f"⚠️ <b>Pydantic Validation Error (400)</b>\n\n"
+            f"<b>Path:</b> <code>{method} {html.escape(url)}</code>\n"
+            f"<b>Errors:</b>\n{errors_str[:1200]}"
+        )
+        await send_telegram_notification(msg)
+    except Exception as telegram_err:
+        logger.error(f"Failed to send Pydantic validation error to telegram: {telegram_err}")
+        
     return JSONResponse(
         status_code=400,
         content={
@@ -174,7 +229,7 @@ async def pydantic_exception_handler(request: Request, exc: ValidationError):
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    if exc.status_code >= 500:
+    if exc.status_code >= 400 and exc.status_code != 404:
         try:
             url = f"{request.url}"
             method = request.method
