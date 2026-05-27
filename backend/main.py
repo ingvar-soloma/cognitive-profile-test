@@ -750,19 +750,23 @@ async def update_profile_settings(data: ProfileUpdate, conn: asyncpg.Connection 
 
 @app.get("/api/public-results/{id_or_share_id}")
 async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):
-    """Explicit JSON endpoint for public results via anonymous share_id (UUID) ONLY."""
-    # Check if id_or_share_id is a valid share_id (UUID)
+    """Explicit JSON endpoint for public results via user_id or anonymous share_id (UUID)."""
     try:
         uuid.UUID(id_or_share_id)
+        is_uuid = True
+    except ValueError:
+        is_uuid = False
+
+    if is_uuid:
         share_lookup = await conn.fetchrow("SELECT user_id, test_type FROM test_results WHERE share_id = $1", id_or_share_id)
         if not share_lookup:
             raise HTTPException(status_code=404, detail="Shared result not found")
         
         user_id = share_lookup['user_id']
-        # Strictly use test_type from the share link record to prevent cross-test data leaks
         test_type = share_lookup['test_type']
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid share ID format. Must be a UUID.")
+    else:
+        user_id = id_or_share_id
+        test_type = t if t else "full_aphantasia_profile"
 
     # 1. Check user public status in DB
     user = await conn.fetchrow("SELECT id, is_public, public_nickname, photo_url FROM aphantasia_users WHERE id = $1", user_id)
@@ -774,11 +778,12 @@ async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, c
     
     # 2. Fetch result from DB
     res_row = await conn.fetchrow("SELECT * FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, test_type)
-    if not res_row:
-         # Fallback search by share_id if test_type search failed (shouldn't happen with UUID logic above but being safe)
+    if not res_row and is_uuid:
+         # Fallback search by share_id specifically
          res_row = await conn.fetchrow("SELECT * FROM test_results WHERE share_id = $1", id_or_share_id)
-         if not res_row:
-            raise HTTPException(status_code=404, detail="Result not found in database")
+         
+    if not res_row:
+        raise HTTPException(status_code=404, detail="Result not found in database")
 
     test_type = res_row['test_type']
     all_answers = safe_json_load(res_row['answers']) or {}
