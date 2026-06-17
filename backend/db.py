@@ -2,6 +2,7 @@ import os
 import logging
 import asyncio
 import asyncpg
+import urllib.parse
 from typing import AsyncGenerator
 from seeders import seed_badges, seed_feature_flags, seed_news
 
@@ -15,7 +16,11 @@ async def get_db_url() -> str:
         db_name = os.getenv("DB_NAME", "postgres")
         db_host = os.getenv("DB_HOST", "host.docker.internal")
         db_port = os.getenv("DB_PORT", os.getenv("LOCAL_DB_PORT", "5432"))
-        database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+        
+        # URL-encode the password to safely handle special characters like @, :, or ,
+        encoded_password = urllib.parse.quote_plus(db_password)
+        
+        database_url = f"postgresql://{db_user}:{encoded_password}@{db_host}:{db_port}/{db_name}"
     return database_url
 
 async def get_db() -> AsyncGenerator[asyncpg.Connection, None]:
