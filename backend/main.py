@@ -488,6 +488,16 @@ def migrate_scores(flat_scores: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     test_type = "express_demo" if has_demo else "full_aphantasia_profile"
     return {test_type: flat_scores}
 
+async def request_ai_service_report(user_id: str, test_results: Dict[str, Any]):
+    """
+    Mocked integration point for the new ai-service (LangGraph Agent RAG).
+    In production, this would make an HTTP call to http://ai-service:8001/api/v1/generate-report
+    """
+    logger.info(f"Delegating report generation for {user_id} to ai-service microservice.")
+    # async with httpx.AsyncClient() as client:
+    #     response = await client.post("http://ai-service:8001/api/v1/generate-report", json={...})
+    pass
+
 async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str = "en", tone: str = "professional", model_name: str = 'gemini-3.1-pro-preview'):
     if not client:
         yield "Gemini API key not configured."
@@ -1119,8 +1129,15 @@ async def post_process_analysis(full_text: str, data: SaveResult, conn: Optional
 
         # 3. Save back to DB
         await db_conn.execute('''
-            UPDATE test_results SET recommendations = $1 WHERE user_id = $2 AND test_type = $3
-        ''', json.dumps(recs), user_id, test_type)
+            INSERT INTO test_results (user_id, test_type, recommendations, answers, scores, time_spent)
+            VALUES ($2, $3, $1, $4, $5, $6)
+            ON CONFLICT (user_id, test_type) DO UPDATE SET
+                recommendations = EXCLUDED.recommendations,
+                answers = EXCLUDED.answers,
+                scores = EXCLUDED.scores,
+                time_spent = EXCLUDED.time_spent,
+                created_at = CURRENT_TIMESTAMP
+        ''', json.dumps(recs), user_id, test_type, json.dumps(data.answers), json.dumps(data.scores), data.time_spent)
 
         # Telegram notification
         user_name = f"{data.auth_data.first_name} {data.auth_data.last_name or ''}".strip()
@@ -1155,6 +1172,33 @@ async def post_process_analysis(full_text: str, data: SaveResult, conn: Optional
     finally:
         if not conn and db_conn: # If we created it here
             await db_conn.close()
+import httpx
+from fastapi.responses import StreamingResponse
+
+@app.post("/api/v1/cognitive-profile/generate-stream")
+async def proxy_generate_stream(request: Request, data: SaveResult, conn: asyncpg.Connection = Depends(get_db)):
+    auth_user = verify_auth(data.auth_data)
+    
+    payload = {
+        "profile": {
+            "user_id": str(auth_user.id),
+            "survey_id": data.test_type,
+            "answers": data.answers,
+            "history": []
+        },
+        "include_scientific_references": True
+    }
+    
+    async def sse_proxy():
+        async with httpx.AsyncClient() as client:
+            try:
+                async with client.stream("POST", "http://ai-service:8001/api/v1/generate-report/stream", json=payload, timeout=120.0) as r:
+                    async for chunk in r.aiter_bytes():
+                        yield chunk
+            except Exception as e:
+                yield f"data: {{\"error\": \"Proxy error: {str(e)}\"}}\\n\\n".encode("utf-8")
+                
+    return StreamingResponse(sse_proxy(), media_type="text/event-stream")
 
 @app.post("/api/analyze-result")
 async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks, conn: asyncpg.Connection = Depends(get_db)):
