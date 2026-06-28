@@ -1,0 +1,50 @@
+name: Smart Test Pipeline
+
+on:
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.set-matrix.outputs.modules }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for git diff
+
+      - name: Find changed Go modules
+        id: set-matrix
+        run: |
+          # 1. Знайти всі змінені файли між PR і master
+          # 2. Витягти назви папок першого рівня (мікросервісів)
+          # 3. Відфільтрувати лише ті, де є go.mod
+          CHANGED_DIRS=$(git diff --name-only origin/master...HEAD | awk -F/ '{print $1}' | sort -u)
+          
+          MODULES="[]"
+          for DIR in $CHANGED_DIRS; do
+            if [ -f "$DIR/go.mod" ]; then
+              MODULES=$(echo "$MODULES" | jq --arg dir "$DIR" '. += [$dir]')
+            fi
+          done
+          
+          echo "modules=$MODULES" >> $GITHUB_OUTPUT
+
+  test:
+    needs: detect-changes
+    # Запускаємо матрицю ТІЛЬКИ для змінених модулів
+    if: ${{ needs.detect-changes.outputs.modules != '[]' }}
+    strategy:
+      matrix:
+        module: ${{ fromJson(needs.detect-changes.outputs.modules) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      
+      - name: Run Tests
+        working-directory: ${{ matrix.module }}
+        run: go test ./... -v -race
