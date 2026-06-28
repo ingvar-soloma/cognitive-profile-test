@@ -43,8 +43,18 @@ logs-backend:
 logs-frontend:
 	docker compose logs -f frontend
 
+logs-ai:
+	docker compose logs -f ai-service
+
 list-subscribers:
 	docker compose exec backend python subscribers_cli.py
+
+# AI Service Commands
+ai-test:
+	docker compose exec ai-service poetry run pytest tests/
+
+ai-eval:
+	docker compose exec ai-service poetry run python evals/benchmark.py
 
 # Cleanup
 prune:
@@ -69,6 +79,9 @@ help:
 	@echo "  make prod-up          - Start production environment"
 	@echo "  make prod-down        - Stop production environment"
 	@echo "  make logs-backend     - View backend logs"
+	@echo "  make logs-ai          - View AI service logs"
 	@echo "  make list-subscribers - List all newsletter subscribers"
+	@echo "  make ai-test          - Run unit tests for the AI service"
+	@echo "  make ai-eval          - Run evaluation benchmarks for the AI service"
 	@echo "  make prune            - Remove unused docker objects"
 	@echo "  make notify-status STATUS=success - Send Telegram notification"

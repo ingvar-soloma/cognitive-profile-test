@@ -20,6 +20,17 @@ services:
       - db
     restart: always
 
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8002:8001"
+    volumes:
+      - ./ai-service:/app
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+    restart: always
+
   db:
     image: postgres:15-alpine
     environment:
