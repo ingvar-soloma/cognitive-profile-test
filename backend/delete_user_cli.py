@@ -7,16 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-async def get_db_url() -> str:
-    database_url = os.getenv("DATABASE_URL")
-    if not database_url:
-        db_user = os.getenv("DB_USER", "user")
-        db_password = os.getenv("DB_PASSWORD", "password")
-        db_name = os.getenv("DB_NAME", "postgres")
-        db_host = os.getenv("DB_HOST", "localhost")
-        db_port = os.getenv("LOCAL_DB_PORT", "5432")
-        database_url = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-    return database_url
+# Add current directory to path for local imports (same as in migrate_to_db.py)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from db import get_db_url
 
 async def run(args):
     url = await get_db_url()
