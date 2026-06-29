@@ -218,9 +218,9 @@ const App: React.FC = () => {
   }, [location.pathname, activeSurveyId]);
   const [user, setUser] = useState<User | null>(null);
 
-  const fetchMe = async () => {
+  const fetchMe = async (forceRefresh = false) => {
     try {
-      const data = await ProfileService.loadResultFromBackend();
+      const data = await ProfileService.loadResultFromBackend(forceRefresh);
       if (data && data.user) {
         setUser(data.user);
         if (data.answers) {
@@ -291,6 +291,7 @@ const App: React.FC = () => {
         console.log('[App] Login event received:', userData.first_name);
         setUser(userData);
         setShowLoginModal(false);
+        fetchMe(true);
 
         // Redirect back to the page the user was trying to access
         const params = new URLSearchParams(window.location.search);

@@ -180,9 +180,16 @@ export class ProfileService {
     }
   }
 
-  static async loadResultFromBackend() {
+  static async loadResultFromBackend(forceRefresh = false) {
     const authDataString = localStorage.getItem('auth_token');
-    if (!authDataString) return null;
+    if (!authDataString) {
+      this.loadPromise = null;
+      return null;
+    }
+
+    if (forceRefresh) {
+      this.loadPromise = null;
+    }
 
     if (this.loadPromise) return this.loadPromise;
 
