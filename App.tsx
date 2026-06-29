@@ -16,6 +16,7 @@ import { ProfileService } from './services/ProfileService';
 import { decode } from '@toon-format/toon';
 import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/Auth/LoginModal';
+import { ConflictResolutionModal } from './components/Auth/ConflictResolutionModal';
 import { Recommendations } from './components/Recommendations/Recommendations';
 import { DashboardResults } from './components/Results/DashboardResults';
 import { PrivacyPolicy } from './components/Legal/PrivacyPolicy';
@@ -218,37 +219,123 @@ const App: React.FC = () => {
   }, [location.pathname, activeSurveyId]);
   const [user, setUser] = useState<User | null>(null);
 
+  const [pendingConflict, setPendingConflict] = useState<{
+    backendData: any;
+    localAnswers: Record<string, Answer>;
+    cloudAnswers: Record<string, Answer>;
+    testType: string;
+  } | null>(null);
+
+  const applyBackendData = (data: any) => {
+    setUser(data.user);
+    if (data.answers) {
+      setHasExistingResults(true);
+      const userProfileId = `g_${data.user.id}`;
+      const profile: Profile = {
+        id: userProfileId,
+        name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
+        answers: data.answers,
+        timeSpent: data.time_spent,
+        lastUpdated: new Date().toISOString(),
+        surveyId: activeSurveyId,
+        badges: data.badges,
+        gemini_recommendations: data.gemini_recommendations
+      };
+      setProfiles([profile]);
+      setActiveProfileId(userProfileId);
+      if (data.answers[activeSurveyId]) {
+        setAnswers(data.answers[activeSurveyId]);
+      }
+      if (data.time_spent) {
+        setElapsedSeconds(data.time_spent);
+      }
+    }
+  };
+
   const fetchMe = async (forceRefresh = false) => {
     try {
       const data = await ProfileService.loadResultFromBackend(forceRefresh);
       if (data && data.user) {
-        setUser(data.user);
-        if (data.answers) {
-          setHasExistingResults(true);
-          const userProfileId = `g_${data.user.id}`;
-          const profile: Profile = {
-            id: userProfileId,
-            name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
-            answers: data.answers,
-            timeSpent: data.time_spent,
-            lastUpdated: new Date().toISOString(),
-            surveyId: activeSurveyId,
-            badges: data.badges,
-            gemini_recommendations: data.gemini_recommendations
-          };
-          setProfiles([profile]);
-          setActiveProfileId(userProfileId);
-          if (data.answers[activeSurveyId]) {
-            setAnswers(data.answers[activeSurveyId]);
-          }
-          if (data.time_spent) {
-            setElapsedSeconds(data.time_spent);
+        // Resolve local guest answers
+        const localProfiles = ProfileService.getProfiles();
+        const guestProfile = localProfiles.find(p => p.id.startsWith('p_'));
+        const localAnswers = guestProfile?.answers[activeSurveyId] || answers || {};
+        const cloudAnswers = data.answers?.[activeSurveyId] || {};
+
+        const localCount = Object.keys(localAnswers).filter(k => localAnswers[k]?.value !== undefined).length;
+        const cloudCount = Object.keys(cloudAnswers).filter(k => cloudAnswers[k]?.value !== undefined).length;
+
+        // Check if there is a conflict (both have progress, and they differ)
+        if (localCount > 0 && cloudCount > 0 && JSON.stringify(localAnswers) !== JSON.stringify(cloudAnswers)) {
+          setPendingConflict({
+            backendData: data,
+            localAnswers,
+            cloudAnswers,
+            testType: activeSurveyId
+          });
+        } else {
+          // No conflict, safe to sync automatically
+          if (localCount > 0 && cloudCount === 0) {
+            // Local has answers, cloud does not: sync local to cloud automatically
+            setUser(data.user);
+            const userProfileId = `g_${data.user.id}`;
+            const mergedAnswers = { ...data.answers, [activeSurveyId]: localAnswers };
+            const profile: Profile = {
+              id: userProfileId,
+              name: `${data.user.first_name} ${data.user.last_name || ''}`.trim(),
+              answers: mergedAnswers,
+              timeSpent: data.time_spent,
+              lastUpdated: new Date().toISOString(),
+              surveyId: activeSurveyId,
+              badges: data.badges,
+              gemini_recommendations: data.gemini_recommendations
+            };
+            setProfiles([profile]);
+            setActiveProfileId(userProfileId);
+            setAnswers(localAnswers);
+          } else {
+            // Otherwise, cloud wins/restored
+            applyBackendData(data);
           }
         }
       }
     } catch (e) {
       console.error('[App] Failed to fetch session:', e);
     }
+  };
+
+  const handleResolveKeepLocal = async () => {
+    if (!pendingConflict) return;
+    const { backendData, localAnswers, testType } = pendingConflict;
+    
+    const userProfileId = `g_${backendData.user.id}`;
+    const updatedAnswers = {
+      ...backendData.answers,
+      [testType]: localAnswers
+    };
+    
+    const profile: Profile = {
+      id: userProfileId,
+      name: `${backendData.user.first_name} ${backendData.user.last_name || ''}`.trim(),
+      answers: updatedAnswers,
+      timeSpent: backendData.time_spent,
+      lastUpdated: new Date().toISOString(),
+      surveyId: testType,
+      badges: backendData.badges,
+      gemini_recommendations: backendData.gemini_recommendations
+    };
+    
+    setUser(backendData.user);
+    setAnswers(localAnswers);
+    setProfiles([profile]);
+    setActiveProfileId(userProfileId);
+    setPendingConflict(null);
+  };
+
+  const handleResolveKeepCloud = () => {
+    if (!pendingConflict) return;
+    applyBackendData(pendingConflict.backendData);
+    setPendingConflict(null);
   };
 
   useEffect(() => {
@@ -1111,6 +1198,17 @@ const App: React.FC = () => {
         title={loginModalConfig.title}
         description={loginModalConfig.description}
       />
+      {pendingConflict && (
+        <ConflictResolutionModal
+          isOpen={!!pendingConflict}
+          lang={language}
+          localAnswersCount={Object.keys(pendingConflict.localAnswers).filter(k => pendingConflict.localAnswers[k]?.value !== undefined).length}
+          cloudAnswersCount={Object.keys(pendingConflict.cloudAnswers).filter(k => pendingConflict.cloudAnswers[k]?.value !== undefined).length}
+          onSelectLocal={handleResolveKeepLocal}
+          onSelectCloud={handleResolveKeepCloud}
+          onClose={() => setPendingConflict(null)}
+        />
+      )}
       <Toaster position="bottom-center" reverseOrder={false} />
     </div>
   );
