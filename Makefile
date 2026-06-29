@@ -49,6 +49,14 @@ logs-ai:
 list-subscribers:
 	docker compose exec backend python subscribers_cli.py
 
+delete-user-results:
+	@read -p "Enter User ID or Email: " uid; \
+	docker compose exec backend python delete_user_cli.py --mode results-only $$uid
+
+delete-user:
+	@read -p "Enter User ID or Email: " uid; \
+	docker compose exec backend python delete_user_cli.py --mode full-user $$uid
+
 # AI Service Commands
 ai-test:
 	docker compose exec ai-service poetry run pytest tests/
@@ -81,6 +89,8 @@ help:
 	@echo "  make logs-backend     - View backend logs"
 	@echo "  make logs-ai          - View AI service logs"
 	@echo "  make list-subscribers - List all newsletter subscribers"
+	@echo "  make delete-user-results - Delete test results of a user (keeps profile)"
+	@echo "  make delete-user      - Delete full user profile and test results"
 	@echo "  make ai-test          - Run unit tests for the AI service"
 	@echo "  make ai-eval          - Run evaluation benchmarks for the AI service"
 	@echo "  make prune            - Remove unused docker objects"
