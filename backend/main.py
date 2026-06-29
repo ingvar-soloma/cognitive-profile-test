@@ -625,11 +625,10 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
     # 1. Database User Management & Referral Logic
     is_new_user = False
     user_exists = await conn.fetchrow("SELECT id, referred_by, credits FROM aphantasia_users WHERE id = $1", user_id)
-    current_credits = user_exists['credits'] if user_exists else 300
+    current_credits = user_exists['credits'] if user_exists else 0
     
     # 2. Test generation credit check logic
-    existing_result = await conn.fetchrow("SELECT 1 FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, data.test_type)
-    cost = 0 if not existing_result else 100
+    cost = 100 if "express" in data.test_type or "demo" in data.test_type else 250
     
     if current_credits < cost:
         raise HTTPException(status_code=403, detail="Insufficient credits to regenerate test results.")
@@ -646,7 +645,7 @@ async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_d
             is_public_val, data.public_nickname, data.referred_by)
             
         await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment) 
-                              VALUES ($1, 300, 'registration_bonus', 'Initial registration bonus')''', user_id)
+                              VALUES ($1, 0, 'registration_bonus', 'Initial registration bonus')''', user_id)
         
         # Referral and Badge logic
         if data.referred_by:
@@ -1167,7 +1166,7 @@ async def post_process_analysis(full_text: str, data: SaveResult, conn: Optional
         # Deduct credits upon successful generation completed
         is_admin = user_id in ADMIN_USER_IDS
         if data.force_regenerate and not is_admin:
-            cost = 50
+            cost = 100 if "express" in test_type or "demo" in test_type else 250
             await db_conn.execute("UPDATE aphantasia_users SET credits = credits - $1 WHERE id = $2", cost, user_id)
             await db_conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment)
                                   VALUES ($1, $2, 'regeneration', $3)''',
@@ -1294,7 +1293,7 @@ async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks, co
     if data.force_regenerate and not is_admin:
         # Cost check only
         credits = await conn.fetchval("SELECT credits FROM aphantasia_users WHERE id = $1", user_id)
-        cost = 50
+        cost = 100 if "express" in data.test_type or "demo" in data.test_type else 250
         if (credits or 0) < cost:
             raise HTTPException(status_code=403, detail=f"Insufficient credits for regeneration ({cost} required)")
         # Deduction occurs in background task post_process_analysis upon success
@@ -1304,7 +1303,8 @@ async def analyze_result(data: SaveResult, background_tasks: BackgroundTasks, co
         if data.test_type in recs and recs[data.test_type].strip():
             # Already has analysis, stream the EXISTING one instead of calling Gemini
             async def stream_existing(text: str):
-                yield "💡 Using your stored analysis. You can optionally regenerate it for 50 credits if you wish.\n\n"
+                cost = 100 if "express" in data.test_type or "demo" in data.test_type else 250
+                yield f"💡 Using your stored analysis. You can optionally regenerate it for {cost} credits if you wish.\n\n"
                 chunk_size = 500
                 for i in range(0, len(text), chunk_size):
                     yield text[i:i+chunk_size]

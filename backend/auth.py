@@ -29,7 +29,7 @@ async def create_guest_session(conn: asyncpg.Connection = Depends(get_db)):
                           VALUES ($1, $2, TRUE, CURRENT_TIMESTAMP)''',
                        user_id, "Guest")
     await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment) 
-                          VALUES ($1, 300, 'registration_bonus', 'Initial guest registration')''', user_id)
+                          VALUES ($1, 0, 'registration_bonus', 'Initial guest registration')''', user_id)
 
     auth_secret = os.getenv("AUTH_SECRET", os.getenv("TELEGRAM_BOT_TOKEN", "default-secret-for-hmac"))
     public_id = await conn.fetchval("SELECT public_id FROM aphantasia_users WHERE id = $1", user_id)
@@ -86,7 +86,7 @@ async def exchange_google_code(req: GoogleExchangeRequest, response: Response, c
                                   VALUES ($1, $2, $3, $4, $5, FALSE, CURRENT_TIMESTAMP, $6, $7, $8)''',
                                user_id, username, first_name, last_name, photo_url, req.source, req.campaign, req.intent)
             await conn.execute('''INSERT INTO credit_transactions (user_id, amount, transaction_type, comment) 
-                                  VALUES ($1, 300, 'registration_bonus', 'Initial google registration')''', user_id)
+                                  VALUES ($1, 0, 'registration_bonus', 'Initial google registration')''', user_id)
         elif not req.guest_id or user:
             # Update detail
             if isinstance(user, asyncpg.Record):

@@ -1180,7 +1180,7 @@ const App: React.FC = () => {
           setTone(t);
           localStorage.setItem('neuroprofile_tone', t);
         }}
-        cost={activeProfile?.answers?.[activeSurveyId] ? 100 : 0}
+        cost={activeSurveyId === 'express_demo' ? 100 : 250}
       />
       {importingAnswers && (
         <ImportManager

@@ -52,25 +52,21 @@ def _save_payload(user_id=TEST_USER_ID, answers=None, force=False):
 
 class TestCreditLogic:
     """
-    Business rule: first save free, subsequent saves cost 100 credits.
+    Business rule: express costs 100 credits, full costs 250 credits.
     User below threshold must be blocked with 403.
     """
 
-    def test_new_user_gets_free_save(self, client, mock_db):
-        """No existing result → cost = 0 → no credit deduction."""
+    def test_new_user_without_credits_is_blocked(self, client, mock_db):
+        """New user starts with 0 credits → cost = 100 → blocked with 403."""
         mock_db.fetchrow.side_effect = [
             None,  # user_exists = None (new user)
-            None,  # existing_result = None (first save)
-        ]
-        mock_db.fetchval.side_effect = [
-            None,   # resolved referral id
-            "share-uuid-abc",  # share_id from INSERT ... RETURNING
+            None,  # existing_result = None
         ]
         mock_db.execute.return_value = "OK"
-
+ 
         resp = client.post("/api/save-result", json=_save_payload())
-        # Should not be 403 — new user, no cost
-        assert resp.status_code != 403
+        assert resp.status_code == 403
+        assert "credits" in resp.json().get("detail", "").lower()
 
     def test_returning_user_with_enough_credits_charged(self, client, mock_db):
         """Existing result + 300 credits → 100 deducted → success."""

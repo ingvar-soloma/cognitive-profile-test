@@ -816,7 +816,7 @@ export const Results: React.FC<ResultsProps> = ({
                   {!isAdmin && isOwner && (
                     <div className="flex flex-col items-end">
                        <span className="text-[8px] font-bold text-stone-400 uppercase tracking-widest leading-none mb-1">{ui.generationCost}</span>
-                       <span className="text-[10px] font-bold text-brand-clay leading-none">50 {ui.credits}</span>
+                       <span className="text-[10px] font-bold text-brand-clay leading-none">{surveyId === 'express_demo' ? 100 : 250} {ui.credits}</span>
                     </div>
                   )}
                   <button

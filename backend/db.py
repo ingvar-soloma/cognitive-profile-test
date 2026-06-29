@@ -54,7 +54,7 @@ async def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_login TIMESTAMP,
                     last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    credits INTEGER DEFAULT 300,
+                    credits INTEGER DEFAULT 0,
                     source VARCHAR(255),
                     campaign VARCHAR(255),
                     intent VARCHAR(255)
@@ -73,8 +73,8 @@ async def init_db():
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referral_count INTEGER DEFAULT 0")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS referred_by VARCHAR(255)")
             await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 300")
-            await conn.execute("UPDATE aphantasia_users SET credits = 300 WHERE credits IS NULL")
+            await conn.execute("ALTER TABLE aphantasia_users ADD COLUMN IF NOT EXISTS credits INTEGER DEFAULT 0")
+            await conn.execute("UPDATE aphantasia_users SET credits = 0 WHERE credits IS NULL")
 
             # Credit Transactions Table
             await conn.execute('''
