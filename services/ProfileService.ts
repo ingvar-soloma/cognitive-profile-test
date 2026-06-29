@@ -19,6 +19,35 @@ export class ProfileService {
     }
   }
 
+  static saveProfiles(profiles: Profile[]): void {
+    try {
+      localStorage.setItem('neuroprofile_profiles', JSON.stringify(profiles));
+    } catch (e) {
+      console.warn('[ProfileService] Failed to save profiles to localStorage', e);
+    }
+  }
+
+  static saveDraftAnswers(surveyId: string, answers: Record<string, any>): void {
+    try {
+      localStorage.setItem(`answers_draft_${surveyId}`, JSON.stringify(answers));
+    } catch (e) {
+      console.warn('[ProfileService] Failed to save draft answers', e);
+    }
+  }
+
+  static loadDraftAnswers(surveyId: string): Record<string, any> | null {
+    try {
+      const saved = localStorage.getItem(`answers_draft_${surveyId}`);
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  static clearDraftAnswers(surveyId: string): void {
+    localStorage.removeItem(`answers_draft_${surveyId}`);
+  }
+
   private static migrateLocalProfile(p: any): Profile {
     // If answers is already keyed (nested objects)
     const firstVal = Object.values(p.answers || {})[0];

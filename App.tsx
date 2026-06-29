@@ -374,6 +374,20 @@ const App: React.FC = () => {
       }
     }
 
+    // Restore draft answers if available (prevents data loss on accidental page close)
+    const draft = ProfileService.loadDraftAnswers(surveyIdToStart);
+    if (draft && Object.keys(draft).length > 0) {
+      setAnswers(draft);
+      // Also restore into active profile
+      if (activeProfileId) {
+        setProfiles(prev => prev.map(p =>
+          p.id === activeProfileId
+            ? { ...p, answers: { ...p.answers, [surveyIdToStart]: draft } }
+            : p
+        ));
+      }
+    }
+
     // If starting a DIFFERENT survey on the same profile, update the profile's primary survey ID
     if (activeProfileId && surveyIdToStart) {
       setProfiles(prev => {
@@ -435,9 +449,26 @@ const App: React.FC = () => {
     }
   }, [activeProfileId, activeSurveyId]);
 
+  // Sync profiles React state → localStorage so Results.tsx can read via ProfileService.getProfiles()
   useEffect(() => {
-    // Background sync - profiles are now managed via state and backend
-  }, [answers, activeProfileId, activeSurveyId, tone]);
+    if (profiles.length > 0) {
+      ProfileService.saveProfiles(profiles);
+    }
+  }, [profiles]);
+
+  // Auto-save draft answers to localStorage with debounce (prevents data loss on page close)
+  const draftSaveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (appState === AppState.SURVEY && Object.keys(answers).length > 0) {
+      if (draftSaveTimeout.current) clearTimeout(draftSaveTimeout.current);
+      draftSaveTimeout.current = setTimeout(() => {
+        ProfileService.saveDraftAnswers(activeSurveyId, answers);
+      }, 1500);
+    }
+    return () => {
+      if (draftSaveTimeout.current) clearTimeout(draftSaveTimeout.current);
+    };
+  }, [answers, activeSurveyId, appState]);
 
   useEffect(() => {
     // Warn on exit if in survey
@@ -692,6 +723,8 @@ const App: React.FC = () => {
 
   const finalizeFinish = () => {
     setShowFinishConfirmation(false);
+    // Save final draft immediately before navigating (catches the last state)
+    ProfileService.saveDraftAnswers(activeSurveyId, answers);
     
     setTimeout(() => {
       if (activeProfileId) {

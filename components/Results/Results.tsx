@@ -107,6 +107,7 @@ export const Results: React.FC<ResultsProps> = ({
   const [currentVersionIndex, setCurrentVersionIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isWaitingFirstToken, setIsWaitingFirstToken] = useState(false);
   const [selectedVersionIndex, setSelectedVersionIndex] = useState<number | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
@@ -245,6 +246,7 @@ export const Results: React.FC<ResultsProps> = ({
 
     if (activeProfile && targetSurveyId) {
         setIsAnalyzing(true);
+        setIsWaitingFirstToken(true);
         setGeminiRecs(null);
         setAnalysisError(null);
   
@@ -253,6 +255,7 @@ export const Results: React.FC<ResultsProps> = ({
         try {
           // Use the profile's own answers which should be up to date in localStorage
           await ProfileService.streamAnalysisFromBackend(activeProfile as any, targetSurveyId, radarScores, lang, (chunk) => {
+            setIsWaitingFirstToken(false);
             setGeminiRecs(prev => (prev || '') + chunk);
           }, forceRegenerate);
         } catch (e) {
@@ -261,6 +264,7 @@ export const Results: React.FC<ResultsProps> = ({
           toast.error(errMsg);
         } finally {
           setIsAnalyzing(false);
+          setIsWaitingFirstToken(false);
         }
     }
   };
@@ -413,7 +417,25 @@ export const Results: React.FC<ResultsProps> = ({
         // Step 3: If no backend recs, and we have local answers, SAVE and trigger analysis
         const activeProfileId = localStorage.getItem('neuroprofile_active_profile_id');
         const profiles = ProfileService.getProfiles();
-        const activeProfile = profiles.find(p => p.id === activeProfileId);
+        let activeProfile = profiles.find(p => p.id === activeProfileId);
+
+        // FALLBACK: if profiles empty in localStorage (React state not yet persisted),
+        // build activeProfile directly from the props answers (which come from App.tsx state)
+        if (!activeProfile && Object.keys(answers).length > 0) {
+          console.log('[Results] Profiles empty in localStorage, building profile from props answers');
+          const draftAnswers = ProfileService.loadDraftAnswers(targetSurveyId);
+          const answersForSurvey = draftAnswers || answers[targetSurveyId] || {};
+          if (Object.keys(answersForSurvey).length > 0) {
+            activeProfile = {
+              id: activeProfileId || 'temp_' + Date.now(),
+              name: user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'User',
+              answers: { [targetSurveyId]: answersForSurvey },
+              timeSpent: {},
+              lastUpdated: new Date().toISOString(),
+              surveyId: targetSurveyId,
+            } as any;
+          }
+        }
 
         if (activeProfile && targetSurveyId && !isPublicView) {
           setIsSaving(true);
@@ -437,11 +459,16 @@ export const Results: React.FC<ResultsProps> = ({
              } else {
                // Trigger streaming analysis
                setIsAnalyzing(true);
+               setIsWaitingFirstToken(true);
                await ProfileService.streamAnalysisFromBackend(activeProfile, targetSurveyId, radarScores, lang, (chunk) => {
+                 setIsWaitingFirstToken(false);
                  setGeminiRecs(prev => (prev || '') + chunk);
                });
                setIsAnalyzing(false);
+               setIsWaitingFirstToken(false);
                setIsSaving(false);
+               // Clear draft after successful analysis
+               ProfileService.clearDraftAnswers(targetSurveyId);
              }
           } else if (result && result.status === 'error') {
                              toast.error(result.detail || "Error saving results. Check your credits.");
@@ -879,7 +906,18 @@ export const Results: React.FC<ResultsProps> = ({
                   {isAnalyzing && !geminiRecs && (
                     <div className="flex flex-col items-center gap-4 py-12">
                       <div className="w-10 h-10 rounded-full border-4 border-brand-ink/10 border-t-brand-ink animate-spin"></div>
-                      <p className="text-stone-400 text-xs font-bold uppercase tracking-widest animate-pulse">{ui.synthesizingInsights}</p>
+                      {isWaitingFirstToken ? (
+                        <>
+                          <p className="text-stone-400 text-xs font-bold uppercase tracking-widest animate-pulse">
+                            {ui.synthesizingInsights}
+                          </p>
+                          <p className="text-stone-300 text-[10px] font-sans animate-pulse">
+                            Waiting for AI response...
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-stone-400 text-xs font-bold uppercase tracking-widest animate-pulse">{ui.synthesizingInsights}</p>
+                      )}
                     </div>
                   )}
 

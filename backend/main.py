@@ -355,18 +355,18 @@ async def add_coop_header(request: Request, call_next):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
     return response
 
-def verify_auth(auth_data: UserAuth) -> bool:
+def verify_auth(auth_data: UserAuth) -> UserAuth:
     """Verifies user authentication data or JWT token."""
     if not AUTH_SECRET:
         logger.warning("AUTH_SECRET not set, skipping auth verification")
-        return True
+        return auth_data
 
     try:
         token = auth_data.hash
         payload = jwt.decode(token, AUTH_SECRET, algorithms=["HS256"])
         if str(payload.get("id")) != str(auth_data.id):
             raise HTTPException(status_code=401, detail="Token mismatch")
-        return True
+        return auth_data
     except jwt.PyJWTError as e:
         logger.error(f"JWT Verification failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid Session Token")
@@ -615,6 +615,10 @@ def get_result_file_path(user_id: str):
 @app.post("/api/save-result", responses={401: {"description": "Invalid Auth"}})
 async def save_result(data: SaveResult, conn: asyncpg.Connection = Depends(get_db)):
     verify_auth(data.auth_data)
+    
+    # Validate answers completeness and correctness
+    TestResultsValidator(answers=data.answers, scores=data.scores)
+    
     user_id = str(data.auth_data.id)
 
     # 1. Database User Management & Referral Logic
@@ -795,10 +799,11 @@ async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, c
     if not res_row:
         raise HTTPException(status_code=404, detail="Result not found in database")
 
-    test_type = res_row['test_type']
-    all_answers = safe_json_load(res_row['answers']) or {}
-    all_scores = safe_json_load(res_row['scores']) or {}
-    recs = safe_json_load(res_row['recommendations']) or {}
+    # Ensure test_type is read safely from the record object
+    test_type = res_row.get('test_type') if hasattr(res_row, 'get') else res_row['test_type']
+    all_answers = safe_json_load(res_row.get('answers') if hasattr(res_row, 'get') else res_row['answers']) or {}
+    all_scores = safe_json_load(res_row.get('scores') if hasattr(res_row, 'get') else res_row['scores']) or {}
+    recs = safe_json_load(res_row.get('recommendations') if hasattr(res_row, 'get') else res_row['recommendations']) or {}
     
     # Strip notes for public view
     answers = {}
@@ -1005,13 +1010,14 @@ async def get_public_result_page(request: Request, id_or_share_id: str, conn: as
     if not user or not user['is_public']:
         raise HTTPException(status_code=403, detail="Profile is private.")
 
-    # 2. Get Result from DB
-    test_result = await conn.fetchrow("SELECT answers, scores, recommendations, created_at FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, test_type)
+    # 2. Get Result from DB including test_type
+    test_result = await conn.fetchrow("SELECT answers, scores, recommendations, created_at, test_type FROM test_results WHERE user_id = $1 AND test_type = $2", user_id, test_type)
     if not test_result:
         raise HTTPException(status_code=404)
 
     # Determine profile title for OG tags
-    test_type_raw = test_type or "unknown"
+    test_type_raw = test_result.get('test_type') if hasattr(test_result, 'get') else test_result['test_type']
+    test_type_raw = test_type_raw or test_type or "unknown"
     
     nickname = user['public_nickname'] or "Anonymous"
     
