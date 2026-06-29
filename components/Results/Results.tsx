@@ -665,6 +665,10 @@ export const Results: React.FC<ResultsProps> = ({
                 });
                 md += '\n';
             }
+
+            if (parsed.hackathon_prep_template) {
+                md += `### 6. Hackathon Preparation Template\n${parsed.hackathon_prep_template}\n\n`;
+            }
             return md;
         }
     } catch (e) {
@@ -679,10 +683,12 @@ export const Results: React.FC<ResultsProps> = ({
         const title = extract('title');
         const summary = extract('executive_summary');
         const deepDive = extract('deep_dive');
+        const prep = extract('hackathon_prep_template');
         
         if (title) md += `## 🧩 ${title}\n\n`;
         if (summary) md += `### 1. Executive Summary\n${summary}\n\n`;
         if (deepDive) md += `### 2. Deep Dive\n${deepDive}\n\n`;
+        if (prep) md += `### 6. Hackathon Preparation Template\n${prep}\n\n`;
         
         if (md) return md;
     }

@@ -515,7 +515,7 @@ async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str 
             f"### CRITICAL RULE:\nYou MUST provide your entire response in the {target_lang} language.\n\n"
             "### YOUR MISSION:\nPerform a deep-level deconstruction of the user's cognitive test results.\n\n"
             "### ANALYTICAL DIMENSIONS:\n1. Sensory Breadth. 2. Object vs. Spatial. 3. Memory Architecture. 4. Cognitive Resilience. 5. Belbin Roles.\n\n"
-            "### REPORT STRUCTURE (Markdown):\n## 🧩 [Title]: The [Type Name] Architecture\n### 1. Executive Summary\n### 2. Deep Dive\n### 3. Memory Analysis\n### 4. Professional Superpowers\n### 5. The 'External Brain' Toolkit\n\n"
+            "### REPORT STRUCTURE (Markdown):\n## 🧩 [Title]: The [Type Name] Architecture\n### 1. Executive Summary\n### 2. Deep Dive\n### 3. Memory Analysis\n### 4. Professional Superpowers\n### 5. The 'External Brain' Toolkit\n### 6. Hackathon Preparation Template\n\n"
             "### TONE & STYLE:\n"
             f"- {'Professional/Clinical Tone: precise, analytical, architecture metaphors.' if tone == 'professional' else 'Friendly/Personal Tone: warm, encouraging, accessible.'}\n"
             "- Ensure double newlines between sections."
@@ -564,9 +564,10 @@ async def stream_gemini_recommendations(test_results: Dict[str, Any], lang: str 
                 "external_brain_toolkit": {
                     "type": "ARRAY",
                     "items": {"type": "STRING"}
-                }
+                },
+                "hackathon_prep_template": {"type": "STRING"}
             },
-            "required": ["title", "executive_summary", "deep_dive", "memory_analysis", "professional_superpowers", "external_brain_toolkit"]
+            "required": ["title", "executive_summary", "deep_dive", "memory_analysis", "professional_superpowers", "external_brain_toolkit", "hackathon_prep_template"]
         }
 
         response = await client.aio.models.generate_content_stream(
@@ -761,6 +762,61 @@ async def update_profile_settings(data: ProfileUpdate, conn: asyncpg.Connection 
             await f.write(json.dumps(res_data, ensure_ascii=False, indent=2))
             
     return {"status": "success"}
+
+class RedeemPromo(BaseModel):
+    auth_data: UserAuth
+    code: str
+
+@app.post("/api/redeem-promo")
+async def redeem_promo_code(data: RedeemPromo, conn: asyncpg.Connection = Depends(get_db)):
+    verify_auth(data.auth_data)
+    user_id = str(data.auth_data.id)
+    
+    code = data.code.strip().upper()
+    if code != "WROC_AI_HACK":
+        raise HTTPException(status_code=400, detail="Invalid promo code")
+        
+    # Check if user exists
+    user_exists = await conn.fetchrow("SELECT 1 FROM aphantasia_users WHERE id = $1", user_id)
+    if not user_exists:
+        # Create user profile first if they somehow redeemed before saving any result
+        await conn.execute('''
+            INSERT INTO aphantasia_users (id, first_name, last_name, photo_url, credits)
+            VALUES ($1, $2, $3, $4, 0)
+        ''', user_id, data.auth_data.first_name, data.auth_data.last_name, data.auth_data.photo_url)
+        
+    # Check if already redeemed
+    exists = await conn.fetchval(
+        "SELECT 1 FROM credit_transactions WHERE user_id = $1 AND transaction_type = 'promo_redeem' AND comment = $2", 
+        user_id, code
+    )
+    if exists:
+        raise HTTPException(status_code=400, detail="Promo code already redeemed")
+        
+    # Award credits
+    amount = 500  # 500 free credits
+    await conn.execute("UPDATE aphantasia_users SET credits = credits + $1 WHERE id = $2", amount, user_id)
+    await conn.execute('''
+        INSERT INTO credit_transactions (user_id, amount, transaction_type, comment)
+        VALUES ($1, $2, 'promo_redeem', $3)
+    ''', user_id, amount, code)
+    
+    new_credits = await conn.fetchval("SELECT credits FROM aphantasia_users WHERE id = $1", user_id)
+    
+    if bot and TELEGRAM_GROUP_ID:
+        try:
+            msg = (
+                f"🎟️ <b>Promo Code Redeemed!</b>\n\n"
+                f"<b>User:</b> <code>{html.escape(data.auth_data.first_name)}</code> (ID: <code>{user_id}</code>)\n"
+                f"<b>Code:</b> <code>{html.escape(code)}</code>\n"
+                f"<b>Credits Added:</b> +{amount}\n"
+                f"<b>New Balance:</b> {new_credits} credits"
+            )
+            await send_telegram_notification(msg)
+        except Exception as e:
+            logger.error(f"Failed to send promo code notification: {e}")
+            
+    return {"status": "success", "credits": new_credits, "message": f"Successfully redeemed promo code! {amount} credits added."}
 
 @app.get("/api/public-results/{id_or_share_id}")
 async def get_public_result_data(id_or_share_id: str, t: Optional[str] = None, conn: asyncpg.Connection = Depends(get_db)):

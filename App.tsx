@@ -31,6 +31,7 @@ import { HowItWorksPage } from './components/Info/HowItWorksPage';
 import { LandingPage } from './components/Info/LandingPage';
 import { NewsPage } from './components/Info/NewsPage';
 import { EarlyAccessPage } from './components/Info/EarlyAccessPage';
+import { GdgLandingPage } from './components/Info/GdgLandingPage';
 import { B2bDashboardPage } from './components/Info/B2bDashboardPage';
 import { CognitiveCompatibilityPage } from './components/Info/CognitiveCompatibilityPage';
 import { CarouselBuilder } from './components/Admin/CarouselBuilder';
@@ -153,7 +154,7 @@ const App: React.FC = () => {
     else if (path === '/recommendations') setAppState(AppState.RECOMMENDATIONS);
     else if (path === '/history' || path === '/dashboard') setAppState(AppState.DASHBOARD_RESULTS);
     else if (path === '/users') setAppState(AppState.USERS);
-    else if (path === '/privacy' || path === '/blog' || path === '/news' || path === '/b2b' || path === '/compatibility' || path === '/early-access') setAppState(AppState.INTRO); // Keep as INTRO for now
+    else if (path === '/privacy' || path === '/blog' || path === '/news' || path === '/b2b' || path === '/compatibility' || path === '/early-access' || path === '/gdg') setAppState(AppState.INTRO); // Keep as INTRO for now
     else if (path.startsWith('/survey/')) setAppState(AppState.SURVEY);
   }, [location.pathname]);
 
@@ -1146,6 +1147,7 @@ const App: React.FC = () => {
           } />
 
           <Route path="/early-access" element={<EarlyAccessPage ui={ui} user={user} />} />
+          <Route path="/gdg" element={<GdgLandingPage ui={ui} language={language} user={user} onStartSurvey={() => handleStartSurvey()} />} />
           <Route path="/b2b" element={<B2bDashboardPage ui={ui} user={user} />} />
           <Route path="/compatibility" element={<CognitiveCompatibilityPage ui={ui} user={user} />} />
           

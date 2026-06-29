@@ -180,6 +180,31 @@ export class ProfileService {
     }
   }
 
+  static async redeemPromoCode(code: string) {
+    const authDataString = localStorage.getItem('auth_token');
+    if (!authDataString) return null;
+    try {
+      const authData = JSON.parse(authDataString);
+      const user = authData.user || authData;
+      
+      const response = await fetch(`${API_BASE_URL}/api/redeem-promo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          auth_data: user,
+          code: code
+        })
+      });
+      const result = await response.json();
+      return { ok: response.ok, ...result };
+    } catch (e) {
+      console.error('[ProfileService] Failed to redeem promo code', e);
+      return { ok: false, detail: 'Network error' };
+    }
+  }
+
   static async loadResultFromBackend(forceRefresh = false) {
     const authDataString = localStorage.getItem('auth_token');
     if (!authDataString) {
