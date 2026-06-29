@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, Sparkles, Brain, CheckCircle, Gift, ArrowRight, Code } from 'lucide-react';
+import { Zap, Sparkles, Brain, CheckCircle, Gift, ArrowRight, Code, Calendar, MapPin, Users, Award, ShieldAlert } from 'lucide-react';
 import { UIStrings, Language, User } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useSeoMetadata } from '@/hooks/useSeoMetadata';
@@ -20,8 +20,8 @@ export const GdgLandingPage: React.FC<GdgLandingPageProps> = ({ ui, language, us
     const [redeemSuccess, setRedeemSuccess] = useState(false);
 
     useSeoMetadata({
-        title: 'GDG Hackathon - Cognitive Profile & AI Copilot',
-        description: 'Special hackathon landing page. Determine your cognitive profile and prepare for the GDG WROC Hackathon.',
+        title: 'GDG Build with AI Wrocław - Hackathon Cognitive & SDLC Assessment',
+        description: 'Prepare for GDG Build with AI Wrocław. Use WROC_AI_HACK to claim 500 free credits and map your cognitive profile for the hackathon.',
         canonical: '/gdg'
     });
 
@@ -37,7 +37,6 @@ export const GdgLandingPage: React.FC<GdgLandingPageProps> = ({ ui, language, us
             if (res && res.status === 'success') {
                 setRedeemSuccess(true);
                 toast.success(language === 'uk' ? 'Промокод успішно активовано! 500 кредитів додано.' : 'Promo code redeemed! 500 credits added.');
-                // Update local user credits
                 user.credits = res.credits;
                 globalThis.dispatchEvent(new CustomEvent('auth-login', { detail: user }));
             } else {
@@ -54,124 +53,185 @@ export const GdgLandingPage: React.FC<GdgLandingPageProps> = ({ ui, language, us
         navigate('/survey/full_aphantasia_profile');
     };
 
-    const t = {
-        en: {
-            sub: 'GDG WROC Hackathon Edition',
-            title: 'Optimize Your Hackathon Brain',
-            desc: 'Every developer builds software differently. Discover your cognitive style, visual imagination depth, and memory architecture to divide tasks perfectly and build faster during WROC_AI_HACK.',
-            promoTitle: 'Participant Special Offer',
-            promoDesc: 'Enter the official hackathon promo code below to claim 500 free credits. This allows you to generate deep AI analysis and recommendations for your team.',
-            loginCta: 'Log in to Redeem Promo',
-            redeemed: 'Promo Code Applied!',
-            redeemBtn: 'Redeem Code',
-            testCta: 'Start Cognitive Assessment',
-            techFocus: 'Scientific framework built for high-performance engineers'
-        },
-        uk: {
-            sub: 'GDG WROC Hackathon Спецвипуск',
-            title: 'Оптимізуйте роботу мозку на хакатоні',
-            desc: 'Кожен розробник створює ПЗ по-своєму. Дізнайтеся свій когнітивний стиль, глибину візуальної уяви та архітектуру пам’яті, щоб ідеально розподілити завдання та кодити швидше під час WROC_AI_HACK.',
-            promoTitle: 'Спеціальна пропозиція для учасників',
-            promoDesc: 'Введіть промокод хакатону нижче, щоб отримати 500 безкоштовних кредитів. Це дозволить вам створити детальний аналіз штучного інтелекту та отримати персоналізовані рекомендації для вашої команди.',
-            loginCta: 'Авторизуйтеся для активації промокоду',
-            redeemed: 'Промокод успішно застосовано!',
-            redeemBtn: 'Активувати код',
-            testCta: 'Почати когнітивний тест',
-            techFocus: 'Наукова модель, створена для високопродуктивних розробників'
-        },
-        ru: {
-            sub: 'GDG WROC Hackathon Спецвыпуск',
-            title: 'Оптимизируйте работу мозга на хакатоне',
-            desc: 'Каждый разработчик создает ПО по-своему. Узнайте свой когнитивный стиль, глубину визуального воображения и архитектуру памяти, чтобы идеально распределить задачи и кодить быстрее во время WROC_AI_HACK.',
-            promoTitle: 'Специальное предложение для участников',
-            promoDesc: 'Введите промокод хакатона ниже, чтобы получить 500 бесплатных кредитов. Это позволит вам создать детальный анализ искусственного интеллекта и получить персональные рекомендации для вашей команды.',
-            loginCta: 'Авторизуйтесь для активации промокода',
-            redeemed: 'Промокод успешно применен!',
-            redeemBtn: 'Активировать код',
-            testCta: 'Начать когнитивный тест',
-            techFocus: 'Научная модель, созданная для высокопроизводительных разработчиков'
-        }
-    }[language] || {
-        en: {
-            sub: 'GDG WROC Hackathon Edition',
-            title: 'Optimize Your Hackathon Brain',
-            desc: 'Every developer builds software differently. Discover your cognitive style, visual imagination depth, and memory architecture to divide tasks perfectly and build faster during WROC_AI_HACK.',
-            promoTitle: 'Participant Special Offer',
-            promoDesc: 'Enter the official hackathon promo code below to claim 500 free credits. This allows you to generate deep AI analysis and recommendations for your team.',
-            loginCta: 'Log in to Redeem Promo',
-            redeemed: 'Promo Code Applied!',
-            redeemBtn: 'Redeem Code',
-            testCta: 'Start Cognitive Assessment',
-            techFocus: 'Scientific framework built for high-performance engineers'
-        }
-    };
+    const isUk = language === 'uk';
+    const isRu = language === 'ru';
 
     return (
-        <div className="min-h-screen text-foreground selection:bg-indigo-500/30 overflow-hidden font-sans">
-            {/* Background glowing blobs */}
+        <div className="min-h-screen text-foreground selection:bg-brand-ink/30 overflow-hidden font-sans bg-brand-bg pb-24">
+            {/* Background elements */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-ink/30 rounded-full blur-[120px]" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-clay/20 rounded-full blur-[120px]" />
+                <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-ink/20 rounded-full blur-[140px]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-clay/10 rounded-full blur-[140px]" />
             </div>
 
-            <div className="relative z-10 max-w-5xl mx-auto px-6 pt-20 pb-32 text-center">
-                {/* Header/Intro Block */}
-                <div className="space-y-8 mb-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-ink/10 border border-brand-ink/20 rounded-full text-[10px] font-extrabold tracking-[0.2em] uppercase text-brand-ink shadow-sm mx-auto">
-                        <Code className="w-3.5 h-3.5" />
-                        {t.sub}
+            <div className="relative z-10 max-w-5xl mx-auto px-6 pt-16 text-center space-y-12">
+                {/* Event Badge */}
+                <div className="inline-flex flex-col md:flex-row items-center gap-3 md:gap-6 px-6 py-3 bg-brand-bgCard border border-stone-line rounded-full shadow-soft mx-auto text-left">
+                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-brand-ink">
+                        <Code className="w-4 h-4" />
+                        GDG Wrocław Presents
                     </div>
+                    <div className="hidden md:block w-px h-4 bg-stone-line" />
+                    <span className="text-xs text-stone-500 font-bold">Build with AI Wrocław: Architecting the Future of Products</span>
+                </div>
 
+                {/* Hero section */}
+                <div className="space-y-6 max-w-4xl mx-auto">
                     <h1 className="text-4xl md:text-7xl font-serif font-black tracking-tight leading-none text-brand-textPrimary">
-                        {t.title}
+                        {isUk ? 'Підготуйте свій мозок до хакатону' : isRu ? 'Подготовьте свой мозг к хакатону' : 'Architect Your Hackathon Brain'}
                     </h1>
-
-                    <p className="text-stone-500 text-lg md:text-xl font-medium max-w-3xl mx-auto leading-relaxed">
-                        {t.desc}
+                    <p className="text-stone-500 text-lg md:text-xl font-medium leading-relaxed max-w-3xl mx-auto">
+                        {isUk 
+                            ? 'Спеціальний когнітивний асесмент для учасників Build with AI Wrocław. Дізнайтеся, як ваша уява, просторове моделювання та структура пам’яті впливають на роботу в команді при створенні AI-продуктів.'
+                            : 'Special cognitive assessment for Build with AI Wrocław participants. Discover how your visual rendering, spatial intelligence, and memory style impact team collaboration during the product creation lifecycle.'
+                        }
                     </p>
+                </div>
 
-                    {/* Promo Code Box */}
-                    <div className="max-w-xl mx-auto p-8 bg-brand-bgCard/40 backdrop-blur-md border border-stone-line rounded-[2.5rem] shadow-soft space-y-6">
-                        <div className="flex items-center gap-3 justify-center text-brand-ink">
-                            <Gift className="w-6 h-6 animate-bounce" />
-                            <h3 className="font-serif font-bold text-lg text-brand-textPrimary">{t.promoTitle}</h3>
+                {/* Event Info Card */}
+                <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto text-left">
+                    <div className="p-6 bg-brand-bgCard/60 border border-stone-line rounded-3xl flex items-start gap-4">
+                        <Calendar className="w-8 h-8 text-brand-ink shrink-0" />
+                        <div>
+                            <h4 className="font-bold text-xs uppercase tracking-wider text-stone-400">When</h4>
+                            <p className="text-sm font-bold text-brand-textPrimary mt-1">June 29 – July 4, 2026</p>
+                            <p className="text-xs text-stone-500">4:00 PM – 8:00 PM (CEST)</p>
                         </div>
-                        <p className="text-xs text-stone-500 max-w-md mx-auto">{t.promoDesc}</p>
-
-                        {!user ? (
-                            <div className="bg-brand-clay/5 border border-brand-clay/20 p-4 rounded-2xl text-xs font-bold text-brand-clay uppercase tracking-wider animate-pulse">
-                                {t.loginCta}
-                            </div>
-                        ) : redeemSuccess ? (
-                            <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl text-xs font-bold text-green-600 flex items-center justify-center gap-2 uppercase tracking-wider">
-                                <CheckCircle className="w-4 h-4" />
-                                {t.redeemed}
-                            </div>
-                        ) : (
-                            <div className="flex gap-3 max-w-sm mx-auto">
-                                <input
-                                    type="text"
-                                    value={promoCode}
-                                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                                    placeholder="PROMOCODE"
-                                    className="flex-1 px-4 py-3 bg-brand-bgCard border border-stone-line rounded-xl text-center font-bold tracking-widest text-brand-textPrimary focus:outline-none focus:border-brand-ink uppercase text-sm"
-                                />
-                                <button
-                                    disabled={isRedeeming}
-                                    onClick={handleRedeem}
-                                    className="px-6 py-3 bg-brand-ink text-white font-bold rounded-xl text-xs uppercase tracking-widest hover:shadow-md transition-all shrink-0 flex items-center justify-center"
-                                >
-                                    {isRedeeming ? (
-                                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                    ) : t.redeemBtn}
-                                </button>
-                            </div>
-                        )}
+                    </div>
+                    <div className="p-6 bg-brand-bgCard/60 border border-stone-line rounded-3xl flex items-start gap-4">
+                        <MapPin className="w-8 h-8 text-brand-ink shrink-0" />
+                        <div>
+                            <h4 className="font-bold text-xs uppercase tracking-wider text-stone-400">Where</h4>
+                            <p className="text-sm font-bold text-brand-textPrimary mt-1">Uniwersytet Ekonomiczny</p>
+                            <p className="text-xs text-stone-500">Wrocław, Komandorska 118/120</p>
+                        </div>
+                    </div>
+                    <div className="p-6 bg-brand-bgCard/60 border border-stone-line rounded-3xl flex items-start gap-4">
+                        <Users className="w-8 h-8 text-brand-ink shrink-0" />
+                        <div>
+                            <h4 className="font-bold text-xs uppercase tracking-wider text-stone-400">Collaborative SDLC</h4>
+                            <p className="text-sm font-bold text-brand-textPrimary mt-1">6-Day AI Journey</p>
+                            <p className="text-xs text-stone-500">UX Designers + Devs + DevOps</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Hackathon Readiness CTA */}
-                <div className="bg-gradient-to-br from-brand-ink to-[#4A3B6D] text-white rounded-[3rem] p-10 md:p-16 text-center space-y-8 relative overflow-hidden group shadow-soft mb-20">
+                {/* Promo Code Box */}
+                <div className="max-w-xl mx-auto p-8 bg-brand-bgCard border border-stone-line rounded-[2.5rem] shadow-soft space-y-6 relative">
+                    <div className="absolute top-[-15px] left-1/2 -translate-x-1/2 bg-brand-ink text-white text-[10px] font-black tracking-widest uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+                        <Gift className="w-3.5 h-3.5" />
+                        PROMO WROC_AI_HACK
+                    </div>
+
+                    <h3 className="font-serif font-bold text-xl text-brand-textPrimary pt-2">
+                        {isUk ? 'Отримайте 500 безкоштовних кредитів' : 'Claim 500 Free Credits'}
+                    </h3>
+                    <p className="text-xs text-stone-500 max-w-md mx-auto leading-relaxed">
+                        {isUk 
+                            ? 'Використовуйте ексклюзивний промокод хакатону, щоб зняти ліміти на генерацію детальних рекомендацій щодо архітектури продукту та стилю підготовки.'
+                            : 'Enter the official WROC_AI_HACK promo code below to unlock unlimited AI recommendation streaming and advanced diagnostic templates for your team.'
+                        }
+                    </p>
+
+                    {!user ? (
+                        <div className="p-4 bg-brand-clay/5 border border-brand-clay/20 text-brand-clay text-xs font-bold uppercase tracking-widest rounded-2xl animate-pulse">
+                            {isUk ? 'Будь ласка, авторизуйтеся, щоб активувати промокод' : 'Please log in to redeem promo code'}
+                        </div>
+                    ) : redeemSuccess ? (
+                        <div className="bg-green-500/10 border border-green-500/30 p-4 rounded-2xl text-xs font-bold text-green-600 flex items-center justify-center gap-2 uppercase tracking-wider">
+                            <CheckCircle className="w-4 h-4" />
+                            {isUk ? 'Промокод активовано!' : 'Promo Code Applied!'}
+                        </div>
+                    ) : (
+                        <div className="flex gap-3 max-w-sm mx-auto">
+                            <input
+                                type="text"
+                                value={promoCode}
+                                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                placeholder="PROMOCODE"
+                                className="flex-1 px-4 py-3 bg-brand-bg border border-stone-line rounded-xl text-center font-bold tracking-widest text-brand-textPrimary focus:outline-none focus:border-brand-ink uppercase text-sm"
+                            />
+                            <button
+                                disabled={isRedeeming}
+                                onClick={handleRedeem}
+                                className="px-6 py-3 bg-brand-ink text-white font-bold rounded-xl text-xs uppercase tracking-widest hover:shadow-md transition-all shrink-0 flex items-center justify-center"
+                            >
+                                {isRedeeming ? (
+                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                ) : (isUk ? 'Активувати' : 'Redeem')}
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* SDLC Days Grid */}
+                <div className="space-y-6 text-left max-w-4xl mx-auto">
+                    <h3 className="text-2xl font-serif font-black text-brand-textPrimary flex items-center gap-2 border-b border-stone-line pb-2">
+                        <Award className="w-6 h-6 text-brand-ink" />
+                        {isUk ? 'Як тест допомагає у розрізі програми хакатону' : 'Aligning Cognition with the 6-Day Program'}
+                    </h3>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="p-6 bg-brand-bgCard/40 border border-stone-line rounded-3xl space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-black uppercase text-brand-ink">Day 1 & 2 · Design & UX</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-clay/10 text-brand-clay rounded">Design Thinking</span>
+                            </div>
+                            <h4 className="font-serif font-bold text-brand-textPrimary">Product Design, Persona & UI Systems</h4>
+                            <p className="text-xs text-stone-500 leading-relaxed">
+                                {isUk 
+                                    ? 'Дізнайтеся глибину вашої візуалізації (Aphantasia/Hyperphantasia). Це допоможе розділити ролі: хто краще генерує інтерфейсні деталі в Figma, а хто структурує потік завдань.'
+                                    : 'Understand your visualization scale (Aphantasia vs. Hyperphantasia). Helps delegate who compiles high-fidelity Figma styles and who outlines logical system scopes.'
+                                }
+                            </p>
+                        </div>
+
+                        <div className="p-6 bg-brand-bgCard/40 border border-stone-line rounded-3xl space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-black uppercase text-brand-ink">Day 3 & 4 · Scale & Backend</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 bg-brand-ink/10 text-brand-ink rounded">Nx + NestJS + DBs</span>
+                            </div>
+                            <h4 className="font-serif font-bold text-brand-textPrimary">State, Reactivity & Data Architectures</h4>
+                            <p className="text-xs text-stone-500 leading-relaxed">
+                                {isUk 
+                                    ? 'Виміряйте свій рівень просторового інтелекту (Spatial Intelligence). Розробники з високим просторовим мисленням легко керують складними реактивними сигналами, монорепозиторіями Nx та зв’язками SQL.'
+                                    : 'Measure your Spatial Intelligence. High-spatial builders intuitively navigate Nx dependency graphs, complex state management, and relational database schemas.'
+                                }
+                            </p>
+                        </div>
+
+                        <div className="p-6 bg-brand-bgCard/40 border border-stone-line rounded-3xl space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-black uppercase text-brand-ink">Day 5 · MCP & CONTRACTIONS</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 bg-green-500/10 text-green-600 rounded">AI Agents & TRIZ</span>
+                            </div>
+                            <h4 className="font-serif font-bold text-brand-textPrimary">Technical Contradictions & Custom MCP Servers</h4>
+                            <p className="text-xs text-stone-500 leading-relaxed">
+                                {isUk 
+                                    ? 'Оцініть свій внутрішній діалог. Невербальні розробники працюють за принципом абстрактних зв’язків, тоді як вербальні легше пишуть точні системні інструкції та правила для AI-агентів.'
+                                    : 'Evaluate your internal monologue. Tells you if you formulate prompts and code rules conceptually or structurally, optimizing prompt and context engineering.'
+                                }
+                            </p>
+                        </div>
+
+                        <div className="p-6 bg-brand-bgCard/40 border border-stone-line rounded-3xl space-y-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-black uppercase text-brand-ink">Day 6 · The Grand Hackathon</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-500/10 text-amber-600 rounded">Final Battle</span>
+                            </div>
+                            <h4 className="font-serif font-bold text-brand-textPrimary">Maximum Synergy Prototype Launch</h4>
+                            <p className="text-xs text-stone-500 leading-relaxed">
+                                {isUk 
+                                    ? 'Використовуйте згенерований звіт для визначення своєї ролі по Белбіну (Plant, Monitor Evaluator, Resource Investigator). Це запобігає конфліктам у команді під час 24-годинного спринту.'
+                                    : 'Leverage your generated Belbin team role from our report. Ensures team chemistry and fast delegation during the high-stress, 24-hour sprint.'
+                                }
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Ultimate Call to Action */}
+                <div className="bg-gradient-to-br from-[#1a73e8] to-[#1253a8] text-white rounded-[3rem] p-10 md:p-16 text-center space-y-8 relative overflow-hidden group shadow-[0_32px_64px_-16px_rgba(26,115,232,0.35)] max-w-4xl mx-auto">
                     <div className="absolute top-0 right-0 p-8">
                         <Zap className="w-16 h-16 text-white/10 rotate-12" />
                     </div>
@@ -181,49 +241,25 @@ export const GdgLandingPage: React.FC<GdgLandingPageProps> = ({ ui, language, us
 
                     <div className="relative z-10 space-y-4">
                         <h3 className="text-3xl md:text-5xl font-serif font-black tracking-tight leading-tight text-white">
-                            Ready to Decode Your Cognition?
+                            {isUk ? 'Пройти повний когнітивний тест' : 'Take the Full Cognitive Assessment'}
                         </h3>
-                        <p className="text-brand-paper/80 text-base md:text-lg max-w-2xl mx-auto">
-                            Takes 15 minutes. Analyzes sensory detail level, inner voice presence, mapping capabilities, and logical architecture.
+                        <p className="text-blue-100 text-sm md:text-base max-w-xl mx-auto font-medium">
+                            {isUk
+                                ? 'Когнітивний тест займе до 15 хвилин. Ви отримаєте інтерактивний радар-графік та детальний AI-звіт підготовки до хакатону.'
+                                : 'Takes about 15 minutes. Instantly generates your interactive 8-axis radar chart and custom hackathon preparation recommendation playbook.'
+                            }
                         </p>
                     </div>
 
                     <div className="relative z-10 flex justify-center">
                         <button
                             onClick={handleStartTest}
-                            className="inline-flex items-center gap-4 px-10 py-5 bg-white text-brand-ink rounded-[2rem] font-bold text-base hover:scale-105 transition-all shadow-xl group/btn"
+                            className="inline-flex items-center gap-4 px-10 py-5 bg-white text-[#1a73e8] rounded-[2rem] font-bold text-base hover:scale-105 transition-all shadow-xl group/btn"
                         >
-                            {t.testCta}
+                            {isUk ? 'Почати тестування' : 'Start Assessment'}
                             <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" />
                         </button>
                     </div>
-                </div>
-
-                {/* Concept breakdown */}
-                <div className="grid md:grid-cols-3 gap-8 text-left">
-                    {[
-                        {
-                            title: '1. Visual Rendering',
-                            desc: 'How vividly do you compile designs? Hypophantasic developers are great with clean abstract architecture, while hyperphantasic developers simulate UI mockups instantly.'
-                        },
-                        {
-                            title: '2. Spatial Mapping',
-                            desc: 'How easily do you trace class hierarchies, network packages, or asynchronous data streams? High spatial profiles excel in system architecture and state management.'
-                        },
-                        {
-                            title: '3. Inner Monologue',
-                            desc: 'Do you talk code to yourself? Developers with a strong inner voice parse logical flows textually, whereas non-verbal thinkers work with schematic links.'
-                        }
-                    ].map((item, i) => (
-                        <div key={i} className="p-6 bg-brand-bgCard/60 border border-stone-line rounded-[2rem] shadow-sm">
-                            <h4 className="font-serif font-bold text-lg text-brand-textPrimary mb-3">{item.title}</h4>
-                            <p className="text-xs text-stone-500 leading-relaxed">{item.desc}</p>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="mt-12 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-                    {t.techFocus}
                 </div>
             </div>
         </div>
